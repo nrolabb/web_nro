@@ -1,6 +1,6 @@
 <%-include("../partials/dashboard-meta.ejs", {title: "Mở rương Jackpot"})%>
 <body class="jackpot-preview">
-<link rel="stylesheet" href="/assets/arena-dashboard/jackpot-live.css?v=2">
+<link rel="stylesheet" href="/assets/arena-dashboard/jackpot-live.css?v=3">
 <%-include("../partials/head.ejs")%>
 <svg height="0" style="position: absolute;" width="0">
 <defs>
@@ -111,5 +111,5 @@
 <button id="closeReward" class="spin-action-btn hidden" onclick="closeRewardReveal()" type="button">ĐÃ NHẬN</button>
 </div></div>
 <script id="jackpotData" type="application/json"><%- JSON.stringify(jackpot).replace(/</g, '\u003c') %></script>
-<script src="/assets/arena-dashboard/jackpot.js?v=4" defer></script>
+<script src="/assets/arena-dashboard/jackpot.js?v=5" defer></script>
 </body></html>

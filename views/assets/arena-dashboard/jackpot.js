@@ -1,12 +1,57 @@
 const jackpot = JSON.parse(document.getElementById('jackpotData').textContent);
 let chestIndex = 0, busy = false, pending = null, revealing = false;
 const money = n => Number(n).toLocaleString('vi-VN');
-function renderJackpotPools(pools) {
- const ids = ['jackpotAmountMini', 'jackpotAmountMinor', 'jackpotAmountMajor', 'jackpotAmountGrand'];
+const poolTiers = [
+ { id: 'jackpotAmountMini', selector: '.jackpot-mini', color: 'floating-add-mini' },
+ { id: 'jackpotAmountMinor', selector: '.jackpot-minor', color: 'floating-add-minor' },
+ { id: 'jackpotAmountMajor', selector: '.jackpot-major', color: 'floating-add-major' },
+ { id: 'jackpotAmountGrand', selector: '.jackpot-grand', color: 'floating-add-grand' }
+];
+const poolAnimationFrames = [null, null, null, null];
+function animatePoolAmount(index, start, target, amountAdded) {
+ const tier = poolTiers[index], amount = document.getElementById(tier.id);
+ if (!amount) return;
+ if (poolAnimationFrames[index] !== null) cancelAnimationFrame(poolAnimationFrames[index]);
+ const visualStart = Number(amount.textContent.replace(/\D/g, '')) || start;
+ if (amountAdded > 0) {
+  const card = document.querySelector(tier.selector);
+  if (card) {
+   const floating = document.createElement('div');
+   floating.className = 'jackpot-floating-add ' + tier.color;
+   floating.textContent = '+' + money(amountAdded);
+   card.append(floating);
+   setTimeout(() => floating.remove(), 8800);
+  }
+ }
+ amount.classList.add('jackpot-digits-counting');
+ const startedAt = performance.now(), duration = 9000;
+ const step = now => {
+  const progress = Math.min((now - startedAt) / duration, 1);
+  amount.textContent = money(Math.round(visualStart + (target - visualStart) * progress));
+  if (progress < 1) poolAnimationFrames[index] = requestAnimationFrame(step);
+  else {
+   poolAnimationFrames[index] = null;
+   amount.textContent = money(target);
+   amount.classList.remove('jackpot-digits-counting');
+  }
+ };
+ poolAnimationFrames[index] = requestAnimationFrame(step);
+}
+function renderJackpotPools(pools, animateIncrease = false) {
  pools.forEach((pool, index) => {
-  const amount = document.getElementById(ids[index]);
-  if (amount) amount.textContent = money(pool.amount);
+  const tier = poolTiers[index], amount = document.getElementById(tier.id);
+  if (!amount) return;
+  const previous = Number(jackpot.pools[index]?.amount ?? pool.amount);
+  const target = Number(pool.amount);
+  if (animateIncrease && target > previous) animatePoolAmount(index, previous, target, target - previous);
+  else {
+   if (poolAnimationFrames[index] !== null) cancelAnimationFrame(poolAnimationFrames[index]);
+   poolAnimationFrames[index] = null;
+   amount.classList.remove('jackpot-digits-counting');
+   amount.textContent = money(target);
+  }
  });
+ jackpot.pools = pools;
 }
 renderJackpotPools(jackpot.pools);
 setInterval(async () => {
@@ -14,7 +59,7 @@ setInterval(async () => {
   const response = await fetch('/jackpot/pools', { cache: 'no-store' });
   if (!response.ok) return;
   const data = await response.json();
-  if (Array.isArray(data.pools) && data.pools.length === 4) renderJackpotPools(data.pools);
+  if (Array.isArray(data.pools) && data.pools.length === 4) renderJackpotPools(data.pools, true);
  } catch (_) {}
 }, 30000);
 function changeChest(direction = 0) {
@@ -65,13 +110,15 @@ async function spinChest() {
   const data = await response.json();
   if (!response.ok) { if (response.status < 500) pending = null; throw new Error(data.message || 'Không thể mở rương. Hãy tải lại trang.'); }
   jackpot.balance = data.balance; pending = null;
-  if (Array.isArray(data.pools) && data.pools.length === 4) renderJackpotPools(data.pools);
+  if (Array.isArray(data.pools) && data.pools.length === 4) renderJackpotPools(data.pools, true);
   const receipt = data.receipt || { chestId: chestIndex, cost: jackpot.price, createdAt: new Date().toISOString() };
   appendHistory(data.reward, receipt);
   document.getElementById('balance').textContent = money(jackpot.balance);
   await animateChestOpen();
   await animateReward(data.reward);
-  result.textContent = 'Nhận được ' + data.reward.name + ' × ' + data.reward.quantity + '. Vào game nhận thưởng vòng quay.';
+  result.textContent = data.reward.type === 'jackpot'
+   ? 'Chúc mừng! Bạn trúng ' + data.reward.name + ' và được cộng ' + money(data.reward.amount) + ' điểm vào tài khoản.'
+   : 'Nhận được ' + data.reward.name + ' × ' + data.reward.quantity + '. Vào game nhận thưởng vòng quay.';
  } catch (err) {
   result.textContent = pending ? 'Chưa xác nhận kết quả. Bấm thử lại để kiểm tra cùng lượt, không trừ điểm lần hai.' : err.message;
  } finally { busy = false; resetChestAnimation(); renderChest(); }
@@ -119,11 +166,16 @@ async function animateReward(winner) {
  // Only the API award can occupy the winning position. Other cards are visual decoration.
  for (let i = 0; i < 65; i++) {
   const item = i === 50 ? winner : pool[Math.floor(Math.random() * pool.length)];
-  const card = document.createElement('div'); card.className = 'roulette-card tier-' + ['blue', 'purple', 'pink', 'gold'][item.chest_id];
+  const card = document.createElement('div');
+  card.className = 'roulette-card tier-' + ['blue', 'purple', 'pink', 'gold'][item.chest_id] + (item.type === 'jackpot' ? ' jackpot-prize-card' : '');
   const icon = document.createElement('div'); icon.className = 'card-icon';
-  const img = document.createElement('img'); img.src = '/api/icon/' + item.icon_id + '.png'; img.alt = ''; icon.append(img);
+  if (item.type === 'jackpot') {
+   const gem = document.createElement('i'); gem.className = 'fa-solid fa-gem'; gem.setAttribute('aria-hidden', 'true'); icon.append(gem);
+  } else {
+   const img = document.createElement('img'); img.src = '/api/icon/' + item.icon_id + '.png'; img.alt = ''; icon.append(img);
+  }
   const name = document.createElement('div'); name.className = 'card-name'; name.textContent = item.name;
-  const qty = document.createElement('div'); qty.className = 'card-tier-label'; qty.textContent = '× ' + item.quantity;
+  const qty = document.createElement('div'); qty.className = 'card-tier-label'; qty.textContent = item.type === 'jackpot' ? money(item.amount) + ' điểm' : '× ' + item.quantity;
   const bar = document.createElement('div'); bar.className = 'card-tier-bar'; card.append(icon, name, qty, bar); rail.append(card);
  }
  revealing = true; modal.classList.remove('hidden');
@@ -140,7 +192,9 @@ async function animateReward(winner) {
   requestAnimationFrame(frame);
  });
  winningCard.classList.add('jackpot-winner');
- status.textContent = 'Bạn nhận được ' + winner.name + ' × ' + winner.quantity + '. Vào game nhận thưởng vòng quay.';
+ status.textContent = winner.type === 'jackpot'
+  ? 'JACKPOT! ' + winner.name + ' — +' + money(winner.amount) + ' điểm đã cộng vào tài khoản.'
+  : 'Bạn nhận được ' + winner.name + ' × ' + winner.quantity + '. Vào game nhận thưởng vòng quay.';
  close.classList.remove('hidden'); close.focus();
 }
 function closeRewardReveal() {

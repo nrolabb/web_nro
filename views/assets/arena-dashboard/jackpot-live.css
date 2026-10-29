@@ -9,6 +9,31 @@
 #rouletteRail { position: relative; }
 #rouletteRail .card-icon img { width: 48px; height: 48px; object-fit: contain; image-rendering: pixelated; }
 #rouletteRail .jackpot-winner { border-color: #ffe38b; box-shadow: inset 0 0 22px #e0a02055; }
+#rouletteRail .jackpot-prize-card {
+    border: 2px solid transparent;
+    background: linear-gradient(180deg, #092233 0%, #07121f 100%) padding-box,
+                linear-gradient(135deg, #eaffff, #5cecff 25%, #169dff 50%, #d7fbff 75%, #57dfff) border-box;
+    box-shadow: 0 0 22px #19cfff66, inset 0 0 24px #28ceff20;
+}
+#rouletteRail .jackpot-prize-card::before {
+    content: '';
+    position: absolute;
+    inset: 3px;
+    border: 1px solid #aaf7ff99;
+    border-radius: 9px;
+    box-shadow: inset 0 0 14px #53e7ff55;
+    pointer-events: none;
+    animation: jackpotDiamondFrame 1.4s ease-in-out infinite alternate;
+}
+#rouletteRail .jackpot-prize-card .card-icon { color: #aaf7ff; filter: drop-shadow(0 0 8px #19cfff) drop-shadow(0 0 18px #168bff); }
+#rouletteRail .jackpot-prize-card .card-name { color: #e9fdff; text-shadow: 0 0 10px #30cfff; }
+#rouletteRail .jackpot-prize-card .card-tier-label { color: #8af4ff; font-size: 0.67rem; text-shadow: 0 0 9px #18cfff; }
+#rouletteRail .jackpot-prize-card .card-tier-bar { height: 5px; background: linear-gradient(90deg, #38dfff, #fff, #168cff); box-shadow: 0 0 15px #19cfff; }
+#rouletteRail .jackpot-winner.jackpot-prize-card { box-shadow: 0 0 30px #31dfffbb, inset 0 0 28px #28ceff40; transform: scale(1.04); }
+@keyframes jackpotDiamondFrame {
+    from { opacity: 0.45; filter: brightness(0.85); }
+    to { opacity: 1; filter: brightness(1.35); }
+}
 #caseOpeningModal .case-opening-stage { max-height: 90dvh; overflow-y: auto; }
 #caseOpeningModal #closeReward { margin-top: 8px; }
 .jackpot-rewards-details { width: 100%; max-width: 1100px; border: 1px solid #35405a; border-radius: 14px; background: #101622; }
