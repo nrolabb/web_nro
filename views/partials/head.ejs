@@ -1,0 +1,31 @@
+<% const currentPath = (options.req.originalUrl || options.req.path || options.req.url || '/').split('?')[0].replace(/\/+$/, '').toLowerCase() || '/'; %>
+<header class="main-header">
+  <a href="/" class="header-left" aria-label="Arena Thần Rồng - Trang chủ"><span class="header-logo-circle"><img src="/assets/images/arena/logo.jpg" alt="Arena Thần Rồng" class="header-logo-img"></span><span class="header-brand"><strong>Arena Thần Rồng</strong><small>DRAGON SUPER</small></span></a>
+  <nav class="header-nav" aria-label="Điều hướng chính"><div class="nav-pill-bar">
+    <% [['/', 'Trang chủ'], ['/jackpot', 'Mở rương Jackpot'], ['/bxh', 'Bảng XH'], ['/naptien', 'Donate']].forEach(([path, label]) => { %>
+      <a href="<%= path %>" class="nav-item <%= currentPath === path ? 'active' : '' %>" <% if (currentPath === path) { %>aria-current="page"<% } %>><%= label %></a>
+    <% }) %>
+  </div></nav>
+  <div class="header-right">
+    <% if (user[0]?.username) { %>
+    <details class="user-capsule">
+      <summary><span class="user-avatar-wrapper"><img src="<%= options.getAvatar?.[user[0].character] || '/assets/images/arena/logo.jpg' %>" alt=""></span><span class="user-info-text"><span class="username"><%= user[0].username %></span><span class="user-balance"><span id="header-user-vnd"><%= Number(user[0].vnd || 0).toLocaleString('vi-VN') %></span> điểm</span></span><i class="fa-solid fa-chevron-down caret-icon"></i></summary>
+      <div class="user-dropdown">
+        <a href="/profile"><i class="fa-solid fa-user"></i> Trang cá nhân</a>
+        <a href="/wallet" data-wallet-open><i class="fa-solid fa-wallet icon-green"></i> Ví cá nhân</a>
+        <a href="/history"><i class="fa-solid fa-clock-rotate-left"></i> Lịch sử giao dịch</a>
+        <a href="/changepassword"><i class="fa-solid fa-key"></i> Đổi mật khẩu</a>
+        <div class="dropdown-divider"></div>
+        <form action="/logout" method="post"><button type="submit" class="logout-link" style="border:0;background:none;padding:0;cursor:pointer;font:inherit"><i class="fa-solid fa-right-from-bracket"></i> Đăng xuất</button></form>
+      </div>
+    </details>
+    <% } else { %>
+      <a href="/login" class="dashboard-login">Đăng nhập</a>
+      <a href="/register" class="dashboard-login dashboard-register">Đăng ký</a>
+    <% } %>
+  </div>
+</header>
+
+<% if (user[0]?.username) { %><%- include("wallet-modal.ejs") %><% } %>
+
+<%- include("social-sidebar.ejs") %>

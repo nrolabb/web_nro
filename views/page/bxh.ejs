@@ -1,0 +1,66 @@
+<%-include("../partials/dashboard-meta.ejs", {title: "Bảng xếp hạng"})%>
+<body class="dashboard-site">
+  <%-include("../partials/head.ejs")%>
+  <%
+    const rows = type == 1 ? topReCharge : type == 2 ? topQuest : allUser;
+    const formatNumber = value => new Intl.NumberFormat('vi-VN').format(Number(value) || 0);
+  %>
+  <main class="main-body-container">
+    <div class="leaderboard-view-panel">
+      <section id="bxh" class="leaderboard-card-container">
+        <h1 class="section-hexagon-title">Bảng xếp hạng</h1>
+        <p class="arena-ranking-server">Máy chủ Super</p>
+        <nav class="leaderboard-tabs-bar" aria-label="Loại bảng xếp hạng">
+          <% ['Top Power', 'Top Đại gia', 'Top Nhiệm Vụ'].forEach((label, index) => { %>
+            <a href="/bxh?type=<%= index %>" class="lb-tab-btn <%= type == index ? 'active' : '' %>" <% if (type == index) { %>aria-current="page"<% } %>><%= label %></a>
+          <% }) %>
+        </nav>
+        <div class="lb-podium-container">
+          <% [1, 0, 2].forEach(index => { const row = rows[index]; if (!row) return; %>
+            <div class="podium-step podium-rank-<%= index + 1 %>">
+              <div class="podium-crown-slot <%= ['gold', 'silver', 'bronze'][index] %>-podium"><i class="fa-solid fa-<%= index === 0 ? 'crown' : 'medal' %>"></i></div>
+              <div class="podium-avatar"><img src="<%= options.getAvatar[row.gender] || '/assets/images/arena/logo.jpg' %>" alt=""></div>
+              <div class="podium-name"><%= row.name || row.username %></div>
+              <div class="podium-score"><%= type == 0 ? formatNumber(Number(row.power) + Number(row.pet_power)) : type == 1 ? formatNumber(row.tongnap) + ' điểm' : JSON.parse(row.data_task)[1] %></div>
+              <div class="podium-pillar"><span class="pillar-rank">#<%= index + 1 %></span></div>
+            </div>
+          <% }) %>
+        </div>
+        <div class="donnet-table-responsive dashboard-table-wrap">
+          <table class="donnet-history-table lb-table arena-ranking-table">
+            <thead><tr>
+              <th scope="col">Hạng</th><th scope="col">Nhân vật</th>
+              <% if (type == 0) { %>
+                <th scope="col">Sức mạnh</th><th scope="col">Đệ tử</th><th scope="col">Tổng</th>
+              <% } else if (type == 1) { %>
+                <th scope="col">Tổng Donate</th>
+              <% } else { %>
+                <th scope="col">Nhiệm vụ chính</th><th scope="col">Nhiệm vụ nhánh</th>
+              <% } %>
+            </tr></thead>
+            <tbody>
+              <% rows.slice(0, 10).forEach((row, index) => { %>
+                <tr class="ranking-page">
+                  <td><b class="<%= index < 3 ? 'arena-ranking-medal' : '' %>"><%= index + 1 %></b></td>
+                  <td><span class="arena-ranking-name"><img src="<%= options.getAvatar[row.gender] || '/assets/images/arena/logo.jpg' %>" alt=""><b><%= row.name || row.username %></b></span></td>
+                  <% if (type == 0) { %>
+                    <td><%= formatNumber(row.power) %></td><td><%= formatNumber(row.pet_power) %></td><td><%= formatNumber(Number(row.power) + Number(row.pet_power)) %></td>
+                  <% } else if (type == 1) { %>
+                    <td><%= formatNumber(row.tongnap) %> điểm</td>
+                  <% } else { const task = JSON.parse(row.data_task); %>
+                    <td><%= task[1] %></td><td><%= task[2] %></td>
+                  <% } %>
+                </tr>
+              <% }) %>
+              <% if (!rows.length) { %>
+                <tr><td colspan="<%= type == 0 ? 5 : type == 1 ? 3 : 4 %>">Chưa có dữ liệu xếp hạng.</td></tr>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  </main>
+
+</body>
+</html>

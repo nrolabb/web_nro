@@ -1,0 +1,24 @@
+.history-page { max-width: 1320px; margin: auto; padding: 32px 20px 64px; }
+.history-page h1 { font-size: 28px; margin-bottom: 8px; }
+.history-account { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 20px; }
+.history-account p { color: #b7b7cb; overflow-wrap: anywhere; }
+.history-summary { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 24px; margin: 0; }
+.history-summary dt { color: #b7b7cb; font-size: 13px; margin-bottom: 8px; }
+.history-summary dd { font-weight: 600; font-size: 21px; overflow-wrap: anywhere; }
+.history-page .history-credit { color: #57e49a; font-weight: 600; }
+.history-page .history-debit { color: #ff747d; font-weight: 600; }
+.history-filters { display: flex; gap: 8px; flex-wrap: wrap; }
+.history-filters a, .history-pagination a { padding: 8px 14px; border: 1px solid #514662; border-radius: 8px; }
+.history-filters a.selected { background: #ffd36a; color: #211a0b; border-color: #ffd36a; }
+.history-table-wrap { overflow-x: auto; margin-top: 20px; }
+.history-table { width: 100%; border-collapse: collapse; font-size: 14px; text-align: left; }
+.history-table th { color: #b7b7cb; background: #252131; font-size: 12px; white-space: nowrap; }
+.history-table th, .history-table td { padding: 16px 12px; border-bottom: 1px solid #373345; vertical-align: top; line-height: 1.6; }
+.history-table small { display: block; color: #b7b7cb; white-space: nowrap; margin-top: 4px; }
+.history-description { min-width: 230px; max-width: 380px; overflow-wrap: anywhere; }
+.history-amount { white-space: nowrap; }
+.history-empty { text-align: center; padding: 40px !important; color: #b7b7cb; }
+.history-pagination { display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 16px; margin-top: 24px; }
+.history-archive summary { cursor: pointer; font-weight: 600; }
+.history-archive p { margin-top: 16px; }
+@media(max-width:600px) { .history-page { padding:24px 12px 40px; } .history-summary { grid-template-columns:1fr; gap:16px; } .history-page .profile-card { padding:18px 12px; } }

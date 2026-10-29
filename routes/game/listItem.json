@@ -1,0 +1,114 @@
+[
+    {
+      "name": "5 Mảnh Đội Trưởng Vàng",
+      "img": "",
+      "params": [
+        { "quantity": 5, "options": [], "id": 956 }
+       
+      ],
+      "ratio": 5
+    },
+    {
+      "name": "1 Trứng Link Thú",
+      "img": "",
+      "params": [
+        { "quantity": 1, "options": [], "id": 1316 }
+      ],
+      "ratio": 1
+    },
+    {
+        "name": "1 Túi Bảo Zệ",
+        "img": "",
+        "params": [
+          { "quantity": 1, "options": [], "id": 2019 }
+        ],
+        "ratio": 1
+      }, {
+        "name": "1 Đá Pháp Sư",
+        "img": "",
+        "params": [
+          { "quantity": 1, "options": [], "id": 1327 }
+        ],
+        "ratio": 3
+      },
+      {
+        "name": "1 Bùa Tẩy Pháp Sư",
+        "img": "",
+        "params": [
+          { "quantity": 1, "options": [], "id": 1328 }
+        ],
+        "ratio": 3
+      },
+      {
+        "name": "Capsule Link Thú Ọc Ọc",
+        "img": "",
+        "params": [
+          { "quantity": 1, "options": [], "id": 869 }
+        ],
+        "ratio": 15
+      },
+      {
+        "name": "20 Đá Nâng Đồ Ngẫu Nhiên",
+        "img": "",
+        "params": [
+          { "quantity": 20, "options": [], "id": 220 }
+        ],
+        "ratio": 30
+      },
+      {
+        "name": "20 Đá Nâng Đồ Ngẫu Nhiên",
+        "img": "",
+        "params": [
+          { "quantity": 20, "options": [], "id": 221 }
+        ],
+        "ratio": 30
+      },
+       {
+        "name": "20 Đá Nâng Đồ Ngẫu Nhiên",
+        "img": "",
+        "params": [
+          { "quantity": 20, "options": [], "id": 222 }
+        ],
+        "ratio": 30
+      },
+       {
+        "name": "20 Đá Nâng Đồ Ngẫu Nhiên",
+        "img": "",
+        "params": [
+          { "quantity": 20, "options": [], "id": 223 }
+        ],
+        "ratio": 30
+      },
+      {
+        "name": "Cải Trang Siêu Hiếm!!!",
+        "img": "",
+        "params": [
+            {"quantity":1,"options":[{"param":32,"id":50},{"param":35,"id":77},{"param":35,"id":103},{"param":10,"id":5}],"id":1287}
+        ],
+        "ratio": 0.0001
+      },
+        {
+        "name": "Khẩu Trang Ọc Ọc",
+        "img": "",
+        "params": [
+          { "quantity": 2, "options": [{"param":20,"id":19},{"param":15,"id":88},{"param":30,"id":9},{"param":0,"id":30}], "id": 764 }
+        ],
+        "ratio": 30
+      },
+       {
+        "name": "20 Đá Nâng Đồ Ngẫu Nhiên",
+        "img": "",
+        "params": [
+          { "quantity": 20, "options": [], "id": 224 }
+        ],
+        "ratio": 30
+      },
+        {
+        "name": "20 Đá Nâng Đồ Ngẫu Nhiên",
+        "img": "",
+        "params": [
+          { "quantity": 20, "options": [], "id": 225 }
+        ],
+        "ratio": 30
+      }
+  ]

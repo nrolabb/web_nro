@@ -1,0 +1,1996 @@
+<!-- Bosses Management Tab (SQL Tập Trung & Thêm / Sửa Boss) -->
+
+<!-- Header Statistics Cards -->
+<% 
+  var templateList = (typeof bossTemplates !== 'undefined' && bossTemplates) ? bossTemplates : [];
+  var disguiseList = (typeof disguiseItems !== 'undefined' && disguiseItems) ? disguiseItems : [];
+  var liveBossList = (typeof bosses !== 'undefined' && bosses) ? bosses : [];
+
+  var totalTemplates = templateList.length;
+  var enabledTemplates = templateList.filter(function(b) { return b.enabled === 1 || b.enabled === true; }).length;
+  var disabledTemplates = totalTemplates - enabledTemplates;
+  var taskBosses = templateList.filter(function(b) { return b.type === 'TASK'; }).length;
+  var eventBosses = templateList.filter(function(b) { return b.type === 'EVENT'; }).length;
+%>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-bottom: 20px;">
+  <div class="panel-card" style="padding: 15px; border-left: 4px solid var(--primary-color);">
+    <div style="font-size: 13px; color: var(--text-muted);">Tổng Boss Template</div>
+    <div style="font-size: 24px; font-weight: 700; color: var(--text-primary); margin-top: 5px;"><%= totalTemplates %></div>
+    <div style="font-size: 12px; color: var(--text-muted); margin-top: 3px;">Quản lý trong CSDL MySQL</div>
+  </div>
+
+  <div class="panel-card" style="padding: 15px; border-left: 4px solid #28a745;">
+    <div style="font-size: 13px; color: var(--text-muted);">Đang Bật Spawn</div>
+    <div style="font-size: 24px; font-weight: 700; color: #28a745; margin-top: 5px;"><%= enabledTemplates %></div>
+    <div style="font-size: 12px; color: var(--text-muted); margin-top: 3px;">Sẵn sàng xuất hiện trong game</div>
+  </div>
+
+  <div class="panel-card" style="padding: 15px; border-left: 4px solid var(--danger);">
+    <div style="font-size: 13px; color: var(--text-muted);">Đang Tắt Spawn</div>
+    <div style="font-size: 24px; font-weight: 700; color: var(--danger); margin-top: 5px;"><%= disabledTemplates %></div>
+    <div style="font-size: 12px; color: var(--text-muted); margin-top: 3px;">Tạm ngưng tạo tự động</div>
+  </div>
+
+  <div class="panel-card" style="padding: 15px; border-left: 4px solid #17a2b8;">
+    <div style="font-size: 13px; color: var(--text-muted);">Boss Task & Event</div>
+    <div style="font-size: 24px; font-weight: 700; color: #17a2b8; margin-top: 5px;">
+      <%= taskBosses %> <span style="font-size: 14px; color: var(--text-muted); font-weight: normal;">Task</span> / <%= eventBosses %> <span style="font-size: 14px; color: var(--text-muted); font-weight: normal;">Event</span>
+    </div>
+    <div style="font-size: 12px; color: var(--text-muted); margin-top: 3px;">Phân loại theo cơ chế</div>
+  </div>
+</div>
+
+<!-- Section: Gọi Boss Tới Máy Chủ -->
+<div class="panel-card" style="max-width: 750px; margin: 0 auto 25px auto;">
+  <div class="panel-card-body">
+    <h2 style="color: var(--text-primary); margin-bottom: 8px; text-align: center; font-size: 20px;">Gọi Boss Tới Máy Chủ</h2>
+    <p style="color: var(--text-muted); text-align: center; margin-bottom: 20px; font-size: 13px;">
+      Chọn Boss từ danh sách CSDL hoặc nhập ID để lập tức tạo Boss vào game mà không cần khởi động lại Server.
+    </p>
+    
+    <div style="display: grid; grid-template-columns: 1fr 180px; gap: 15px; align-items: end;">
+      <div class="form-group" style="margin-bottom: 0;">
+        <label class="form-label" style="font-size: 13px; font-weight: 600;">Chọn Boss từ CSDL</label>
+        <select id="bossSelect" class="form-input" onchange="updateCustomId()" style="padding: 10px;">
+          <option value="">-- Chọn Boss từ Template SQL --</option>
+          <% 
+            var templateGroups = {};
+            templateList.forEach(function(bt) {
+              var grp = bt.sub_type || bt.type || 'Khác';
+              if (!templateGroups[grp]) templateGroups[grp] = [];
+              templateGroups[grp].push(bt);
+            });
+          %>
+          <% Object.keys(templateGroups).forEach(function(grp) { %>
+            <optgroup label="<%= grp %> (<%= templateGroups[grp].length %> boss)">
+              <% templateGroups[grp].forEach(function(bt) { %>
+                <option value="<%= bt.id %>"><%= bt.name %> (ID: <%= bt.id %>) - [<%= bt.type %>]</option>
+              <% }); %>
+            </optgroup>
+          <% }); %>
+        </select>
+      </div>
+
+      <div class="form-group" style="margin-bottom: 0;">
+        <label class="form-label" style="font-size: 13px; font-weight: 600;">Hoặc nhập ID Boss</label>
+        <input type="number" id="customBossId" class="form-input" placeholder="Ví dụ: -1822" style="padding: 10px;">
+      </div>
+    </div>
+
+    <div style="text-align: center; margin-top: 20px;">
+      <button class="btn btn-primary" onclick="spawnBoss()" style="width: 100%; padding: 12px; font-size: 15px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 8px;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+          <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+          <line x1="12" y1="22.08" x2="12" y2="12"/>
+        </svg>
+        Gọi Boss Vào Game
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Section: Quản Lý Cấu Hình Boss (SQL boss_template) -->
+<div class="toolbar" style="margin-bottom: 15px;">
+  <div class="toolbar-left" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+    <button class="btn btn-success" onclick="openAddBossModal()" style="display: inline-flex; align-items: center; gap: 6px; font-weight: 600;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Thêm Boss Mới
+    </button>
+
+    <div class="search-box" style="min-width: 220px;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" class="form-input" placeholder="Tìm tên, ID hoặc Nhóm Boss..." id="bossSearchInput" onkeyup="filterBossTable()">
+    </div>
+
+    <select id="bossTypeFilter" class="form-input" onchange="filterBossTable()" style="width: auto; padding: 6px 12px; font-size: 13px;">
+      <option value="">-- Tất cả loại Boss --</option>
+      <option value="NORMAL">NORMAL (Thường)</option>
+      <option value="TASK">TASK (Nhiệm vụ)</option>
+      <option value="EVENT">EVENT (Sự kiện)</option>
+      <option value="DUNGEON">DUNGEON (Phó bản)</option>
+      <option value="PHOBAN">PHOBAN (Phó bản đặc thù)</option>
+      <option value="MINI">MINI (Mini Boss)</option>
+      <option value="FINAL">FINAL (Trùm cuối)</option>
+    </select>
+
+    <select id="bossStatusFilter" class="form-input" onchange="filterBossTable()" style="width: auto; padding: 6px 12px; font-size: 13px;">
+      <option value="">-- Tất cả trạng thái --</option>
+      <option value="1">Đang BẬT Spawn</option>
+      <option value="0">Đang TẮT Spawn</option>
+    </select>
+  </div>
+
+  <div class="toolbar-right">
+    <span class="result-count">Hiển thị: <strong id="visibleBossCount"><%= totalTemplates %></strong> / <%= totalTemplates %> Boss Template</span>
+  </div>
+</div>
+
+<div class="panel-card" style="margin-bottom: 25px;">
+  <div class="panel-card-body" style="padding: 0;">
+    <div class="admin-table-wrapper">
+      <table class="admin-table" id="bossTemplateTable">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Tên Boss & Dạng</th>
+            <th>Chỉ số (HP / Sát thương)</th>
+            <th>Loại & Nhóm</th>
+            <th>Hồi sinh / Tự rời</th>
+            <th>Trạng thái Spawn</th>
+            <th style="text-align: center;">Hành động</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (templateList && templateList.length > 0) { %>
+            <% templateList.forEach(function(b) { %>
+              <tr class="boss-row" 
+                  data-name="<%= (b.name || '').toLowerCase() %>" 
+                  data-id="<%= b.id %>" 
+                  data-subtype="<%= (b.sub_type || '').toLowerCase() %>" 
+                  data-type="<%= b.type %>" 
+                  data-enabled="<%= b.enabled ? '1' : '0' %>">
+                <td style="font-family: 'JetBrains Mono', monospace; font-weight: 600;"><%= b.id %></td>
+                <td>
+                  <div style="font-weight: 600; color: var(--primary-color); font-size: 14px;"><%= b.name %></div>
+                  <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">
+                    <span class="badge" style="background: rgba(255,255,255,0.08); font-weight: normal;"><%= b.form_count || 1 %> Dạng (Form)</span>
+                    <% if (b.require_task_id) { %>
+                      <span class="badge badge-warning" style="font-size: 10px;">NV ID: <%= b.require_task_id %></span>
+                    <% } %>
+                  </div>
+                </td>
+                <td style="font-size: 12px; font-family: 'JetBrains Mono', monospace;">
+                  <% if (b.min_hp) { %>
+                    <div style="color: #28a745;">HP: <%= formatNumber(b.min_hp) %><% if (b.max_hp && b.max_hp !== b.min_hp) { %> ~ <%= formatNumber(b.max_hp) %><% } %></div>
+                    <div style="color: var(--danger);">Dame: <%= formatNumber(b.min_dame) %><% if (b.max_dame && b.max_dame !== b.min_dame) { %> ~ <%= formatNumber(b.max_dame) %><% } %></div>
+                  <% } else { %>
+                    <span style="color: var(--text-muted);">Theo dạng form</span>
+                  <% } %>
+                </td>
+                <td>
+                  <% 
+                    var typeBadgeClass = 'badge-purple';
+                    if (b.type === 'TASK') typeBadgeClass = 'badge-warning';
+                    else if (b.type === 'EVENT') typeBadgeClass = 'badge-success';
+                    else if (b.type === 'MINI') typeBadgeClass = 'badge';
+                    else if (b.type === 'PHOBAN' || b.type === 'DUNGEON') typeBadgeClass = 'badge-danger';
+                  %>
+                  <span class="badge <%= typeBadgeClass %>"><%= b.type %></span>
+                  <% if (b.sub_type) { %>
+                    <div style="font-size: 11px; color: var(--text-muted); margin-top: 3px;"><%= b.sub_type %></div>
+                  <% } %>
+                </td>
+                <td style="font-size: 12px;">
+                  <div>Hồi: <strong><%= b.respawn_delay %>s</strong> (<%= Math.round(b.respawn_delay/60) %> phút)</div>
+                  <div style="color: var(--text-muted);">Rời: <%= b.despawn_timeout %>s | Spawn: <%= b.spawn_count %></div>
+                </td>
+                <td>
+                  <button type="button" 
+                          class="btn btn-sm <%= b.enabled ? 'btn-success' : 'btn-danger' %>" 
+                          style="font-size: 11px; padding: 4px 10px; border-radius: 12px;"
+                          onclick="toggleBossEnabled(<%= b.id %>, <%= b.enabled ? 0 : 1 %>)">
+                    <%= b.enabled ? '✓ BẬT Spawn' : '✕ TẮT Spawn' %>
+                  </button>
+                </td>
+                <td style="text-align: center;">
+                  <div class="action-group" style="justify-content: center; gap: 5px;">
+                    <button class="btn btn-sm btn-ghost" onclick="viewBossDetails(<%= b.id %>)" title="Xem Chi tiết SQL & Canvas">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                      Chi tiết
+                    </button>
+                    <button class="btn btn-sm btn-primary" onclick="openEditBossModal(<%= b.id %>)" title="Chỉnh sửa đầy đủ Boss & Form">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                      Sửa
+                    </button>
+                    <button class="btn btn-sm btn-danger" onclick="deleteBossTemplate(<%= b.id %>, '<%= escapeJsString(b.name) %>')" title="Xóa Boss">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                      Xóa
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            <% }); %>
+          <% } else { %>
+            <tr>
+              <td colspan="7" style="text-align: center; padding: 40px; color: var(--text-muted);">
+                Chưa có dữ liệu Boss Template trong CSDL MySQL
+              </td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Section: Live Boss Shortcut -->
+<div class="panel-card" style="margin-bottom: 20px;">
+  <div class="panel-card-body" style="padding: 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 15px;">
+    <div>
+      <h3 style="margin: 0 0 6px 0; color: var(--text-primary); font-size: 16px; display: flex; align-items: center; gap: 8px;">
+        <span style="width: 10px; height: 10px; border-radius: 50%; background: #28a745; display: inline-block;"></span>
+        Danh sách Boss Đang Xuất Hiện Trực Tiếp (Live Status)
+      </h3>
+      <p style="margin: 0; color: var(--text-muted); font-size: 13px;">
+        Danh sách Boss Trực Tiếp đã được tách thành trang riêng biệt với bộ lọc nâng cao, thống kê và tính năng Tự động làm mới (Auto Refresh).
+      </p>
+    </div>
+    <a href="/panel/admin?type=boss_live" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 6px; font-weight: 600; font-size: 13px; text-decoration: none;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+      Xem Trang Boss Live Trực Tiếp
+    </a>
+  </div>
+</div>
+
+<!-- MODAL 1: ADD BOSS TEMPLATE & FORM MODAL -->
+<div id="addBossModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 9999; align-items: center; justify-content: center; backdrop-filter: blur(5px);">
+  <div class="panel-card" style="width: 900px; max-width: 95vw; max-height: 92vh; overflow-y: auto; box-shadow: 0 12px 40px rgba(0,0,0,0.7);">
+    <div class="panel-card-body">
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 15px;">
+        <h3 style="margin: 0; color: var(--primary-color); font-size: 19px;">Thêm Boss Mới (CSDL SQL Tập Trung)</h3>
+        <button class="btn btn-ghost btn-sm" onclick="closeAddBossModal()" style="font-size: 18px;">✕</button>
+      </div>
+
+      <form id="addBossForm" onsubmit="submitAddBoss(event)">
+        <div style="display: grid; grid-template-columns: 1fr 240px; gap: 20px; align-items: start;">
+          
+          <!-- Left side: Form Inputs -->
+          <div>
+            <h4 style="color: var(--text-primary); margin: 0 0 10px 0; font-size: 14px; border-left: 3px solid var(--primary-color); padding-left: 8px;">1. Thông tin Boss Template</h4>
+            
+            <div style="display: grid; grid-template-columns: 120px 1fr 1fr; gap: 10px;">
+              <div class="form-group">
+                <label class="form-label">ID Boss</label>
+                <input type="number" class="form-input" id="add_id" name="id" placeholder="Tự tạo ID âm">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Tên Boss (*)</label>
+                <input type="text" class="form-input" id="add_name" name="name" placeholder="Ví dụ: Broly Huyền Thoại" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Loại Boss</label>
+                <select class="form-input" id="add_type" name="type">
+                  <option value="NORMAL">NORMAL</option>
+                  <option value="TASK">TASK</option>
+                  <option value="EVENT">EVENT</option>
+                  <option value="DUNGEON">DUNGEON</option>
+                  <option value="PHOBAN">PHOBAN</option>
+                  <option value="MINI">MINI</option>
+                  <option value="FINAL">FINAL</option>
+                </select>
+              </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+              <div class="form-group">
+                <label class="form-label">Nhóm Boss (sub_type)</label>
+                <input type="text" class="form-input" id="add_sub_type" name="sub_type" placeholder="NAPPA, TDST, CELL...">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Hành tinh (Gender)</label>
+                <select class="form-input" id="add_gender" name="gender">
+                  <option value="0">Trái Đất (0)</option>
+                  <option value="1">Namếc (1)</option>
+                  <option value="2">Xayda (2)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Số lượng Spawn</label>
+                <input type="number" class="form-input" id="add_spawn_count" name="spawn_count" min="1" value="1">
+              </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+              <div class="form-group">
+                <label class="form-label">Thời gian hồi sinh (s)</label>
+                <input type="number" class="form-input" id="add_respawn_delay" name="respawn_delay" min="0" value="300">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Thời gian tự rời (s)</label>
+                <input type="number" class="form-input" id="add_despawn_timeout" name="despawn_timeout" min="0" value="900">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Nhiệm vụ ID (nếu có)</label>
+                <input type="number" class="form-input" id="add_require_task_id" name="require_task_id" placeholder="VD: 19, 20">
+              </div>
+            </div>
+
+            <h4 style="color: var(--text-primary); margin: 15px 0 10px 0; font-size: 14px; border-left: 3px solid #28a745; padding-left: 8px;">2. Cấu hình Dạng gốc (Form 0 & Trang phục)</h4>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+              <div class="form-group">
+                <label class="form-label">HP Min/Max</label>
+                <input type="number" class="form-input" id="add_hp_min" name="hp_min" value="1000000" placeholder="HP">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Sát thương (Dame)</label>
+                <input type="number" class="form-input" id="add_dame" name="dame" value="10000">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Tên dạng hiển thị</label>
+                <input type="text" class="form-input" id="add_form_name" name="form_name" placeholder="Mặc định: Tên Boss Gốc">
+              </div>
+            </div>
+
+            <!-- Disguise Selector Trigger -->
+            <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); padding: 10px; border-radius: 8px; margin-bottom: 12px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <span style="font-size: 13px; font-weight: 600; color: #ffc107;">Chọn Trang Phục Theo Cải Trang (type = 5)</span>
+                <button type="button" class="btn btn-warning btn-sm" onclick="openDisguiseSelectorModal('add')">
+                  🔍 Chọn từ Danh sách Cải Trang
+                </button>
+              </div>
+              <div style="font-size: 11px; color: var(--text-muted);">
+                Tự động lấy ID Part Head, Body, Leg từ vật phẩm Cải trang trong `item_template`.
+              </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
+              <div class="form-group">
+                <label class="form-label">Head Part ID</label>
+                <input type="number" class="form-input" id="add_outfit_head" name="outfit_head" value="-1" onchange="triggerAddCanvasUpdate()">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Body Part ID</label>
+                <input type="number" class="form-input" id="add_outfit_body" name="outfit_body" value="-1" onchange="triggerAddCanvasUpdate()">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Leg Part ID</label>
+                <input type="number" class="form-input" id="add_outfit_leg" name="outfit_leg" value="-1" onchange="triggerAddCanvasUpdate()">
+              </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
+              <div class="form-group">
+                <label class="form-label">Bag Part</label>
+                <input type="number" class="form-input" id="add_outfit_bag" name="outfit_bag" value="-1">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Aura Part</label>
+                <input type="number" class="form-input" id="add_outfit_aura" name="outfit_aura" value="-1">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Eff Part</label>
+                <input type="number" class="form-input" id="add_outfit_eff" name="outfit_eff" value="-1">
+              </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+              <div class="form-group">
+                <label class="form-label">Câu thoại xuất hiện (Start)</label>
+                <input type="text" class="form-input" id="add_text_start" name="text_start" placeholder="Ví dụ: Ta sẽ hủy diệt thế giới!">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Câu thoại giao chiến (Mid)</label>
+                <input type="text" class="form-input" id="add_text_mid" name="text_mid" placeholder="Ví dụ: Đỡ lấy chiêu này!">
+              </div>
+            </div>
+
+            <div style="display: flex; gap: 15px; margin-top: 10px;">
+              <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer;">
+                <input type="checkbox" id="add_enabled" name="enabled" checked> Bật Spawn
+              </label>
+              <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer;">
+                <input type="checkbox" id="add_is_notify" name="is_notify" checked> Thông báo Server
+              </label>
+              <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer;">
+                <input type="checkbox" id="add_is_zone_0_1_disabled" name="is_zone_0_1_disabled" checked> Tắt Khu 0-1
+              </label>
+            </div>
+
+            <!-- Add Map Spawn Selector -->
+            <h4 style="color: var(--text-primary); margin: 15px 0 8px 0; font-size: 14px; border-left: 3px solid #17a2b8; padding-left: 8px;">
+              🗺️ Danh Sách Map Xuất Hiện (boss_map)
+            </h4>
+            <div style="background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); padding: 10px; border-radius: 8px;">
+              <div id="add_map_badges_container" style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px;"></div>
+              <div style="display: grid; grid-template-columns: 1fr 110px 90px; gap: 8px; align-items: center;">
+                <select class="form-input" id="add_map_id_select" style="font-size: 12px;">
+                  <option value="">-- Chọn Map Spawn --</option>
+                  <% if (typeof mapList !== 'undefined' && mapList.length > 0) { %>
+                    <% mapList.forEach(function(m) { %>
+                      <option value="<%= m.id %>">[ID <%= m.id %>] <%= m.name %></option>
+                    <% }); %>
+                  <% } %>
+                </select>
+                <input type="number" class="form-input" id="add_map_zone_id" placeholder="Khu (-1: All)" value="-1" style="font-size: 12px;">
+                <button type="button" class="btn btn-info btn-sm" onclick="addMapToAddList()" style="font-size: 11px; white-space: nowrap;">
+                  ➕ Thêm
+                </button>
+              </div>
+            </div>
+
+            <!-- Add Boss Reward Selector -->
+            <h4 style="color: var(--text-primary); margin: 15px 0 8px 0; font-size: 14px; border-left: 3px solid #28a745; padding-left: 8px;">
+              🎁 Danh Sách Vật Phẩm Rớt (boss_reward)
+            </h4>
+            <div style="background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); padding: 10px; border-radius: 8px; margin-bottom: 12px;">
+              <div style="display: grid; grid-template-columns: 1fr 65px 65px 65px 55px 55px 65px; gap: 6px; align-items: end; margin-bottom: 8px;">
+                <div>
+                  <label style="font-size: 10px; color: var(--text-muted); display: block; margin-bottom: 2px;">Chọn Vật Phẩm</label>
+                  <input type="text" class="form-input" id="add_reward_item_filter" placeholder="Lọc item..." oninput="filterRewardItemCombo('add', this.value)" style="font-size: 11px; padding: 3px 6px; margin-bottom: 3px;">
+                  <select class="form-input" id="add_reward_item_id" style="font-size: 11px; padding: 4px;">
+                    <option value="">-- Chọn Item --</option>
+                    <% if (typeof itemTemplates !== 'undefined' && itemTemplates && itemTemplates.length > 0) { %>
+                      <% itemTemplates.forEach(function(it) { %>
+                        <option value="<%= it.id %>">[ID <%= it.id %>] <%= it.name %></option>
+                      <% }); %>
+                    <% } %>
+                  </select>
+                </div>
+                <div>
+                  <label style="font-size: 10px; color: var(--text-muted); display: block; margin-bottom: 2px;">SL Min</label>
+                  <input type="number" class="form-input" id="add_reward_q_min" value="1" min="1" style="font-size: 11px; padding: 4px;">
+                </div>
+                <div>
+                  <label style="font-size: 10px; color: var(--text-muted); display: block; margin-bottom: 2px;">SL Max</label>
+                  <input type="number" class="form-input" id="add_reward_q_max" value="1" min="1" style="font-size: 11px; padding: 4px;">
+                </div>
+                <div>
+                  <label style="font-size: 10px; color: var(--text-muted); display: block; margin-bottom: 2px;">Tỉ lệ %</label>
+                  <input type="number" class="form-input" id="add_reward_rate" value="100" min="0.01" step="any" style="font-size: 11px; padding: 4px;">
+                </div>
+                <div>
+                  <label style="font-size: 10px; color: var(--text-muted); display: block; margin-bottom: 2px;">Đ.SK</label>
+                  <input type="number" class="form-input" id="add_reward_event_point" value="0" min="0" style="font-size: 11px; padding: 4px;">
+                </div>
+                <div>
+                  <label style="font-size: 10px; color: var(--text-muted); display: block; margin-bottom: 2px;">Đ.NĐ</label>
+                  <input type="number" class="form-input" id="add_reward_active_point" value="0" min="0" style="font-size: 11px; padding: 4px;">
+                </div>
+                <div>
+                  <button type="button" class="btn btn-success btn-sm" onclick="addRewardToAddList()" style="font-size: 11px; padding: 5px 0; width: 100%;">
+                    ➕ Thêm
+                  </button>
+                </div>
+              </div>
+
+              <div style="max-height: 180px; overflow-y: auto; border: 1px solid rgba(255,255,255,0.08); border-radius: 6px;">
+                <table class="admin-table" style="font-size: 11px;">
+                  <thead>
+                    <tr>
+                      <th style="width: 30px;">#</th>
+                      <th>Vật Phẩm</th>
+                      <th style="width: 80px;">Số Lượng</th>
+                      <th style="width: 60px;">Tỉ Lệ</th>
+                      <th>Option</th>
+                      <th style="text-align: center; width: 45px;">Xóa</th>
+                    </tr>
+                  </thead>
+                  <tbody id="add_reward_rows">
+                    <tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 12px;">Chưa chọn vật phẩm rớt nào</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right side: Canvas Character Preview -->
+          <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); padding: 15px; border-radius: 10px; text-align: center;">
+            <h4 style="margin: 0 0 10px 0; color: var(--primary-color); font-size: 14px;">Xem Trước Hình Dáng</h4>
+            <div style="position: relative; width: 100%; height: 260px; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.4); border-radius: 8px; border: 1px dashed rgba(255,255,255,0.15);">
+              <canvas id="addBossCanvas" width="200" height="250" style="width: 200px; height: 250px;"></canvas>
+            </div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 10px; text-align: left; line-height: 1.5;">
+              📌 Canvas đọc dữ liệu Part ID <code>head</code>, <code>body</code>, <code>leg</code> ghép từ bảng <code>part</code> và ảnh tại <code>C:\NROServer\data\icon\x4</code>.
+            </div>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="triggerAddCanvasUpdate()" style="margin-top: 10px; width: 100%;">
+              🔄 Vẽ lại Canvas
+            </button>
+          </div>
+
+        </div>
+
+        <div style="margin-top: 20px; border-top: 1px solid var(--border-color); padding-top: 15px; display: flex; justify-content: flex-end; gap: 10px;">
+          <button type="button" class="btn btn-ghost" onclick="closeAddBossModal()">Hủy</button>
+          <button type="submit" class="btn btn-success" style="padding: 8px 20px; font-weight: 600;">Lưu Boss Mới Vào CSDL</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL 2: FULL EDIT BOSS TEMPLATE & FORM MODAL -->
+<div id="editBossModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 9999; align-items: center; justify-content: center; backdrop-filter: blur(5px);">
+  <div class="panel-card" style="width: 900px; max-width: 95vw; max-height: 92vh; overflow-y: auto; box-shadow: 0 12px 40px rgba(0,0,0,0.7);">
+    <div class="panel-card-body">
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 15px;">
+        <h3 style="margin: 0; color: var(--primary-color); font-size: 19px;" id="editBossTitle">Chỉnh sửa Boss & Form</h3>
+        <button class="btn btn-ghost btn-sm" onclick="closeEditBossModal()" style="font-size: 18px;">✕</button>
+      </div>
+
+      <form id="editBossForm" onsubmit="saveBossTemplate(event)">
+        <input type="hidden" id="edit_id" name="id">
+        <input type="hidden" id="edit_form_id" name="form_id">
+
+        <div style="display: grid; grid-template-columns: 1fr 240px; gap: 20px; align-items: start;">
+          
+          <!-- Left side: Edit Form Inputs -->
+          <div>
+            <h4 style="color: var(--text-primary); margin: 0 0 10px 0; font-size: 14px; border-left: 3px solid var(--primary-color); padding-left: 8px;">1. Thông tin Boss Template</h4>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+              <div class="form-group">
+                <label class="form-label">Tên Boss (*)</label>
+                <input type="text" class="form-input" id="edit_name" name="name" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Phân loại (Type)</label>
+                <select class="form-input" id="edit_type" name="type">
+                  <option value="NORMAL">NORMAL</option>
+                  <option value="TASK">TASK</option>
+                  <option value="EVENT">EVENT</option>
+                  <option value="DUNGEON">DUNGEON</option>
+                  <option value="PHOBAN">PHOBAN</option>
+                  <option value="MINI">MINI</option>
+                  <option value="FINAL">FINAL</option>
+                </select>
+              </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+              <div class="form-group">
+                <label class="form-label">Nhóm Boss (sub_type)</label>
+                <input type="text" class="form-input" id="edit_sub_type" name="sub_type" placeholder="NAPPA, TDST, CELL...">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Hành tinh (Gender)</label>
+                <select class="form-input" id="edit_gender" name="gender">
+                  <option value="0">Trái Đất (0)</option>
+                  <option value="1">Namếc (1)</option>
+                  <option value="2">Xayda (2)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Số lượng Spawn</label>
+                <input type="number" class="form-input" id="edit_spawn_count" name="spawn_count" min="1" value="1">
+              </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+              <div class="form-group">
+                <label class="form-label">Thời gian hồi sinh (s)</label>
+                <input type="number" class="form-input" id="edit_respawn_delay" name="respawn_delay" min="0" value="300">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Thời gian tự rời (s)</label>
+                <input type="number" class="form-input" id="edit_despawn_timeout" name="despawn_timeout" min="0" value="900">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Nhiệm vụ ID</label>
+                <input type="number" class="form-input" id="edit_require_task_id" name="require_task_id" placeholder="Nhiệm vụ ID">
+              </div>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; margin: 15px 0 10px 0;">
+              <h4 style="color: var(--text-primary); margin: 0; font-size: 14px; border-left: 3px solid #28a745; padding-left: 8px;">2. Chỉnh sửa Dạng Biến Hình (Boss Form) & Trang Phục</h4>
+              <div id="editFormTabsContainer" style="display: flex; gap: 4px;"></div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px;">
+              <div class="form-group">
+                <label class="form-label">HP Min</label>
+                <input type="number" class="form-input" id="edit_hp_min" name="hp_min" placeholder="HP Min">
+              </div>
+              <div class="form-group">
+                <label class="form-label">HP Max</label>
+                <input type="number" class="form-input" id="edit_hp_max" name="hp_max" placeholder="HP Max">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Sát thương (Dame)</label>
+                <input type="number" class="form-input" id="edit_dame" name="dame">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Tên dạng (Form Name)</label>
+                <input type="text" class="form-input" id="edit_form_name" name="form_name">
+              </div>
+            </div>
+
+            <!-- Disguise Selector Trigger for Edit Modal -->
+            <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); padding: 10px; border-radius: 8px; margin-bottom: 12px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <span style="font-size: 13px; font-weight: 600; color: #ffc107;">Đổi Trang Phục Theo Cải Trang (type = 5)</span>
+                <button type="button" class="btn btn-warning btn-sm" onclick="openDisguiseSelectorModal('edit')">
+                  🔍 Chọn Cải Trang Mới
+                </button>
+              </div>
+              <div style="font-size: 11px; color: var(--text-muted);">
+                Cập nhật tự động `head`, `body`, `leg` từ danh sách vật phẩm Cải trang trong `item_template`.
+              </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
+              <div class="form-group">
+                <label class="form-label">Head Part ID</label>
+                <input type="number" class="form-input" id="edit_outfit_head" name="outfit_head" onchange="triggerEditCanvasUpdate()">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Body Part ID</label>
+                <input type="number" class="form-input" id="edit_outfit_body" name="outfit_body" onchange="triggerEditCanvasUpdate()">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Leg Part ID</label>
+                <input type="number" class="form-input" id="edit_outfit_leg" name="outfit_leg" onchange="triggerEditCanvasUpdate()">
+              </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
+              <div class="form-group">
+                <label class="form-label">Bag Part</label>
+                <input type="number" class="form-input" id="edit_outfit_bag" name="outfit_bag">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Aura Part</label>
+                <input type="number" class="form-input" id="edit_outfit_aura" name="outfit_aura">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Eff Part</label>
+                <input type="number" class="form-input" id="edit_outfit_eff" name="outfit_eff">
+              </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+              <div class="form-group">
+                <label class="form-label">Thoại xuất hiện (Start)</label>
+                <input type="text" class="form-input" id="edit_text_start" name="text_start">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Thoại giao chiến (Mid)</label>
+                <input type="text" class="form-input" id="edit_text_mid" name="text_mid">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Thoại rút lui (End)</label>
+                <input type="text" class="form-input" id="edit_text_end" name="text_end">
+              </div>
+            </div>
+
+            <div style="display: flex; gap: 15px; margin-top: 10px;">
+              <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer;">
+                <input type="checkbox" id="edit_enabled" name="enabled"> Bật Spawn
+              </label>
+              <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer;">
+                <input type="checkbox" id="edit_is_notify" name="is_notify"> Thông báo Server
+              </label>
+              <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer;">
+                <input type="checkbox" id="edit_is_zone_0_1_disabled" name="is_zone_0_1_disabled"> Tắt Khu 0-1
+              </label>
+            </div>
+
+            <!-- Edit Map Spawn Selector -->
+            <h4 style="color: var(--text-primary); margin: 15px 0 8px 0; font-size: 14px; border-left: 3px solid #17a2b8; padding-left: 8px;">
+              🗺️ Quản Lý Map Xuất Hiện (boss_map)
+            </h4>
+            <div style="background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); padding: 10px; border-radius: 8px;">
+              <div id="edit_map_badges_container" style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px;"></div>
+              <div style="display: grid; grid-template-columns: 1fr 110px 90px; gap: 8px; align-items: center;">
+                <select class="form-input" id="edit_map_id_select" style="font-size: 12px;">
+                  <option value="">-- Chọn Map Spawn Mới --</option>
+                  <% if (typeof mapList !== 'undefined' && mapList.length > 0) { %>
+                    <% mapList.forEach(function(m) { %>
+                      <option value="<%= m.id %>">[ID <%= m.id %>] <%= m.name %></option>
+                    <% }); %>
+                  <% } %>
+                </select>
+                <input type="number" class="form-input" id="edit_map_zone_id" placeholder="Khu (-1: All)" value="-1" style="font-size: 12px;">
+                <button type="button" class="btn btn-info btn-sm" onclick="addMapToEditList()" style="font-size: 11px; white-space: nowrap;">
+                  ➕ Thêm
+                </button>
+              </div>
+            </div>
+
+            <!-- Edit Boss Reward Selector -->
+            <h4 style="color: var(--text-primary); margin: 15px 0 8px 0; font-size: 14px; border-left: 3px solid #28a745; padding-left: 8px;">
+              🎁 Quản Lý Vật Phẩm Rớt (boss_reward)
+            </h4>
+            <div style="background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); padding: 10px; border-radius: 8px; margin-bottom: 12px;">
+              <div style="display: grid; grid-template-columns: 1fr 65px 65px 65px 55px 55px 65px; gap: 6px; align-items: end; margin-bottom: 8px;">
+                <div>
+                  <label style="font-size: 10px; color: var(--text-muted); display: block; margin-bottom: 2px;">Chọn Vật Phẩm</label>
+                  <input type="text" class="form-input" id="edit_reward_item_filter" placeholder="Lọc item..." oninput="filterRewardItemCombo('edit', this.value)" style="font-size: 11px; padding: 3px 6px; margin-bottom: 3px;">
+                  <select class="form-input" id="edit_reward_item_id" style="font-size: 11px; padding: 4px;">
+                    <option value="">-- Chọn Item --</option>
+                    <% if (typeof itemTemplates !== 'undefined' && itemTemplates && itemTemplates.length > 0) { %>
+                      <% itemTemplates.forEach(function(it) { %>
+                        <option value="<%= it.id %>">[ID <%= it.id %>] <%= it.name %></option>
+                      <% }); %>
+                    <% } %>
+                  </select>
+                </div>
+                <div>
+                  <label style="font-size: 10px; color: var(--text-muted); display: block; margin-bottom: 2px;">SL Min</label>
+                  <input type="number" class="form-input" id="edit_reward_q_min" value="1" min="1" style="font-size: 11px; padding: 4px;">
+                </div>
+                <div>
+                  <label style="font-size: 10px; color: var(--text-muted); display: block; margin-bottom: 2px;">SL Max</label>
+                  <input type="number" class="form-input" id="edit_reward_q_max" value="1" min="1" style="font-size: 11px; padding: 4px;">
+                </div>
+                <div>
+                  <label style="font-size: 10px; color: var(--text-muted); display: block; margin-bottom: 2px;">Tỉ lệ %</label>
+                  <input type="number" class="form-input" id="edit_reward_rate" value="100" min="0.01" step="any" style="font-size: 11px; padding: 4px;">
+                </div>
+                <div>
+                  <label style="font-size: 10px; color: var(--text-muted); display: block; margin-bottom: 2px;">Đ.SK</label>
+                  <input type="number" class="form-input" id="edit_reward_event_point" value="0" min="0" style="font-size: 11px; padding: 4px;">
+                </div>
+                <div>
+                  <label style="font-size: 10px; color: var(--text-muted); display: block; margin-bottom: 2px;">Đ.NĐ</label>
+                  <input type="number" class="form-input" id="edit_reward_active_point" value="0" min="0" style="font-size: 11px; padding: 4px;">
+                </div>
+                <div>
+                  <button type="button" class="btn btn-success btn-sm" onclick="addRewardToEditList()" style="font-size: 11px; padding: 5px 0; width: 100%;">
+                    ➕ Thêm
+                  </button>
+                </div>
+              </div>
+
+              <div style="max-height: 180px; overflow-y: auto; border: 1px solid rgba(255,255,255,0.08); border-radius: 6px;">
+                <table class="admin-table" style="font-size: 11px;">
+                  <thead>
+                    <tr>
+                      <th style="width: 30px;">#</th>
+                      <th>Vật Phẩm</th>
+                      <th style="width: 110px;">Số Lượng (Min ~ Max)</th>
+                      <th style="width: 75px;">Tỉ Lệ</th>
+                      <th>Option</th>
+                      <th style="text-align: center; width: 45px;">Xóa</th>
+                    </tr>
+                  </thead>
+                  <tbody id="edit_reward_rows">
+                    <tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 12px;">Chưa chọn vật phẩm rớt nào</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Sub-components Summary Container -->
+            <div id="editSubComponentsSummary" style="margin-top: 15px;"></div>
+          </div>
+
+          <!-- Right side: Edit Canvas Preview -->
+          <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); padding: 15px; border-radius: 10px; text-align: center;">
+            <h4 style="margin: 0 0 10px 0; color: var(--primary-color); font-size: 14px;">Xem Trước Hình Dáng</h4>
+            <div style="position: relative; width: 100%; height: 260px; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.4); border-radius: 8px; border: 1px dashed rgba(255,255,255,0.15);">
+              <canvas id="editBossCanvas" width="200" height="250" style="width: 200px; height: 250px;"></canvas>
+            </div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 10px; text-align: left; line-height: 1.5;">
+              📌 Hiển thị sprite nhân vật khi cập nhật Head/Body/Leg.
+            </div>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="triggerEditCanvasUpdate()" style="margin-top: 10px; width: 100%;">
+              🔄 Vẽ lại Canvas
+            </button>
+          </div>
+
+        </div>
+
+        <div style="margin-top: 20px; border-top: 1px solid var(--border-color); padding-top: 15px; display: flex; justify-content: space-between; align-items: center;">
+          <button type="button" class="btn btn-danger" onclick="confirmDeleteCurrentBoss()" style="font-size: 13px;">
+            🗑 Xóa Boss Này
+          </button>
+          <div style="display: flex; gap: 10px;">
+            <button type="button" class="btn btn-ghost" onclick="closeEditBossModal()">Hủy</button>
+            <button type="submit" class="btn btn-primary" style="padding: 8px 20px; font-weight: 600;">Lưu Cấu Hình SQL</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL 3: VIEW BOSS DETAILS & CANVAS PREVIEW MODAL -->
+<div id="bossDetailsModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 9999; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
+  <div class="panel-card" style="width: 850px; max-width: 95vw; max-height: 90vh; overflow-y: auto; box-shadow: 0 10px 30px rgba(0,0,0,0.6);">
+    <div class="panel-card-body" id="bossDetailsContent">
+      <div style="text-align: center; padding: 40px; color: var(--text-muted);">Đang tải chi tiết từ CSDL MySQL...</div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL 4: DISGUISE (CẢI TRANG type = 5) SELECTOR MODAL -->
+<div id="disguiseSelectorModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 10005; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
+  <div class="panel-card" style="width: 650px; max-width: 92vw; max-height: 85vh; overflow-y: auto; box-shadow: 0 12px 35px rgba(0,0,0,0.7);">
+    <div class="panel-card-body">
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 12px;">
+        <h3 style="margin: 0; color: #ffc107; font-size: 17px;">Danh sách Cải Trang (item_template type = 5)</h3>
+        <button class="btn btn-ghost btn-sm" onclick="closeDisguiseSelectorModal()" style="font-size: 18px;">✕</button>
+      </div>
+
+      <div class="search-box" style="margin-bottom: 12px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" class="form-input" placeholder="Tìm tên hoặc ID Cải trang..." id="disguiseSearchInput" onkeyup="filterDisguiseItems()">
+      </div>
+
+      <div style="max-height: 450px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 8px;">
+        <table class="admin-table" style="font-size: 13px;">
+          <thead>
+            <tr>
+              <th style="width: 50px;">Icon</th>
+              <th>ID & Tên Cải Trang</th>
+              <th>Part (Head / Body / Leg)</th>
+              <th style="text-align: right; width: 80px;">Chọn</th>
+            </tr>
+          </thead>
+          <tbody id="disguiseTableBody">
+            <% if (disguiseList && disguiseList.length > 0) { %>
+              <% disguiseList.forEach(function(item) { %>
+                <tr class="disguise-row" data-name="<%= (item.name || '').toLowerCase() %>" data-id="<%= item.id %>">
+                  <td>
+                    <img src="/api/icon/<%= item.icon_id %>.png" onError="this.src='/api/icon-x2/<%= item.icon_id %>.png'" style="width: 32px; height: 32px; object-fit: contain;">
+                  </td>
+                  <td>
+                    <div style="font-weight: 600; color: var(--primary-color);"><%= item.name %></div>
+                    <div style="font-size: 11px; color: var(--text-muted);">Item ID: <%= item.id %></div>
+                  </td>
+                  <td style="font-family: 'JetBrains Mono', monospace; font-size: 12px;">
+                    H: <strong><%= item.head %></strong> | B: <strong><%= item.body %></strong> | L: <strong><%= item.leg %></strong>
+                  </td>
+                  <td style="text-align: right;">
+                    <button type="button" class="btn btn-warning btn-sm" onclick="selectDisguiseItem(<%= item.head %>, <%= item.body %>, <%= item.leg %>, '<%= escapeJsString(item.name) %>')">
+                      Chọn
+                    </button>
+                  </td>
+                </tr>
+              <% }); %>
+            <% } else { %>
+              <tr><td colspan="4" style="text-align: center; padding: 25px; color: var(--text-muted);">Không tìm thấy dữ liệu Cải Trang (type = 5) trong item_template</td></tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+
+      <div style="margin-top: 12px; text-align: right;">
+        <button class="btn btn-ghost" onclick="closeDisguiseSelectorModal()">Đóng</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL 5: BOSS ITEM OPTION BUILDER MODAL -->
+<div id="bossOptionModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 10010; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
+  <div class="panel-card" style="width: 580px; max-width: 92vw; max-height: 85vh; overflow-y: auto; box-shadow: 0 12px 35px rgba(0,0,0,0.7);">
+    <div class="panel-card-body">
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; margin-bottom: 12px;">
+        <h3 style="margin: 0; color: #28a745; font-size: 16px;" id="bossOptionModalTitle">Cấu Hình Option Cho Vật Phẩm</h3>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="closeBossOptionModal()" style="font-size: 18px;">✕</button>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 120px 80px; gap: 8px; align-items: end; margin-bottom: 12px;">
+        <div>
+          <label class="form-label" style="font-size: 12px; font-weight: 600;">Option từ item_option_template</label>
+          <input type="text" class="form-input" id="bossOptionFilter" placeholder="Tìm option..." oninput="filterBossOptionCombo(this.value)" style="font-size: 11px; padding: 4px 8px; margin-bottom: 4px;">
+          <select class="form-input" id="bossOptionSelect" style="font-size: 12px; padding: 6px;">
+            <option value="">-- Chọn Option --</option>
+            <% if (typeof itemOptionTemplates !== 'undefined' && itemOptionTemplates && itemOptionTemplates.length > 0) { %>
+              <% itemOptionTemplates.forEach(function(opt) { %>
+                <option value="<%= opt.id %>">[ID <%= opt.id %>] <%= opt.name %></option>
+              <% }); %>
+            <% } %>
+          </select>
+        </div>
+        <div>
+          <label class="form-label" style="font-size: 12px; font-weight: 600;">Chỉ số (param)</label>
+          <input type="number" step="1" class="form-input" id="bossOptionParam" value="0" style="font-size: 12px; padding: 6px;">
+        </div>
+        <div>
+          <button type="button" class="btn btn-primary btn-sm" onclick="addBossOptionToTempList()" style="width: 100%; font-size: 12px; padding: 8px 0;">+ Thêm</button>
+        </div>
+      </div>
+
+      <div style="max-height: 250px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 6px; margin-bottom: 15px;">
+        <table class="admin-table" style="font-size: 12px;">
+          <thead>
+            <tr>
+              <th style="width: 50px;">ID</th>
+              <th>Tên Option</th>
+              <th style="width: 110px;">Chỉ Số (Param)</th>
+              <th style="text-align: center; width: 60px;">Xóa</th>
+            </tr>
+          </thead>
+          <tbody id="bossOptionTableBody">
+            <tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 15px;">Chưa có option nào được thêm</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 10px;">
+        <button type="button" class="btn btn-ghost" onclick="closeBossOptionModal()">Hủy</button>
+        <button type="button" class="btn btn-success" onclick="saveBossOptionsToItem()">Áp Dụng Option</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%
+  function formatNumber(num) {
+    if (!num) return '0';
+    return new Intl.NumberFormat('vi-VN').format(num);
+  }
+  function escapeJsString(str) {
+    if (!str) return '';
+    return str.replace(/'/g, "\\'").replace(/"/g, '\\"');
+  }
+%>
+
+<script>
+  var currentDisguiseTarget = 'add'; // 'add' or 'edit'
+
+  function updateCustomId() {
+    var select = document.getElementById('bossSelect');
+    var input = document.getElementById('customBossId');
+    if (select.value) {
+      input.value = select.value;
+    }
+  }
+
+  async function spawnBoss() {
+    var bossId = document.getElementById('customBossId').value;
+    if (!bossId) {
+      showToast('Vui lòng chọn hoặc nhập Boss ID', 'error');
+      return;
+    }
+    
+    if (!confirm('Bạn có chắc chắn muốn gọi Boss mang ID ' + bossId + ' vào game?')) {
+      return;
+    }
+
+    var result = await adminApi('spawn-boss', { bossId: bossId });
+    if (result.success) {
+      showToast(result.message, 'success');
+      document.getElementById('bossSelect').value = '';
+      document.getElementById('customBossId').value = '';
+    } else {
+      showToast(result.message || 'Lỗi gửi lệnh', 'error');
+    }
+  }
+
+  function filterBossTable() {
+    var search = (document.getElementById('bossSearchInput').value || '').toLowerCase().trim();
+    var typeFilter = document.getElementById('bossTypeFilter').value;
+    var statusFilter = document.getElementById('bossStatusFilter').value;
+
+    var rows = document.querySelectorAll('.boss-row');
+    var visibleCount = 0;
+
+    rows.forEach(function(row) {
+      var name = row.getAttribute('data-name');
+      var id = row.getAttribute('data-id');
+      var subtype = row.getAttribute('data-subtype');
+      var type = row.getAttribute('data-type');
+      var enabled = row.getAttribute('data-enabled');
+
+      var matchesSearch = !search || name.includes(search) || id.includes(search) || subtype.includes(search);
+      var matchesType = !typeFilter || type === typeFilter;
+      var matchesStatus = !statusFilter || enabled === statusFilter;
+
+      if (matchesSearch && matchesType && matchesStatus) {
+        row.style.display = '';
+        visibleCount++;
+      } else {
+        row.style.display = 'none';
+      }
+    });
+
+    document.getElementById('visibleBossCount').textContent = visibleCount;
+  }
+
+  async function toggleBossEnabled(bossId, newEnabledState) {
+    var actionText = newEnabledState ? 'BẬT' : 'TẮT';
+    if (!confirm('Bạn có muốn ' + actionText + ' trạng thái Spawn của Boss ID ' + bossId + '?')) return;
+
+    var result = await adminApi('toggle-boss-enabled', { bossId: bossId, enabled: newEnabledState });
+    if (result.success) {
+      showToast(result.message, 'success');
+      setTimeout(function() { location.reload(); }, 600);
+    } else {
+      showToast(result.message || 'Lỗi cập nhật', 'error');
+    }
+  }
+
+  async function deleteBossTemplate(bossId, bossName) {
+    if (!confirm('XÁC NHẬN XÓA: Bạn có chắc chắn muốn xóa hẳn Boss "' + bossName + '" (ID: ' + bossId + ') khỏi CSDL MySQL?')) {
+      return;
+    }
+    var result = await adminApi('delete-boss-template', { bossId: bossId });
+    if (result.success) {
+      showToast(result.message, 'success');
+      setTimeout(function() { location.reload(); }, 600);
+    } else {
+      showToast(result.message || 'Lỗi xóa Boss', 'error');
+    }
+  }
+
+  function confirmDeleteCurrentBoss() {
+    var bossId = document.getElementById('edit_id').value;
+    var bossName = document.getElementById('edit_name').value;
+    if (bossId) {
+      deleteBossTemplate(bossId, bossName);
+    }
+  }
+
+  /* MAP SPAWN MANAGEMENT SYSTEM */
+  var addBossMapList = [];
+  var editBossMapList = [];
+  var mapTemplateDict = {};
+  <% if (typeof mapList !== 'undefined' && mapList.length > 0) { %>
+    <% mapList.forEach(function(m) { %>
+      mapTemplateDict[<%= m.id %>] = "<%= escapeJsString(m.name) %>";
+    <% }); %>
+  <% } %>
+
+  /* BOSS REWARD & OPTION MANAGEMENT SYSTEM */
+  function escapeBossHtml(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  function escapeJsString(str) {
+    return escapeBossHtml(str);
+  }
+
+  var addBossRewardList = [];
+  var editBossRewardList = [];
+
+  var itemTemplateList = <%- JSON.stringify(typeof itemTemplates !== 'undefined' && itemTemplates ? itemTemplates : []).replace(/</g, '\\u003c') %>;
+  var itemTemplateDict = {};
+  itemTemplateList.forEach(function(it) { itemTemplateDict[it.id] = it; });
+
+  var itemOptionList = <%- JSON.stringify(typeof itemOptionTemplates !== 'undefined' && itemOptionTemplates ? itemOptionTemplates : []).replace(/</g, '\\u003c') %>;
+  var itemOptionDict = {};
+  itemOptionList.forEach(function(opt) { itemOptionDict[opt.id] = opt.name; });
+
+  var currentOptionTargetContext = 'add'; // 'add' or 'edit'
+  var currentOptionItemIndex = -1;
+  var tempBossOptions = [];
+
+  function filterRewardItemCombo(targetPrefix, filterText) {
+    var select = document.getElementById(targetPrefix + '_reward_item_id');
+    if (!select) return;
+    var search = (filterText || '').toLowerCase().trim();
+    var html = '<option value="">-- Chọn Item --</option>';
+    itemTemplateList.forEach(function(it) {
+      var name = (it.name || '').toLowerCase();
+      var idStr = String(it.id);
+      if (!search || name.includes(search) || idStr.includes(search)) {
+        html += '<option value="' + it.id + '">[ID ' + it.id + '] ' + escapeBossHtml(it.name) + '</option>';
+      }
+    });
+    select.innerHTML = html;
+  }
+
+  function filterBossOptionCombo(filterText) {
+    var select = document.getElementById('bossOptionSelect');
+    if (!select) return;
+    var search = (filterText || '').toLowerCase().trim();
+    var html = '<option value="">-- Chọn Option --</option>';
+    itemOptionList.forEach(function(opt) {
+      var name = (opt.name || '').toLowerCase();
+      var idStr = String(opt.id);
+      if (!search || name.includes(search) || idStr.includes(search)) {
+        html += '<option value="' + opt.id + '">[ID ' + opt.id + '] ' + escapeBossHtml(opt.name) + '</option>';
+      }
+    });
+    select.innerHTML = html;
+  }
+
+  function openBossOptionModal(targetContext, itemIndex) {
+    currentOptionTargetContext = targetContext;
+    currentOptionItemIndex = itemIndex;
+
+    var rewardList = targetContext === 'add' ? addBossRewardList : editBossRewardList;
+    var rewardItem = rewardList[itemIndex];
+    if (!rewardItem) return;
+
+    var itemInfo = itemTemplateDict[rewardItem.item_id] || { name: 'Item #' + rewardItem.item_id };
+    document.getElementById('bossOptionModalTitle').textContent = 'Option cho: ' + itemInfo.name + ' (ID: ' + rewardItem.item_id + ')';
+
+    var opts = rewardItem.item_options;
+    if (typeof opts === 'string') {
+      try { opts = JSON.parse(opts); } catch(e) { opts = []; }
+    }
+    tempBossOptions = (opts || []).map(function(o) { return { id: Number(o.id), param: Number(o.param) }; });
+
+    document.getElementById('bossOptionFilter').value = '';
+    filterBossOptionCombo('');
+    document.getElementById('bossOptionParam').value = '0';
+    renderBossOptionRows();
+
+    document.getElementById('bossOptionModal').style.display = 'flex';
+  }
+
+  function closeBossOptionModal() {
+    document.getElementById('bossOptionModal').style.display = 'none';
+  }
+
+  function renderBossOptionRows() {
+    var tbody = document.getElementById('bossOptionTableBody');
+    if (!tbody) return;
+
+    if (tempBossOptions.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 15px;">Chưa có option nào được thêm</td></tr>';
+      return;
+    }
+
+    var html = '';
+    tempBossOptions.forEach(function(opt, idx) {
+      var optName = itemOptionDict[opt.id] || ('Option ID ' + opt.id);
+      html += '<tr>';
+      html += '<td style="font-family: \'JetBrains Mono\', monospace; font-weight: 600;">' + opt.id + '</td>';
+      html += '<td style="font-weight: 500;">' + escapeJsString(optName) + '</td>';
+      html += '<td><input type="number" class="form-input" style="padding: 3px 6px; font-size: 12px; width: 90px;" value="' + opt.param + '" onchange="updateBossOptionParam(' + idx + ', this.value)"></td>';
+      html += '<td style="text-align: center;"><button type="button" class="btn btn-ghost btn-sm" style="color: #ff6b6b;" onclick="removeBossOptionFromTempList(' + idx + ')">✕</button></td>';
+      html += '</tr>';
+    });
+    tbody.innerHTML = html;
+  }
+
+  function addBossOptionToTempList() {
+    var select = document.getElementById('bossOptionSelect');
+    var optId = Number(select.value);
+    var param = Number(document.getElementById('bossOptionParam').value);
+
+    if (!Number.isInteger(optId) || optId < 0) {
+      showToast('Vui lòng chọn Option hợp lệ!', 'warning');
+      return;
+    }
+    if (isNaN(param)) param = 0;
+
+    tempBossOptions.push({ id: optId, param: param });
+    renderBossOptionRows();
+    select.value = '';
+    document.getElementById('bossOptionParam').value = '0';
+  }
+
+  function updateBossOptionParam(index, val) {
+    var p = Number(val);
+    if (!isNaN(p) && tempBossOptions[index]) {
+      tempBossOptions[index].param = p;
+    }
+  }
+
+  function removeBossOptionFromTempList(index) {
+    tempBossOptions.splice(index, 1);
+    renderBossOptionRows();
+  }
+
+  function saveBossOptionsToItem() {
+    var rewardList = currentOptionTargetContext === 'add' ? addBossRewardList : editBossRewardList;
+    if (rewardList[currentOptionItemIndex]) {
+      rewardList[currentOptionItemIndex].item_options = tempBossOptions.map(function(o) {
+        return { id: Number(o.id), param: Number(o.param) };
+      });
+    }
+    closeBossOptionModal();
+    if (currentOptionTargetContext === 'add') {
+      renderAddRewardRows();
+    } else {
+      renderEditRewardRows();
+    }
+  }
+
+  function renderAddRewardRows() {
+    var tbody = document.getElementById('add_reward_rows');
+    if (!tbody) return;
+
+    if (addBossRewardList.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 12px;">Chưa chọn vật phẩm rớt nào</td></tr>';
+      return;
+    }
+
+    var html = '';
+    addBossRewardList.forEach(function(r, idx) {
+      var itemInfo = itemTemplateDict[r.item_id] || { name: 'Item #' + r.item_id, icon_id: null };
+      var iconHtml = itemInfo.icon_id != null ? '<img src="/api/icon/' + itemInfo.icon_id + '.png" onError="this.src=\'/api/icon-x2/' + itemInfo.icon_id + '.png\'" style="width: 20px; height: 20px; vertical-align: middle; margin-right: 4px;">' : '';
+      
+      var opts = r.item_options;
+      if (typeof opts === 'string') { try { opts = JSON.parse(opts); } catch(e) { opts = []; } }
+      var optCount = Array.isArray(opts) ? opts.length : 0;
+      var optSummary = optCount > 0 ? opts.map(function(o) {
+        return (itemOptionDict[o.id] || ('#' + o.id)) + ': +' + o.param;
+      }).join(', ') : 'Chưa có option';
+
+      html += '<tr>';
+      html += '<td>' + (idx + 1) + '</td>';
+      html += '<td><div>' + iconHtml + '<strong>' + escapeJsString(itemInfo.name) + '</strong> <small style="color: var(--text-muted);">(ID: ' + r.item_id + ')</small></div></td>';
+      html += '<td>' + r.quantity_min + (r.quantity_max > r.quantity_min ? (' ~ ' + r.quantity_max) : '') + '</td>';
+      html += '<td style="color: #28a745; font-weight: 600;">' + r.rate + '%</td>';
+      html += '<td>';
+      html += '<div style="display: flex; align-items: center; gap: 6px;">';
+      html += '<span class="badge" title="' + escapeJsString(optSummary) + '" style="font-size: 10px;">' + optCount + ' option</span>';
+      html += '<button type="button" class="btn btn-ghost btn-sm" style="font-size: 10px; padding: 2px 5px;" onclick="openBossOptionModal(\'add\', ' + idx + ')">⚙ Option</button>';
+      html += '</div>';
+      html += '</td>';
+      html += '<td style="text-align: center;"><button type="button" class="btn btn-ghost btn-sm" style="color: #ff6b6b;" onclick="removeRewardFromAddList(' + idx + ')">✕</button></td>';
+      html += '</tr>';
+    });
+    tbody.innerHTML = html;
+  }
+
+  function addRewardToAddList() {
+    var select = document.getElementById('add_reward_item_id');
+    var itemId = Number(select.value);
+    var qMin = Number(document.getElementById('add_reward_q_min').value) || 1;
+    var qMax = Number(document.getElementById('add_reward_q_max').value) || qMin;
+    var rate = Number(document.getElementById('add_reward_rate').value) || 100;
+    var evPt = Number(document.getElementById('add_reward_event_point').value) || 0;
+    var actPt = Number(document.getElementById('add_reward_active_point').value) || 0;
+
+    if (!Number.isInteger(itemId) || itemId <= 0) {
+      showToast('Vui lòng chọn vật phẩm rớt hợp lệ!', 'warning');
+      return;
+    }
+
+    addBossRewardList.push({
+      item_id: itemId,
+      quantity_min: qMin,
+      quantity_max: qMax,
+      rate: rate,
+      event_point: evPt,
+      active_point: actPt,
+      item_options: []
+    });
+
+    renderAddRewardRows();
+    select.value = '';
+  }
+
+  function removeRewardFromAddList(index) {
+    addBossRewardList.splice(index, 1);
+    renderAddRewardRows();
+  }
+
+  function renderEditRewardRows() {
+    var tbody = document.getElementById('edit_reward_rows');
+    if (!tbody) return;
+
+    if (editBossRewardList.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 12px;">Chưa chọn vật phẩm rớt nào</td></tr>';
+      return;
+    }
+
+    var html = '';
+    editBossRewardList.forEach(function(r, idx) {
+      var itemInfo = itemTemplateDict[r.item_id] || { name: r.item_name || ('Item #' + r.item_id), icon_id: r.icon_id || null };
+      var iconId = itemInfo.icon_id || r.icon_id;
+      var iconHtml = iconId != null ? '<img src="/api/icon/' + iconId + '.png" onError="this.src=\'/api/icon-x2/' + iconId + '.png\'" style="width: 20px; height: 20px; vertical-align: middle; margin-right: 4px;">' : '';
+
+      var opts = r.item_options;
+      if (typeof opts === 'string') { try { opts = JSON.parse(opts); } catch(e) { opts = []; } }
+      var optCount = Array.isArray(opts) ? opts.length : 0;
+      var optSummary = optCount > 0 ? opts.map(function(o) {
+        return (itemOptionDict[o.id] || ('#' + o.id)) + ': +' + o.param;
+      }).join(', ') : 'Chưa có option';
+
+      html += '<tr>';
+      html += '<td>' + (idx + 1) + '</td>';
+      html += '<td><div>' + iconHtml + '<strong>' + escapeJsString(itemInfo.name) + '</strong> <small style="color: var(--text-muted);">(ID: ' + r.item_id + ')</small></div></td>';
+      html += '<td><div style="display: flex; gap: 3px; align-items: center;"><input type="number" min="1" class="form-input" style="width: 50px; padding: 2px 4px; font-size: 11px;" value="' + r.quantity_min + '" onchange="updateEditRewardQMin(' + idx + ', this.value)">~<input type="number" min="1" class="form-input" style="width: 50px; padding: 2px 4px; font-size: 11px;" value="' + r.quantity_max + '" onchange="updateEditRewardQMax(' + idx + ', this.value)"></div></td>';
+      html += '<td><input type="number" step="any" min="0" class="form-input" style="width: 60px; padding: 2px 4px; font-size: 11px; color: #28a745; font-weight: 600;" value="' + r.rate + '" onchange="updateEditRewardRate(' + idx + ', this.value)">%</td>';
+      html += '<td>';
+      html += '<div style="display: flex; align-items: center; gap: 6px;">';
+      html += '<span class="badge" title="' + escapeJsString(optSummary) + '" style="font-size: 10px;">' + optCount + ' option</span>';
+      html += '<button type="button" class="btn btn-ghost btn-sm" style="font-size: 10px; padding: 2px 5px;" onclick="openBossOptionModal(\'edit\', ' + idx + ')">⚙ Option</button>';
+      html += '</div>';
+      html += '</td>';
+      html += '<td style="text-align: center;"><button type="button" class="btn btn-ghost btn-sm" style="color: #ff6b6b;" onclick="removeRewardFromEditList(' + idx + ')">✕</button></td>';
+      html += '</tr>';
+    });
+    tbody.innerHTML = html;
+  }
+
+  function addRewardToEditList() {
+    var select = document.getElementById('edit_reward_item_id');
+    var itemId = Number(select.value);
+    var qMin = Number(document.getElementById('edit_reward_q_min').value) || 1;
+    var qMax = Number(document.getElementById('edit_reward_q_max').value) || qMin;
+    var rate = Number(document.getElementById('edit_reward_rate').value) || 100;
+    var evPt = Number(document.getElementById('edit_reward_event_point').value) || 0;
+    var actPt = Number(document.getElementById('edit_reward_active_point').value) || 0;
+
+    if (!Number.isInteger(itemId) || itemId <= 0) {
+      showToast('Vui lòng chọn vật phẩm rớt hợp lệ!', 'warning');
+      return;
+    }
+
+    editBossRewardList.push({
+      item_id: itemId,
+      quantity_min: qMin,
+      quantity_max: qMax,
+      rate: rate,
+      event_point: evPt,
+      active_point: actPt,
+      item_options: []
+    });
+
+    renderEditRewardRows();
+    select.value = '';
+  }
+
+  function updateEditRewardQMin(index, val) {
+    var v = Number(val);
+    if (!isNaN(v) && editBossRewardList[index]) editBossRewardList[index].quantity_min = v;
+  }
+  function updateEditRewardQMax(index, val) {
+    var v = Number(val);
+    if (!isNaN(v) && editBossRewardList[index]) editBossRewardList[index].quantity_max = v;
+  }
+  function updateEditRewardRate(index, val) {
+    var v = Number(val);
+    if (!isNaN(v) && editBossRewardList[index]) editBossRewardList[index].rate = v;
+  }
+
+  function removeRewardFromEditList(index) {
+    editBossRewardList.splice(index, 1);
+    renderEditRewardRows();
+  }
+
+  function renderAddMapBadges() {
+    var container = document.getElementById('add_map_badges_container');
+    if (!container) return;
+    if (addBossMapList.length === 0) {
+      container.innerHTML = '<span style="font-size: 12px; color: var(--text-muted);">Chưa chọn Map (Mặc định xuất hiện ngẫu nhiên tất cả map)</span>';
+      return;
+    }
+    var html = '';
+    addBossMapList.forEach(function(m, idx) {
+      var mapName = mapTemplateDict[m.map_id] || ('Map ID ' + m.map_id);
+      var zoneText = m.zone_id === -1 ? 'Tất cả khu (-1)' : ('Khu ' + m.zone_id);
+      html += '<span class="badge" style="background: rgba(23,162,184,0.2); border: 1px solid #17a2b8; color: #fff; font-size: 11px; padding: 3px 8px; display: inline-flex; align-items: center; gap: 6px;">';
+      html += '🗺️ <strong>' + mapName + '</strong> (ID: ' + m.map_id + ') - ' + zoneText;
+      html += ' <button type="button" onclick="removeMapFromAddList(' + idx + ')" style="background: none; border: none; color: #ff6b6b; cursor: pointer; font-weight: bold; font-size: 12px; padding: 0; margin-left: 3px;">✕</button>';
+      html += '</span>';
+    });
+    container.innerHTML = html;
+  }
+
+  function addMapToAddList() {
+    var select = document.getElementById('add_map_id_select');
+    var mapId = Number(select.value);
+    var zoneId = Number(document.getElementById('add_map_zone_id').value);
+    if (!Number.isInteger(mapId) || mapId < 0) {
+      showToast('Vui lòng chọn Map hợp lệ từ danh sách!', 'warning');
+      return;
+    }
+    if (isNaN(zoneId)) zoneId = -1;
+    addBossMapList.push({ map_id: mapId, zone_id: zoneId });
+    select.value = '';
+    renderAddMapBadges();
+  }
+
+  function removeMapFromAddList(index) {
+    addBossMapList.splice(index, 1);
+    renderAddMapBadges();
+  }
+
+  function renderEditMapBadges() {
+    var container = document.getElementById('edit_map_badges_container');
+    if (!container) return;
+    if (editBossMapList.length === 0) {
+      container.innerHTML = '<span style="font-size: 12px; color: var(--text-muted);">Chưa chọn Map (Tất cả map/ngẫu nhiên)</span>';
+      return;
+    }
+    var html = '';
+    editBossMapList.forEach(function(m, idx) {
+      var mapName = mapTemplateDict[m.map_id] || ('Map ID ' + m.map_id);
+      var zoneText = m.zone_id === -1 ? 'Tất cả khu (-1)' : ('Khu ' + m.zone_id);
+      html += '<span class="badge" style="background: rgba(23,162,184,0.2); border: 1px solid #17a2b8; color: #fff; font-size: 11px; padding: 3px 8px; display: inline-flex; align-items: center; gap: 6px;">';
+      html += '🗺️ <strong>' + mapName + '</strong> (ID: ' + m.map_id + ') - ' + zoneText;
+      html += ' <button type="button" onclick="removeMapFromEditList(' + idx + ')" style="background: none; border: none; color: #ff6b6b; cursor: pointer; font-weight: bold; font-size: 12px; padding: 0; margin-left: 3px;">✕</button>';
+      html += '</span>';
+    });
+    container.innerHTML = html;
+  }
+
+  function addMapToEditList() {
+    var select = document.getElementById('edit_map_id_select');
+    var mapId = Number(select.value);
+    var zoneId = Number(document.getElementById('edit_map_zone_id').value);
+    if (!Number.isInteger(mapId) || mapId < 0) {
+      showToast('Vui lòng chọn Map hợp lệ từ danh sách!', 'warning');
+      return;
+    }
+    if (isNaN(zoneId)) zoneId = -1;
+    editBossMapList.push({ map_id: mapId, zone_id: zoneId });
+    select.value = '';
+    renderEditMapBadges();
+  }
+
+  function removeMapFromEditList(index) {
+    editBossMapList.splice(index, 1);
+    renderEditMapBadges();
+  }
+
+  /* MODAL ADD BOSS */
+  function openAddBossModal() {
+    addBossMapList = [];
+    addBossRewardList = [];
+    renderAddMapBadges();
+    renderAddRewardRows();
+    document.getElementById('addBossModal').style.display = 'flex';
+    setTimeout(function() { triggerAddCanvasUpdate(); }, 150);
+  }
+
+  function closeAddBossModal() {
+    document.getElementById('addBossModal').style.display = 'none';
+  }
+
+  function triggerAddCanvasUpdate() {
+    var head = document.getElementById('add_outfit_head').value;
+    var body = document.getElementById('add_outfit_body').value;
+    var leg = document.getElementById('add_outfit_leg').value;
+    renderBossCanvas('addBossCanvas', head, body, leg);
+  }
+
+  async function submitAddBoss(event) {
+    event.preventDefault();
+    var formData = {
+      id: document.getElementById('add_id').value,
+      name: document.getElementById('add_name').value,
+      type: document.getElementById('add_type').value,
+      sub_type: document.getElementById('add_sub_type').value,
+      gender: document.getElementById('add_gender').value,
+      spawn_count: document.getElementById('add_spawn_count').value,
+      respawn_delay: document.getElementById('add_respawn_delay').value,
+      despawn_timeout: document.getElementById('add_despawn_timeout').value,
+      require_task_id: document.getElementById('add_require_task_id').value,
+      enabled: document.getElementById('add_enabled').checked,
+      is_notify: document.getElementById('add_is_notify').checked,
+      is_zone_0_1_disabled: document.getElementById('add_is_zone_0_1_disabled').checked,
+      
+      form_name: document.getElementById('add_form_name').value,
+      hp_min: document.getElementById('add_hp_min').value,
+      hp_max: document.getElementById('add_hp_min').value,
+      dame: document.getElementById('add_dame').value,
+      outfit_head: document.getElementById('add_outfit_head').value,
+      outfit_body: document.getElementById('add_outfit_body').value,
+      outfit_leg: document.getElementById('add_outfit_leg').value,
+      outfit_bag: document.getElementById('add_outfit_bag').value,
+      outfit_aura: document.getElementById('add_outfit_aura').value,
+      outfit_eff: document.getElementById('add_outfit_eff').value,
+      text_start: document.getElementById('add_text_start').value,
+      text_mid: document.getElementById('add_text_mid').value,
+      maps: JSON.stringify(addBossMapList),
+      rewards: JSON.stringify(addBossRewardList)
+    };
+
+    var result = await adminApi('add-boss-template', formData);
+    if (result.success) {
+      showToast(result.message, 'success');
+      closeAddBossModal();
+      setTimeout(function() { location.reload(); }, 600);
+    } else {
+      showToast(result.message || 'Lỗi thêm Boss', 'error');
+    }
+  }
+
+  /* FULL EDIT BOSS MODAL SYSTEM */
+  var currentEditBossData = null;
+
+  async function openEditBossModal(bossId) {
+    var modal = document.getElementById('editBossModal');
+    modal.style.display = 'flex';
+    document.getElementById('editBossTitle').textContent = 'Đang tải dữ liệu Boss ID ' + bossId + '...';
+
+    var result = await adminApi('get-boss-details', { bossId: bossId });
+    if (!result.success || !result.boss) {
+      showToast(result.message || 'Lỗi tải dữ liệu Boss', 'error');
+      closeEditBossModal();
+      return;
+    }
+
+    currentEditBossData = result.boss;
+    var t = result.boss.template;
+    var forms = result.boss.forms || [];
+
+    // Load Maps for Edit
+    editBossMapList = (result.boss.maps || []).map(function(m) {
+      return { map_id: m.map_id, zone_id: m.zone_id };
+    });
+    renderEditMapBadges();
+
+    // Load Rewards for Edit
+    editBossRewardList = (result.boss.rewards || []).map(function(r) {
+      var opts = r.item_options;
+      if (typeof opts === 'string') {
+        try { opts = JSON.parse(opts); } catch(e) { opts = []; }
+      }
+      return {
+        id: r.id,
+        boss_id: r.boss_id,
+        item_id: r.item_id,
+        item_name: r.item_name,
+        icon_id: r.icon_id,
+        quantity_min: r.quantity_min || 1,
+        quantity_max: r.quantity_max || r.quantity_min || 1,
+        rate: r.rate !== undefined ? r.rate : 100,
+        event_point: r.event_point || 0,
+        active_point: r.active_point || 0,
+        item_options: Array.isArray(opts) ? opts : []
+      };
+    });
+    renderEditRewardRows();
+
+    // 1. Populate Boss Template Fields
+    document.getElementById('edit_id').value = t.id;
+    document.getElementById('edit_name').value = t.name || '';
+    document.getElementById('edit_type').value = t.type || 'NORMAL';
+    document.getElementById('edit_sub_type').value = t.sub_type || '';
+    document.getElementById('edit_gender').value = t.gender !== undefined ? t.gender : 0;
+    document.getElementById('edit_spawn_count').value = t.spawn_count || 1;
+    document.getElementById('edit_respawn_delay').value = t.respawn_delay || 300;
+    document.getElementById('edit_despawn_timeout').value = t.despawn_timeout || 900;
+    document.getElementById('edit_require_task_id').value = t.require_task_id || '';
+    document.getElementById('edit_enabled').checked = !!t.enabled;
+    document.getElementById('edit_is_notify').checked = !!t.is_notify;
+    document.getElementById('edit_is_zone_0_1_disabled').checked = !!t.is_zone_0_1_disabled;
+
+    // 2. Render Form Tabs if multiple forms exist
+    var tabsContainer = document.getElementById('editFormTabsContainer');
+    if (forms.length > 1) {
+      var tabsHtml = '';
+      forms.forEach(function(f, idx) {
+        tabsHtml += '<button type="button" class="btn btn-sm ' + (idx === 0 ? 'btn-primary' : 'btn-ghost') + '" onclick="switchEditForm(' + idx + ')" id="formTab_' + idx + '" style="font-size: 11px; padding: 2px 8px;">Dạng ' + (f.form_order !== undefined ? f.form_order : idx) + '</button>';
+      });
+      tabsContainer.innerHTML = tabsHtml;
+    } else {
+      tabsContainer.innerHTML = '<span style="font-size: 11px; color: var(--text-muted);">(Dạng 0 Mặc định)</span>';
+    }
+
+    // 3. Load Form 0 initially
+    switchEditForm(0);
+
+    // 4. Render Sub-components summary (Maps, Skills, Rewards)
+    renderEditSubComponentsSummary(result.boss);
+
+    document.getElementById('editBossTitle').textContent = 'Chỉnh sửa Boss: ' + t.name + ' (ID: ' + t.id + ')';
+  }
+
+  function switchEditForm(index) {
+    if (!currentEditBossData || !currentEditBossData.forms) return;
+    var forms = currentEditBossData.forms;
+    var f = forms[index] || forms[0] || {};
+
+    // Update active tab button highlight
+    forms.forEach(function(item, idx) {
+      var btn = document.getElementById('formTab_' + idx);
+      if (btn) {
+        if (idx === index) {
+          btn.className = 'btn btn-sm btn-primary';
+        } else {
+          btn.className = 'btn btn-sm btn-ghost';
+        }
+      }
+    });
+
+    document.getElementById('edit_form_id').value = f.id || '';
+    document.getElementById('edit_form_name').value = f.name || (currentEditBossData.template ? currentEditBossData.template.name : '');
+    document.getElementById('edit_hp_min').value = f.hp_min !== undefined ? f.hp_min : 1000000;
+    document.getElementById('edit_hp_max').value = f.hp_max !== undefined ? f.hp_max : (f.hp_min !== undefined ? f.hp_min : 1000000);
+    document.getElementById('edit_dame').value = f.dame !== undefined ? f.dame : 10000;
+    document.getElementById('edit_outfit_head').value = f.outfit_head !== undefined ? f.outfit_head : -1;
+    document.getElementById('edit_outfit_body').value = f.outfit_body !== undefined ? f.outfit_body : -1;
+    document.getElementById('edit_outfit_leg').value = f.outfit_leg !== undefined ? f.outfit_leg : -1;
+    document.getElementById('edit_outfit_bag').value = f.outfit_bag !== undefined ? f.outfit_bag : -1;
+    document.getElementById('edit_outfit_aura').value = f.outfit_aura !== undefined ? f.outfit_aura : -1;
+    document.getElementById('edit_outfit_eff').value = f.outfit_eff !== undefined ? f.outfit_eff : -1;
+    document.getElementById('edit_text_start').value = f.text_start || '';
+    document.getElementById('edit_text_mid').value = f.text_mid || '';
+    document.getElementById('edit_text_end').value = f.text_end || '';
+
+    setTimeout(function() { triggerEditCanvasUpdate(); }, 80);
+  }
+
+  function renderEditSubComponentsSummary(boss) {
+    var container = document.getElementById('editSubComponentsSummary');
+    if (!container) return;
+
+    var maps = boss.maps || [];
+    var skills = boss.skills || [];
+    var rewards = boss.rewards || [];
+
+    var mapsText = maps.length > 0 ? maps.map(function(m) { return (m.map_name || ('Map ' + m.map_id)); }).join(', ') : 'Tất cả map';
+    var skillsText = skills.length > 0 ? skills.map(function(s) { return (s.skill_name || ('Skill ' + s.skill_id)) + ' (Cấp ' + s.skill_level + ')'; }).join(', ') : 'Không';
+    var rewardsText = rewards.length > 0 ? rewards.map(function(r) { return (r.item_name || ('Item ' + r.item_id)) + ' (' + r.rate + '%)'; }).join(', ') : 'Không';
+
+    container.innerHTML = `
+      <div style="background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); padding: 10px; border-radius: 8px; font-size: 11px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+        <div><strong style="color: #17a2b8;">🗺️ Maps spawn (${maps.length}):</strong><br><span style="color: var(--text-muted);">${mapsText}</span></div>
+        <div><strong style="color: #ffc107;">⚡ Chiêu thức (${skills.length}):</strong><br><span style="color: var(--text-muted);">${skillsText}</span></div>
+        <div><strong style="color: #28a745;">🎁 Vật phẩm rớt (${rewards.length}):</strong><br><span style="color: var(--text-muted);">${rewardsText}</span></div>
+      </div>
+    `;
+  }
+
+  function triggerEditCanvasUpdate() {
+    var head = document.getElementById('edit_outfit_head').value;
+    var body = document.getElementById('edit_outfit_body').value;
+    var leg = document.getElementById('edit_outfit_leg').value;
+    renderBossCanvas('editBossCanvas', head, body, leg);
+  }
+
+  function closeEditBossModal() {
+    document.getElementById('editBossModal').style.display = 'none';
+  }
+
+  async function saveBossTemplate(event) {
+    event.preventDefault();
+    var formData = {
+      id: document.getElementById('edit_id').value,
+      name: document.getElementById('edit_name').value,
+      type: document.getElementById('edit_type').value,
+      sub_type: document.getElementById('edit_sub_type').value,
+      gender: document.getElementById('edit_gender').value,
+      spawn_count: document.getElementById('edit_spawn_count').value,
+      respawn_delay: document.getElementById('edit_respawn_delay').value,
+      despawn_timeout: document.getElementById('edit_despawn_timeout').value,
+      require_task_id: document.getElementById('edit_require_task_id').value,
+      enabled: document.getElementById('edit_enabled').checked,
+      is_notify: document.getElementById('edit_is_notify').checked,
+      is_zone_0_1_disabled: document.getElementById('edit_is_zone_0_1_disabled').checked,
+
+      form_id: document.getElementById('edit_form_id').value,
+      form_name: document.getElementById('edit_form_name').value,
+      hp_min: document.getElementById('edit_hp_min').value,
+      hp_max: document.getElementById('edit_hp_max').value,
+      dame: document.getElementById('edit_dame').value,
+      outfit_head: document.getElementById('edit_outfit_head').value,
+      outfit_body: document.getElementById('edit_outfit_body').value,
+      outfit_leg: document.getElementById('edit_outfit_leg').value,
+      outfit_bag: document.getElementById('edit_outfit_bag').value,
+      outfit_aura: document.getElementById('edit_outfit_aura').value,
+      outfit_eff: document.getElementById('edit_outfit_eff').value,
+      text_start: document.getElementById('edit_text_start').value,
+      text_mid: document.getElementById('edit_text_mid').value,
+      text_end: document.getElementById('edit_text_end').value,
+      maps: JSON.stringify(editBossMapList),
+      rewards: JSON.stringify(editBossRewardList)
+    };
+
+    var result = await adminApi('update-boss-template', formData);
+    if (result.success) {
+      showToast(result.message, 'success');
+      closeEditBossModal();
+      setTimeout(function() { location.reload(); }, 600);
+    } else {
+      showToast(result.message || 'Lỗi cập nhật', 'error');
+    }
+  }
+
+  /* DISGUISE SELECTOR MODAL */
+  function openDisguiseSelectorModal(target) {
+    currentDisguiseTarget = target || 'add';
+    document.getElementById('disguiseSelectorModal').style.display = 'flex';
+  }
+
+  function closeDisguiseSelectorModal() {
+    document.getElementById('disguiseSelectorModal').style.display = 'none';
+  }
+
+  function filterDisguiseItems() {
+    var search = (document.getElementById('disguiseSearchInput').value || '').toLowerCase().trim();
+    var rows = document.querySelectorAll('.disguise-row');
+    rows.forEach(function(row) {
+      var name = row.getAttribute('data-name');
+      var id = row.getAttribute('data-id');
+      if (!search || name.includes(search) || id.includes(search)) {
+        row.style.display = '';
+      } else {
+        row.style.display = 'none';
+      }
+    });
+  }
+
+  function selectDisguiseItem(head, body, leg, name) {
+    if (currentDisguiseTarget === 'add') {
+      document.getElementById('add_outfit_head').value = head;
+      document.getElementById('add_outfit_body').value = body;
+      document.getElementById('add_outfit_leg').value = leg;
+      showToast('Đã chọn Cải trang cho Boss Mới: ' + name, 'success');
+      triggerAddCanvasUpdate();
+    } else if (currentDisguiseTarget === 'edit') {
+      document.getElementById('edit_outfit_head').value = head;
+      document.getElementById('edit_outfit_body').value = body;
+      document.getElementById('edit_outfit_leg').value = leg;
+      showToast('Đã chọn Cải trang cho Boss đang sửa: ' + name, 'success');
+      triggerEditCanvasUpdate();
+    }
+    closeDisguiseSelectorModal();
+  }
+
+  /* VIEW DETAILS & CANVAS PREVIEW */
+  async function viewBossDetails(bossId) {
+    var modal = document.getElementById('bossDetailsModal');
+    var container = document.getElementById('bossDetailsContent');
+    modal.style.display = 'flex';
+    container.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text-muted);">Đang tải chi tiết CSDL cho Boss ID ' + bossId + '...</div>';
+
+    var result = await adminApi('get-boss-details', { bossId: bossId });
+    if (!result.success || !result.boss) {
+      container.innerHTML = '<div style="text-align: center; padding: 30px; color: var(--danger);">' + (result.message || 'Lỗi tải chi tiết') + '<br><br><button class="btn btn-ghost" onclick="closeBossDetailsModal()">Đóng</button></div>';
+      return;
+    }
+
+    var data = result.boss;
+    var t = data.template;
+    var firstForm = (data.forms && data.forms.length > 0) ? data.forms[0] : null;
+
+    var html = `
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 15px;">
+        <div>
+          <h3 style="margin: 0; color: var(--primary-color); font-size: 20px;">${t.name} <span style="font-size: 14px; color: var(--text-muted); font-weight: normal;">(ID: ${t.id})</span></h3>
+          <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Phân loại: <strong>${t.type}</strong> | Nhóm: <strong>${t.sub_type || 'Không'}</strong> | Trạng thái: ${t.enabled ? '<span style="color:#28a745;">BẬT</span>' : '<span style="color:var(--danger);">TẮT</span>'}</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="closeBossDetailsModal()" style="font-size: 18px;">✕</button>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 220px; gap: 20px; margin-bottom: 15px;">
+        <div>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 15px; background: rgba(255,255,255,0.03); padding: 12px; border-radius: 8px;">
+            <div><small style="color:var(--text-muted)">Thời gian hồi sinh:</small><br><strong>${t.respawn_delay}s</strong> (${Math.round(t.respawn_delay/60)} phút)</div>
+            <div><small style="color:var(--text-muted)">Thời gian tự rời:</small><br><strong>${t.despawn_timeout}s</strong> (${Math.round(t.despawn_timeout/60)} phút)</div>
+            <div><small style="color:var(--text-muted)">Số lượng spawn:</small><br><strong>${t.spawn_count} thực thể</strong></div>
+            <div><small style="color:var(--text-muted)">Thông báo toàn server:</small><br><strong>${t.is_notify ? 'Có' : 'Không'}</strong></div>
+          </div>
+
+          <!-- Forms Section -->
+          <h4 style="color: var(--text-primary); margin: 15px 0 8px 0; font-size: 15px; border-left: 3px solid var(--primary-color); padding-left: 8px;">Danh sách Dạng Biến Hình (boss_form) & Kỹ năng (boss_skill)</h4>
+          <div style="display: flex; flex-direction: column; gap: 10px;">
+    `;
+
+    if (data.forms && data.forms.length > 0) {
+      data.forms.forEach(function(f) {
+        var formSkills = data.skills ? data.skills.filter(function(s) { return s.form_id === f.id; }) : [];
+        html += `
+          <div style="background: rgba(0,0,0,0.25); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+              <strong style="color: var(--primary-color);">Dạng ${f.form_order + 1}: ${f.name}</strong>
+              <span style="font-size: 12px; font-family: monospace; color: #28a745;">HP: ${new Intl.NumberFormat('vi-VN').format(f.hp_min)} ~ ${new Intl.NumberFormat('vi-VN').format(f.hp_max)} | Dame: ${new Intl.NumberFormat('vi-VN').format(f.dame)}</span>
+            </div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 6px;">
+              Trang phục Part: Head <strong>${f.outfit_head}</strong>, Body <strong>${f.outfit_body}</strong>, Leg <strong>${f.outfit_leg}</strong> | Balo ${f.outfit_bag}, Aura ${f.outfit_aura}, Eff ${f.outfit_eff}
+            </div>
+            ${f.text_start ? `<div style="font-size: 12px; font-style: italic; color: #ffc107;">💬 Ra trận: "${f.text_start}"</div>` : ''}
+            
+            <div style="margin-top: 8px; padding-top: 6px; border-top: 1px dashed rgba(255,255,255,0.1);">
+              <div style="font-size: 12px; font-weight: 600; margin-bottom: 4px;">Kỹ năng sử dụng:</div>
+              <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                ${formSkills.length > 0 ? formSkills.map(function(s) {
+                  return `<span class="badge" style="background: rgba(255,255,255,0.08); font-size: 11px;">${s.skill_name || ('Skill ID ' + s.skill_id)} (Cấp ${s.skill_level}) - ${s.cooldown}ms</span>`;
+                }).join('') : '<span style="font-size: 11px; color: var(--text-muted);">Không có chiêu thức đặc thù</span>'}
+              </div>
+            </div>
+          </div>
+        `;
+      });
+    } else {
+      html += `<div style="color: var(--text-muted); font-size: 13px;">Chưa cấu hình boss_form</div>`;
+    }
+
+    html += `
+          </div>
+        </div>
+
+        <!-- Canvas Preview for Detail Modal -->
+        <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); padding: 12px; border-radius: 8px; text-align: center;">
+          <h4 style="margin: 0 0 10px 0; color: var(--primary-color); font-size: 13px;">Hình Dáng Nhân Vật (Canvas)</h4>
+          <div style="width: 100%; height: 230px; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.4); border-radius: 6px;">
+            <canvas id="detailBossCanvas" width="180" height="220" style="width: 180px; height: 220px;"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Map & Rewards Grid -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 10px;">
+        <!-- Maps -->
+        <div>
+          <h4 style="color: var(--text-primary); margin: 0 0 8px 0; font-size: 15px; border-left: 3px solid #17a2b8; padding-left: 8px;">Map Xuất Hiện (boss_map)</h4>
+          <div style="background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; max-height: 160px; overflow-y: auto;">
+    `;
+
+    if (data.maps && data.maps.length > 0) {
+      html += `<ul style="margin: 0; padding-left: 18px; font-size: 13px;">`;
+      data.maps.forEach(function(m) {
+        html += `<li><strong>${m.map_name || ('Map ID ' + m.map_id)}</strong> (ID: ${m.map_id}) ${m.zone_id !== -1 ? '- Khu ' + m.zone_id : '- Ngẫu nhiên khu'}</li>`;
+      });
+      html += `</ul>`;
+    } else {
+      html += `<div style="font-size: 12px; color: var(--text-muted);">Tất cả map (hoặc ngẫu nhiên)</div>`;
+    }
+
+    html += `
+          </div>
+        </div>
+
+        <!-- Rewards -->
+        <div>
+          <h4 style="color: var(--text-primary); margin: 0 0 8px 0; font-size: 15px; border-left: 3px solid #28a745; padding-left: 8px;">Phần Thưởng Rớt Đồ (boss_reward)</h4>
+          <div style="background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; max-height: 160px; overflow-y: auto;">
+    `;
+
+    if (data.rewards && data.rewards.length > 0) {
+      html += `<div style="display: flex; flex-direction: column; gap: 6px; font-size: 12px;">`;
+      data.rewards.forEach(function(r) {
+        var optsList = [];
+        try {
+          optsList = typeof r.item_options === 'string' ? JSON.parse(r.item_options) : (r.item_options || []);
+        } catch(e) {}
+        var optStr = '';
+        if (Array.isArray(optsList) && optsList.length > 0) {
+          optStr = '<div style="font-size: 11px; color: var(--text-muted); margin-top: 2px; display: flex; flex-wrap: wrap; gap: 4px;">' + optsList.map(function(o) {
+            var optName = itemOptionDict[o.id] || ('Option #' + o.id);
+            return `<span class="badge" style="background: rgba(255,255,255,0.06); font-size: 10px; font-weight: normal;">${escapeJsString(optName)}: +${o.param}</span>`;
+          }).join('') + '</div>';
+        }
+
+        html += `
+          <div style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 6px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span>🎁 <strong>${r.item_name || ('Item ID ' + r.item_id)}</strong> (SL: ${r.quantity_min}~${r.quantity_max})</span>
+              <span style="color: #28a745; font-weight: 600;">Tỉ lệ: ${r.rate}%</span>
+            </div>
+            ${optStr}
+          </div>
+        `;
+      });
+      html += `</div>`;
+    } else {
+      html += `<div style="font-size: 12px; color: var(--text-muted);">Chưa cấu hình boss_reward</div>`;
+    }
+
+    html += `
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top: 20px; display: flex; justify-content: space-between; align-items: center;">
+        <button class="btn btn-primary" onclick="closeBossDetailsModal(); openEditBossModal(${t.id});">
+          ✏️ Chỉnh Sửa Boss Này
+        </button>
+        <button class="btn btn-ghost" onclick="closeBossDetailsModal()">Đóng Chi Tiết</button>
+      </div>
+    `;
+
+    container.innerHTML = html;
+
+    if (firstForm) {
+      setTimeout(function() {
+        renderBossCanvas('detailBossCanvas', firstForm.outfit_head, firstForm.outfit_body, firstForm.outfit_leg);
+      }, 100);
+    }
+  }
+
+  function closeBossDetailsModal() {
+    document.getElementById('bossDetailsModal').style.display = 'none';
+  }
+
+  /* CANVAS SPRITE RENDERER SYSTEM (Trục tọa độ xOy & Part index) */
+  async function renderBossCanvas(canvasId, headPart, bodyPart, legPart) {
+    var canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    var ctx = canvas.getContext('2d');
+    
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Gốc tọa độ xOy trên Canvas (Tâm trục X, Sàn trục Y)
+    var originX = Math.round(canvas.width / 2);
+    var groundY = canvas.height - 35;
+
+    // Bóng sàn chân ở gốc tọa độ
+    ctx.beginPath();
+    ctx.ellipse(originX, groundY, 32, 9, 0, 0, 2 * Math.PI);
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+    ctx.fill();
+
+    var h = Number(headPart);
+    var b = Number(bodyPart);
+    var l = Number(legPart);
+
+    if ((isNaN(h) || h < 0) && (isNaN(b) || b < 0) && (isNaN(l) || l < 0)) {
+      ctx.fillStyle = '#999';
+      ctx.font = '12px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('Chưa chọn Part/Cải trang', originX, canvas.height / 2);
+      return;
+    }
+
+    var res = await adminApi('get-part-icons', { head: h, body: b, leg: l });
+    if (!res.success || !res.parts) return;
+
+    var parts = res.parts;
+
+    var loadImg = function(iconId) {
+      return new Promise(function(resolve) {
+        if (iconId === undefined || iconId === null || iconId < 0) return resolve(null);
+        var img = new Image();
+        img.onload = function() { resolve(img); };
+        img.onerror = function() { resolve(null); };
+        img.src = '/api/icon/' + iconId + '.png';
+      });
+    };
+
+    var legImg = parts.leg ? await loadImg(parts.leg.iconId) : null;
+    var bodyImg = parts.body ? await loadImg(parts.body.iconId) : null;
+    var headImg = parts.head ? await loadImg(parts.head.iconId) : null;
+
+    // Xóa nền & vẽ lại trục tọa độ xOy
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Trục xOy mờ định vị
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(originX, 10);
+    ctx.lineTo(originX, canvas.height - 10);
+    ctx.moveTo(10, groundY);
+    ctx.lineTo(canvas.width - 10, groundY);
+    ctx.stroke();
+
+    // Bóng sàn chân
+    ctx.beginPath();
+    ctx.ellipse(originX, groundY, 32, 9, 0, 0, 2 * Math.PI);
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+    ctx.fill();
+
+    // Ghép 3 bộ phận Leg (chân), Body (thân), Head (đầu) lên hệ trục xOy
+    // Tỉ lệ x4: Ảnh icon từ x4 có độ phân giải gấp 4 lần hệ tọa độ 1x trong DATA
+    // Trục Oy hướng xuống dưới (Màn hình Canvas): Phía trên đường sàn Ox mang giá trị âm (-dy)
+    // Quy tắc cộng offset: Head (-13, +34), Body (-9, +16), Leg (-8, +10)
+    var SCALE = 4;
+
+    // 1. Chân (Leg - type 2: vị trí 1, dx + -8, dy + 10)
+    if (legImg && parts.leg) {
+      var legDx = ((parts.leg.dx || 0) - 8) * SCALE;
+      var legDy = ((parts.leg.dy || 0) + 10) * SCALE;
+      var legX = originX + legDx;
+      var legY = groundY - legDy; // Phía trên Ox có giá trị Y nhỏ hơn (âm so với Ox)
+      ctx.drawImage(legImg, Math.round(legX), Math.round(legY));
+    }
+
+    // 2. Thân (Body - type 1: vị trí 1, dx + -9, dy + 16)
+    if (bodyImg && parts.body) {
+      var bodyDx = ((parts.body.dx || 0) - 9) * SCALE;
+      var bodyDy = ((parts.body.dy || 0) + 16) * SCALE;
+      var bodyX = originX + bodyDx;
+      var bodyY = groundY - bodyDy; // Phía trên Ox có giá trị Y nhỏ hơn (âm so với Ox)
+      ctx.drawImage(bodyImg, Math.round(bodyX), Math.round(bodyY));
+    }
+
+    // 3. Đầu (Head - type 0: vị trí 0, dx + -13, dy + 34)
+    if (headImg && parts.head) {
+      var headDx = ((parts.head.dx || 0) - 13) * SCALE;
+      var headDy = ((parts.head.dy || 0) + 34) * SCALE;
+      var headX = originX + headDx;
+      var headY = groundY - headDy; // Phía trên Ox có giá trị Y nhỏ hơn (âm so với Ox)
+      ctx.drawImage(headImg, Math.round(headX), Math.round(headY));
+    }
+  }
+</script>

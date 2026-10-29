@@ -1,0 +1,4 @@
+logs/
+sql/
+*.env
+views/assets/download/*

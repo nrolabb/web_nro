@@ -1,0 +1,49 @@
+<div class="panel-card">
+  <div class="panel-card-header">
+    <div class="panel-card-title">Các lệnh trong Command.java</div>
+    <div style="width: min(100%, 320px);">
+      <input id="commandSearch" class="form-input" type="search" placeholder="Tìm lệnh hoặc chức năng..." oninput="filterCommands()">
+    </div>
+  </div>
+  <div class="panel-card-body" style="padding: 0;">
+    <div class="admin-table-wrapper">
+      <table class="admin-table" id="commandTable">
+        <thead>
+          <tr>
+            <th style="width: 70px;">#</th>
+            <th style="width: 300px;">Cú pháp</th>
+            <th style="width: 130px;">Phạm vi</th>
+            <th>Chức năng</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% commands.forEach(function(item, index) { %>
+            <tr>
+              <td><%= index + 1 %></td>
+              <td><code style="font-weight: 700; color: var(--primary-color);"><%= item.command %></code></td>
+              <td><%= item.scope %></td>
+              <td><%= item.description %></td>
+            </tr>
+          <% }); %>
+          <tr id="commandEmpty" style="display: none;">
+            <td colspan="4" style="text-align: center; padding: 36px; color: var(--text-muted);">Không tìm thấy lệnh phù hợp.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+  function filterCommands() {
+    var query = document.getElementById('commandSearch').value.trim().toLocaleLowerCase('vi');
+    var rows = document.querySelectorAll('#commandTable tbody tr:not(#commandEmpty)');
+    var visibleCount = 0;
+    rows.forEach(function(row) {
+      var visible = row.textContent.toLocaleLowerCase('vi').includes(query);
+      row.style.display = visible ? '' : 'none';
+      if (visible) visibleCount++;
+    });
+    document.getElementById('commandEmpty').style.display = visibleCount ? 'none' : '';
+  }
+</script>

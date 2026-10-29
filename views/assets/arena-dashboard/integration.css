@@ -1,0 +1,88 @@
+/* Integrate the supplied Arena theme with the existing server routes. */
+.main-header { height: auto; min-height: 60px; flex-direction: row; gap: 16px; flex-wrap: wrap; z-index: 1000; width: 100%; }
+.main-header .header-nav { position: static; left: auto; transform: none; flex: 1; min-width: 0; }
+.main-header .nav-pill-bar { justify-content: center; flex-wrap: wrap; }
+.main-header .nav-item { white-space: nowrap; text-align: center; }
+.main-header .header-right { flex-shrink: 0; }
+.main-header .user-capsule { display: block; }
+.main-header .user-capsule summary { display: flex; align-items: center; gap: 10px; list-style: none; }
+.main-header .user-capsule summary::-webkit-details-marker { display: none; }
+.main-header .user-avatar-wrapper img { width: 100%; height: 100%; object-fit: contain; }
+.main-header .user-capsule:not([open]) .user-dropdown { display: none; }
+.dashboard-login { color: #fff; font-size: 0.85rem; text-decoration: none; font-weight: 600; }
+.dashboard-site { display: block; margin: 0; }
+.dashboard-site a { text-decoration: none; }
+.dashboard-site .section-hexagon-title { text-align: center; }
+.dashboard-site .main-body-container { min-height: calc(100vh - 60px); }
+.dashboard-site .dashboard-table-wrap, .dashboard-site .dashboard-reward-details { width: 100%; }
+.dashboard-site .arena-ranking-server { text-align: center; margin: 12px 0; color: #c0c4d8; }
+.dashboard-site .arena-ranking-table { white-space: nowrap; }
+.dashboard-site .arena-ranking-name { display: inline-flex; align-items: center; gap: 10px; }
+.dashboard-site .arena-ranking-name img { width: 32px; height: 32px; object-fit: contain; }
+.dashboard-site .podium-avatar img { width: 70%; height: 70%; object-fit: contain; }
+.dashboard-site .podium-name { overflow-wrap: anywhere; }
+.dashboard-site .podium-score { overflow-wrap: anywhere; }
+.dashboard-site .arena-ranking-medal { color: #ffd700; }
+.dashboard-site .lb-podium-container { width: 100%; }
+.dashboard-site .leaderboard-card-container > .section-hexagon-title { margin-bottom: 12px; }
+.dashboard-site .hero-character-img { image-rendering: pixelated; object-fit: contain; }
+.dashboard-site .modal-overlay { padding: 16px; z-index: 1100; }
+.dashboard-site .modal-content { max-height: calc(100dvh - 32px); overflow-y: auto; }
+.dashboard-site .modal-content h2 { font-size: 1.3rem; }
+.dashboard-site .modal-content p { overflow-wrap: anywhere; }
+.dashboard-site .spin-buttons-row { flex-wrap: wrap; justify-content: center; gap: 14px; }
+.dashboard-site .spin-action-btn:disabled { opacity: 0.6; cursor: wait; }
+.dashboard-site .dashboard-jackpot-summary .jackpot-digits { font-size: clamp(1rem, 2vw, 1.7rem); }
+.dashboard-site .jackpot-ticker-bar { text-align: center; padding: 12px; }
+.dashboard-site #jackpotStatus { text-align: center; margin: 16px 0; }
+.dashboard-rewards { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin: 16px 0; }
+.dashboard-reward-card { display: flex; flex-direction: column; gap: 8px; padding: 18px; border: 1px solid #ffd700; border-radius: 14px; background: #1c1924; }
+.dashboard-reward-details { margin: 20px 0; }
+.dashboard-site .donnet-table-responsive { max-width: 100%; }
+.dashboard-site .chest-container:focus-visible, .main-header a:focus-visible, .main-header summary:focus-visible { outline: 2px solid #ffd700; outline-offset: 4px; }
+@media (max-width: 1100px) {
+  .main-header .header-nav { order: 3; flex-basis: 100%; width: 100%; }
+  .main-header .header-right { margin-left: auto; }
+  .main-header { padding: 8px 12px; gap: 8px; }
+}
+@media (max-width: 600px) {
+  .main-header .nav-item { font-size: 0.65rem; padding: 7px 10px; }
+  .dashboard-site .leaderboard-view-panel, .dashboard-site .donnet-view-panel { padding: 24px 10px; }
+  .dashboard-site .leaderboard-card-container, .dashboard-site .donnet-card-container { width: 100%; padding: 18px 12px; }
+  .dashboard-site .lb-podium-container { gap: 6px; }
+  .dashboard-site .podium-step { min-width: 0; flex: 1; }
+  .dashboard-site .podium-name, .dashboard-site .podium-score { font-size: 0.75rem; }
+  .dashboard-site .section-hexagon-title { font-size: 1rem; padding: 10px 22px; }
+  .dashboard-site .dashboard-content { padding: 0 12px; }
+  .dashboard-site .chest-slider { max-width: 100%; }
+}
+
+.main-header .header-left, .main-header .header-right { width: auto; }
+
+/* The chest preview uses the original source layout and effects. */
+.jackpot-preview-note { text-align: center; color: #ffe57f; font-size: 0.8rem; margin: 16px 12px 0; }
+.jackpot-preview .dashboard-modal { z-index: 1200; }
+.jackpot-preview .dashboard-modal .modal-box { max-height: calc(100dvh - 32px); overflow-y: auto; }
+
+/* Keep the page artwork pinned to the entire viewport, including behind the header. */
+html { min-height: 100%; }
+body {
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+  margin: 0;
+  background-image: none;
+}
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image: var(--page-background);
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+}

@@ -1,0 +1,905 @@
+<%-include("../partials/meta.ejs")%>
+<link rel="stylesheet" href="../assets/css/spin.css">
+  <body>
+    <style>
+      .titleSpin{
+        position: absolute;
+        background: linear-gradient(135deg, #ff4d4d, #ff9933);
+        font-family: Pony;
+        color: white;
+        font-size: 16px;
+        padding: 10px 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 15px rgba(255, 77, 77, 0.4);
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+      }
+      .showImg {
+        opacity: 1;
+        z-index: 1;
+        position: relative;
+        transform: translateY(-165px);
+        background: white;
+        border-radius: 15px;
+        box-shadow: rgb(175 162 138 / 38%) 1px 1px 10px 6px;
+      }
+
+      .gift-container.gift-container-x10 {
+        height: min(620px, 90vh);
+        padding: 42px 22px 20px;
+        overflow-y: auto;
+      }
+      .spin-result-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-rows: repeat(5, minmax(92px, 1fr));
+        gap: 10px;
+        min-height: 100%;
+      }
+      .spin-result-item {
+        min-width: 0;
+        padding: 8px 6px;
+        text-align: center;
+        background: rgba(255, 255, 255, 0.38);
+        border: 2px solid rgba(255, 255, 255, 0.55);
+        border-radius: 12px;
+      }
+      .spin-result-icon {
+        display: block;
+        width: 44px;
+        height: 44px;
+        margin: 0 auto 5px;
+        object-fit: contain;
+        filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.25));
+      }
+      .spin-result-item.reward-pending .spin-result-icon,
+      .spin-result-item.reward-pending .spin-result-name,
+      .spin-result-item.reward-pending .spin-result-code {
+        opacity: 0;
+      }
+      .spin-result-item.reward-revealed .spin-result-icon,
+      .spin-result-item.reward-revealed .spin-result-name,
+      .spin-result-item.reward-revealed .spin-result-code {
+        animation: rewardCellReveal 0.28s ease-out both;
+      }
+      @keyframes rewardCellReveal {
+        from { opacity: 0; transform: scale(0.55); }
+        to { opacity: 1; transform: scale(1); }
+      }
+      .flying-reward-ball {
+        position: fixed;
+        z-index: 2147483647;
+        width: 52px;
+        height: 52px;
+        pointer-events: none;
+        background-image: url('../assets/images/spin/itemBubble.png');
+        background-size: contain;
+        background-repeat: no-repeat;
+        background-position: center;
+        transform: translate(-50%, -50%) scale(0.45);
+      }
+      .spin-result-name {
+        min-height: 30px;
+        color: #fff;
+        font-family: Pony, sans-serif;
+        font-size: 12px;
+        line-height: 15px;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.45);
+        overflow-wrap: anywhere;
+      }
+      .spin-result-code {
+        margin-top: 5px;
+        padding: 3px 5px;
+        overflow: hidden;
+        color: #6c5ce7;
+        background: #fff;
+        border-radius: 5px;
+        font-family: monospace;
+        font-size: 11px;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      @media only screen and (max-width: 480px) {
+        .gift-container.gift-container-x10 {
+          width: 95vw;
+          zoom: 1 !important;
+          padding-right: 12px;
+          padding-left: 12px;
+        }
+      }
+
+      /* A readable surface over the full-screen artwork. */
+      .spin-page-title {
+        position: relative;
+        z-index: 4;
+        width: calc(100% - 32px);
+        max-width: 680px;
+        margin: 28px auto 24px;
+        padding: 26px 24px;
+        text-align: center;
+        background: rgba(13, 22, 37, 0.58);
+        border: 1px solid rgba(160, 194, 224, 0.25);
+        border-radius: 20px;
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.22);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+      }
+      .spin-page-title, .spin-page-title * {
+        font-family: 'Be Vietnam Pro', system-ui, sans-serif;
+      }
+      .spin-page-title h1 {
+        margin: 0;
+        color: #f8fafc;
+        font-size: clamp(22px, 4vw, 30px);
+        font-weight: 700;
+        line-height: 1.4;
+        letter-spacing: -0.5px;
+      }
+      .spin-page-title .balance-info {
+        margin-top: 14px;
+        font-size: 14px;
+        line-height: 1.8;
+        color: #d5dfed;
+      }
+      .spin-page-title .balance-info span {
+        display: inline-block;
+        margin: 0 4px;
+        color: #ffd54f;
+        font-size: 22px;
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+      }
+      @media (max-width: 480px) {
+        .spin-page-title { margin-top: 18px; padding: 20px 14px; }
+        .spin-page-title .balance-info span { font-size: 20px; }
+      }
+
+      /* Spin History Panel */
+      .spin-history-panel {
+        max-width: 800px;
+        margin: 20px auto 30px;
+        padding: 0 15px;
+      }
+      .spin-history-panel .panel-header {
+        background: linear-gradient(135deg, #1a1a2e, #16213e);
+        color: #fff;
+        padding: 14px 20px;
+        border-radius: 12px 12px 0 0;
+        font-family: Pony, sans-serif;
+        font-size: 18px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .spin-history-panel .panel-header .icon-history {
+        font-size: 22px;
+      }
+      .spin-history-panel .panel-body {
+        background: rgba(10, 8, 16, 0.9);
+        border: 1px solid #334155;
+        border-top: none;
+        border-radius: 0 0 12px 12px;
+        max-height: 350px;
+        overflow-y: auto;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      }
+      .spin-history-panel .panel-body::-webkit-scrollbar {
+        width: 6px;
+      }
+      .spin-history-panel .panel-body::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 3px;
+      }
+      .spin-history-panel .panel-body::-webkit-scrollbar-thumb {
+        background: linear-gradient(135deg, #ff6b35, #f7c948);
+        border-radius: 3px;
+      }
+      .history-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-family: sans-serif;
+        font-size: 14px;
+      }
+      .history-table thead {
+        position: sticky;
+        top: 0;
+        z-index: 2;
+      }
+      .history-table thead th {
+        background: linear-gradient(135deg, #2d3436, #636e72);
+        color: #fff;
+        padding: 12px 15px;
+        text-align: left;
+        font-weight: 600;
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      .history-table tbody tr {
+        transition: background-color 0.2s ease;
+        border-bottom: 1px solid #334155;
+      }
+      .history-table tbody tr:hover {
+        background-color: #26364d;
+      }
+      .history-table tbody tr:nth-child(even) {
+        background-color: #192538;
+      }
+      .history-table tbody tr:nth-child(even):hover {
+        background-color: #26364d;
+      }
+      .history-table tbody td {
+        padding: 10px 15px;
+        color: #e0e0e0;
+      }
+      .history-table .player-name {
+        font-weight: 600;
+        color: #e2e8f0;
+      }
+      .history-table .item-name {
+        color: #ffd7a0;
+        font-weight: 500;
+      }
+      .history-table .item-time {
+        color: #b8c6da;
+        font-size: 13px;
+      }
+      .history-table .item-code {
+        font-family: monospace;
+        background: #f0f0f0;
+        padding: 3px 8px;
+        border-radius: 4px;
+        font-size: 12px;
+        color: #6c5ce7;
+      }
+      .empty-history {
+        text-align: center;
+        padding: 40px 20px;
+        color: #999;
+        font-style: italic;
+      }
+      .empty-history .icon-empty {
+        font-size: 40px;
+        margin-bottom: 10px;
+      }
+
+      /* New spin highlight animation */
+      @keyframes newSpinHighlight {
+        0% { background-color: #334b67; transform: scale(1.01); }
+        100% { background-color: transparent; transform: scale(1); }
+      }
+      .history-table tbody tr.new-spin {
+        animation: newSpinHighlight 2s ease forwards;
+      }
+
+      /* Cost info badges */
+      .spin-cost-info {
+        text-align: center;
+        margin: 10px 0 0;
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        flex-wrap: wrap;
+      }
+      .cost-badge {
+        background: #233248;
+        border: 1px solid #41546d;
+        padding: 6px 16px;
+        border-radius: 20px;
+        font-size: 13px;
+        font-family: 'Be Vietnam Pro', system-ui, sans-serif;
+        color: #e2e8f0;
+      }
+      .cost-badge strong {
+        color: #ffd7a0;
+      }
+
+      .fast-spin-option {
+        position: absolute;
+        top: 82px;
+        left: 147px;
+        width: 147px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        padding: 5px 8px;
+        color: #fff;
+        background: rgba(26, 26, 46, 0.82);
+        border-radius: 14px;
+        font: 600 13px sans-serif;
+        cursor: pointer;
+        white-space: nowrap;
+        user-select: none;
+      }
+      .fast-spin-option input {
+        width: 16px;
+        height: 16px;
+        margin: 0;
+        accent-color: #ff6b35;
+        cursor: pointer;
+      }
+
+      /* === Machine Reward: Bay từ lỗ ra bóng, phóng to trên mặt máy === */
+      .machine-reward {
+        display: none;
+        position: absolute;
+        z-index: 7;
+        pointer-events: none;
+      }
+      .machine-reward-ball {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 70px;
+        height: 70px;
+        background-image: url('../assets/images/spin/itemBubble.png');
+        background-size: contain;
+        background-repeat: no-repeat;
+        background-position: center;
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+      }
+      .machine-reward-icon {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 120px;
+        height: 120px;
+        object-fit: contain;
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0);
+        filter: drop-shadow(0 0 15px #fff) drop-shadow(0 0 30px #ffe23e) drop-shadow(0 0 50px rgba(255,150,0,0.5));
+        z-index: 2;
+      }
+      .machine-reward-name {
+        position: absolute;
+        left: 50%;
+        width: 330px;
+        color: #fff;
+        font: 700 25px Pony, sans-serif;
+        text-align: center;
+        text-shadow: 0 3px 4px #142359, 0 0 10px #246dff, 0 0 20px rgba(36,109,255,0.5);
+        opacity: 0;
+        transform: translateX(-50%);
+        z-index: 3;
+      }
+      /* Sparkle tia sáng */
+      .machine-reward-sparkles {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 0;
+        height: 0;
+        z-index: 1;
+        pointer-events: none;
+      }
+      .machine-reward-sparkle {
+        position: absolute;
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #ffe23e;
+        box-shadow: 0 0 8px 2px #ffe23e;
+        opacity: 0;
+      }
+    </style>
+    <%-include("../partials/head.ejs")%>
+
+      <!-- Page Title -->
+      <div class="spin-page-title">
+        <h1>Vòng Quay May Mắn</h1>
+        <div class="balance-info">Số dư hiện tại: <span id="currentBalance"><%= Number(user[0]?.vnd || 0).toLocaleString('vi-VN') %></span> điểm</div>
+        <div class="spin-cost-info">
+          <div class="cost-badge">Quay 1 lần: <strong>1,000 điểm</strong></div>
+          <div class="cost-badge">Quay 10 lần: <strong>9,000 điểm</strong></div>
+        </div>
+      </div>
+
+      <section class="section section game_rotation">
+        <div class="section__content_rotation">
+          <div class="inner_rotation inner--game_rotation">
+            <div class="airblowing">
+              <div id="anireward" class="anireward">
+                <% for(let i=0; i<15; i++) { %>
+                  <% let item = (itemsList && itemsList.length > 0) ? itemsList[i % itemsList.length] : null; %>
+                  <% let imgSrc = item && item.image ? item.image : (item && item.icon_id ? `/api/icon/${item.icon_id}.png` : '../assets/images/spin/default.png'); %>
+                  <div class="anireward__item anireward__item--<%= i+1 %>"
+                       style="background-image: url('../assets/images/spin/itemBubble.png'); background-size: 100% 100%; display: flex; align-items: center; justify-content: center;">
+                    <img src="<%= imgSrc %>" style="width: 65%; height: 65%; object-fit: contain;">
+                  </div>
+                <% } %>
+              </div>
+              <div id="action" class="action"><a href="javascript:;"
+                  class="action__open action__open--1 pm__rut rut-1"><img
+                    src="../assets/images/spin/btn.png" class="action__btn"></a> <a
+                  href="javascript:;" class="action__open action__open--10 pm__rut rut-10"><img
+                    src="../assets/images/spin/btn.png" class="action__btn"></a>
+                <label class="fast-spin-option" for="fastSpinCheckbox">
+                  <input type="checkbox" id="fastSpinCheckbox">
+                  <span>Quay nhanh</span>
+                </label>
+              </div>
+              <div id="machineReward" class="machine-reward" aria-hidden="true">
+                <div class="machine-reward-ball"></div>
+                <div class="machine-reward-sparkles"></div>
+                <img class="machine-reward-icon" alt="Phần thưởng">
+                <div class="machine-reward-name"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="spinModal">
+        </div>
+
+      </section>
+
+      <!-- Spin History Panel -->
+      <section class="spin-history-panel">
+        <div class="panel-header">
+          <span class="icon-history">📜</span>
+          Lịch Sử Quay Thưởng
+        </div>
+        <div class="panel-body">
+          <table class="history-table">
+            <thead>
+              <tr>
+                <th style="width: 10%">#</th>
+                <th style="width: 45%">Vật phẩm</th>
+                <th style="width: 20%">Trạng thái</th>
+                <th style="width: 25%">Thời gian</th>
+              </tr>
+            </thead>
+            <tbody id="spinHistoryBody">
+              <% const history = typeof spinHistory !== 'undefined' && Array.isArray(spinHistory) ? spinHistory : []; %>
+              <% if (history.length > 0) { %>
+                <% history.forEach(function(record, index) { %>
+                  <tr>
+                    <td><%= index + 1 %></td>
+                    <td class="item-name">
+                        <%= record.name %>
+                    </td>
+                    <td>
+                      <span class="item-code" style="<%= record.status === 1 ? 'background:#d4edda;color:#155724' : 'background:#fff3cd;color:#856404' %>"><%= record.status === 1 ? 'Đã nhận' : 'Chưa nhận' %></span>
+                    </td>
+                    <td class="item-time"><%= new Date(record.status === 1 ? record.claimed_at : record.created_at).toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' }) %></td>
+                  </tr>
+                <% }); %>
+              <% } else { %>
+                <tr>
+                  <td colspan="4" class="empty-history">
+                    <div class="icon-empty">🎲</div>
+                    Chưa có lịch sử quay nào!
+                  </td>
+                </tr>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <script>
+            function escapeSpinHtml(value) {
+              return String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
+            }
+            function safeSpinImage(value) {
+              const image = String(value || '');
+              return /^\/(?:api\/icon(?:-x2)?\/|assets\/images\/)/.test(image) ? escapeSpinHtml(image) : '/assets/images/spin/default.png';
+            }
+          var rut1 = document.querySelector(".rut-1");
+          var rut10 = document.querySelector(".rut-10");
+          var fastSpinCheckbox = document.getElementById("fastSpinCheckbox");
+          var fastSpinMinimumBalance = 100000;
+          var isSpinning = false;
+
+          function getCurrentBalance() {
+            var balanceElement = document.getElementById("currentBalance");
+            var balanceText = balanceElement ? balanceElement.textContent : "0";
+            return Number(balanceText.replace(/[^0-9-]/g, "")) || 0;
+          }
+
+          function updateFastSpinAvailability(showMessage) {
+            var canUseFastSpin = getCurrentBalance() > fastSpinMinimumBalance;
+            if (!canUseFastSpin) {
+              fastSpinCheckbox.checked = false;
+              if (showMessage) {
+                toastr["warning"]("Tài khoản cần có số dư trên 100.000 điểm để sử dụng quay nhanh.", "Thông báo");
+              }
+            }
+            return canUseFastSpin;
+          }
+
+          fastSpinCheckbox.addEventListener("change", function() {
+            updateFastSpinAvailability(true);
+          });
+
+          updateFastSpinAvailability(false);
+
+          const addAndRemoveClass = (element, className, timeout) => {
+            element.classList.add(className);
+            setTimeout(() => {
+              element.classList.remove(className);
+            }, timeout);
+          };
+
+          rut10.addEventListener("click", () => {
+            if (isSpinning) return;
+            handleButtonClick("x10");
+          });
+
+          rut1.addEventListener("click", () => {
+            if (isSpinning) return;
+            handleButtonClick("x1");
+          });
+
+          function handleButtonClick(type) {
+            isSpinning = true;
+            var spinDuration = updateFastSpinAvailability(false) && fastSpinCheckbox.checked ? 2000 : 5000;
+            var anireward__item = document.querySelectorAll(".anireward__item");
+            anireward__item.forEach(async(item, index) => {
+              addAndRemoveClass(item, `anireward__running--${index + 1}`, spinDuration);
+            });
+            setTimeout(() => {
+              $.ajax({
+              method: "POST",
+              url: "/spin",
+              data: JSON.stringify({ type: type }),
+              headers:{
+                'Content-type': 'application/json; charset=UTF-8'
+              },
+              success: async (data, status) => {
+                       if(data.error){
+                           isSpinning = false;
+                           toastr["error"](data?.message, "Error")
+                       }
+                       else {
+                        console.log(data);
+                        // Update balance display
+                        if (data.newBalance !== undefined) {
+                          document.getElementById("currentBalance").textContent = Number(data.newBalance).toLocaleString('vi-VN');
+                          const headerBalance = document.getElementById("header-user-vnd");
+                          if (headerBalance) {
+                            headerBalance.textContent = Number(data.newBalance).toLocaleString('vi-VN');
+                          }
+                          updateFastSpinAvailability(false);
+                        }
+
+                        // Show result modal
+                        var spinModal = document.querySelector(".spinModal");
+                        if (type === "x10" && data.data.length > 1) {
+                          // Show multiple items for x10
+                          var itemsHtml = data.data.map((item, i) => `
+                            <div class="spin-result-item reward-pending" data-reward-index="${i}">
+                            <img class="spin-result-icon" src="${safeSpinImage(item.img)}" alt="${escapeSpinHtml(item.name)}">
+                              <div class="spin-result-name">${escapeSpinHtml(item.name)}</div>
+                              <div class="spin-result-code">${data.giftCodes[i]}</div>
+                            </div>
+                          `).join('');
+                          spinModal.innerHTML = `
+                          <div class="gift-container gift-container-x10"><button type="button" class="btn btn-primary btn-close-gift">
+                            X
+                          </button>
+                          <div class="spin-result-grid">
+                            ${itemsHtml}
+                          </div>
+                          </div>
+                          <div class="gift-background"></div>
+                          `;
+                        } else {
+                          spinModal.innerHTML = `
+                          <div class="gift-container"><button type="button" class="btn btn-primary btn-close-gift">
+                            X
+                          </button>
+                          <div class="row justify-content-end">
+                            <div class="col-12 mt-5 d-flex justify-content-center">
+                              <div class="titleSpin">${escapeSpinHtml(data.data[0].name)}</div>
+                                <img style="height: auto; width: 50%; top: 100%" src="${safeSpinImage(data.data[0].img)}" class="img showImg">
+                              <div class="message-success message-show">
+                                <b>${data.giftCodes[0]}</b>
+                                </div>
+                            </div>
+                          </div>
+                          </div>
+                          <div class="gift-background"></div>
+                          `;
+                        }
+                        await playRewardReveal(data.data);
+                        document.querySelector(".btn-close-gift").addEventListener("click", () => {
+                          document.querySelector(".spinModal").innerHTML = ``;
+                        });
+
+                        // Add new entries to history table
+                        addToHistory(data);
+                        isSpinning = false;
+                       }
+                   },
+                   error: (data, status) => {
+                       isSpinning = false;
+                       toastr["error"](data?.message || "Đã xảy ra lỗi tại máy chủ!", "Error")
+                   }
+            })
+            }, spinDuration)
+          }
+
+          function playRewardReveal(items) {
+            if (items.length > 1) {
+              return playMultiRewardReveal(items);
+            }
+            var reveal = document.getElementById("machineReward");
+            var machine = document.querySelector(".airblowing");
+            var icon = reveal.querySelector(".machine-reward-icon");
+            var ball = reveal.querySelector(".machine-reward-ball");
+            var sparklesContainer = reveal.querySelector(".machine-reward-sparkles");
+            var name = reveal.querySelector(".machine-reward-name");
+            var isFast = items.length > 1;
+            var revealDuration = isFast ? 1500 : 3200;
+
+            return items.reduce(function(sequence, item) {
+              return sequence.then(function() {
+                return new Promise(function(resolve) {
+                  var rect = machine.getBoundingClientRect();
+                  // Vị trí lỗ bóng ra (dưới máy)
+                  var startX = rect.left + rect.width * (197 / 648);
+                  var startY = rect.top + rect.height * (730 / 869);
+                  // Vị trí giữa mặt máy
+                  var endX = rect.left + rect.width * (324 / 648);
+                  var endY = rect.top + rect.height * (335 / 869);
+                  var ballSize = Math.max(45, rect.width * (70 / 648));
+                  var iconSize = Math.max(70, rect.width * (120 / 648));
+
+                  // Chuẩn bị ảnh item
+                  icon.src = item.img;
+                  icon.alt = item.name;
+                  name.textContent = item.name;
+
+                  // Reset trạng thái
+                  document.body.appendChild(reveal);
+                  reveal.className = "machine-reward";
+                  reveal.style.position = "fixed";
+                  reveal.style.zIndex = "2147483647";
+                  reveal.style.display = "block";
+                  reveal.style.width = "1px";
+                  reveal.style.height = "1px";
+                  reveal.setAttribute("aria-hidden", "false");
+
+                  // Đặt kích thước bóng
+                  ball.style.width = ballSize + "px";
+                  ball.style.height = ballSize + "px";
+                  ball.style.display = "block";
+                  ball.style.opacity = "1";
+
+                  // Đặt kích thước icon
+                  icon.style.width = iconSize + "px";
+                  icon.style.height = iconSize + "px";
+                  icon.style.opacity = "0";
+
+                  // Vị trí tên item (dưới icon)
+                  name.style.top = (iconSize * 0.7 + 20) + "px";
+
+                  // Tạo sparkles (tia sáng)
+                  sparklesContainer.innerHTML = '';
+                  for (var s = 0; s < 12; s++) {
+                    var sp = document.createElement('div');
+                    sp.className = 'machine-reward-sparkle';
+                    sparklesContainer.appendChild(sp);
+                  }
+                  var sparkles = sparklesContainer.querySelectorAll('.machine-reward-sparkle');
+
+                  // === PHASE 1: Bóng bay từ lỗ lên giữa mặt máy (0% -> 45%) ===
+                  var phase1End = 0.45;
+                  // === PHASE 2: Bóng nổ, icon xuất hiện phóng to (45% -> 75%) ===
+                  var phase2End = 0.75;
+                  // === PHASE 3: Icon + tên hiện rõ rồi fade out (75% -> 100%) ===
+
+                  // Animation cho container (vị trí di chuyển)
+                  reveal.animate([
+                    { left: startX + "px", top: startY + "px", offset: 0 },
+                    { left: startX + "px", top: (startY - rect.height * 0.04) + "px", offset: 0.12 },
+                    { left: endX + "px", top: endY + "px", offset: phase1End },
+                    { left: endX + "px", top: endY + "px", offset: 1 }
+                  ], { duration: revealDuration, easing: "ease-in-out", fill: "forwards" });
+
+                  // Animation cho bóng: nhỏ -> to -> nổ tung
+                  ball.animate([
+                    { transform: "translate(-50%, -50%) scale(0.3)", opacity: 1, boxShadow: "0 0 10px 4px rgba(255,226,62,0.4)", offset: 0 },
+                    { transform: "translate(-50%, -50%) scale(0.6)", opacity: 1, boxShadow: "0 0 15px 6px rgba(255,226,62,0.5)", offset: 0.12 },
+                    { transform: "translate(-50%, -50%) scale(1)", opacity: 1, boxShadow: "0 0 25px 10px rgba(255,226,62,0.7)", offset: phase1End },
+                    { transform: "translate(-50%, -50%) scale(1.1)", opacity: 1, boxShadow: "0 0 30px 15px rgba(255,226,62,0.8)", offset: phase1End + 0.04 },
+                    { transform: "translate(-50%, -50%) scale(2.5)", opacity: 0, boxShadow: "0 0 60px 30px rgba(255,226,62,0)", offset: phase2End - 0.05 },
+                    { transform: "translate(-50%, -50%) scale(3)", opacity: 0, offset: 1 }
+                  ], { duration: revealDuration, easing: "ease-out", fill: "forwards" });
+
+                  // Animation cho icon: ẩn trong bóng -> xuất hiện phóng to
+                  icon.animate([
+                    { opacity: 0, transform: "translate(-50%, -50%) scale(0)", offset: 0 },
+                    { opacity: 0, transform: "translate(-50%, -50%) scale(0)", offset: phase1End },
+                    { opacity: 1, transform: "translate(-50%, -50%) scale(1.6)", filter: "drop-shadow(0 0 20px #fff) drop-shadow(0 0 40px #ffe23e) brightness(1.3)", offset: phase1End + 0.12 },
+                    { opacity: 1, transform: "translate(-50%, -50%) scale(1.3)", filter: "drop-shadow(0 0 15px #fff) drop-shadow(0 0 30px #ffe23e) brightness(1.1)", offset: phase2End },
+                    { opacity: 1, transform: "translate(-50%, -50%) scale(1.35)", filter: "drop-shadow(0 0 15px #fff) drop-shadow(0 0 30px #ffe23e) brightness(1.05)", offset: 0.88 },
+                    { opacity: 0, transform: "translate(-50%, -50%) scale(1.8)", filter: "drop-shadow(0 0 10px #fff) drop-shadow(0 0 20px #ffe23e) brightness(1)", offset: 1 }
+                  ], { duration: revealDuration, easing: "ease-out", fill: "forwards" });
+
+                  // Animation cho tên item
+                  name.animate([
+                    { opacity: 0, transform: "translateX(-50%) translateY(15px)", offset: 0 },
+                    { opacity: 0, transform: "translateX(-50%) translateY(15px)", offset: phase2End - 0.02 },
+                    { opacity: 1, transform: "translateX(-50%) translateY(0)", offset: phase2End + 0.08 },
+                    { opacity: 1, transform: "translateX(-50%) translateY(0)", offset: 0.90 },
+                    { opacity: 0, transform: "translateX(-50%) translateY(-10px)", offset: 1 }
+                  ], { duration: revealDuration, easing: "ease-out", fill: "forwards" });
+
+                  // Animation cho sparkles (tia sáng bắn ra khi bóng nổ)
+                  sparkles.forEach(function(sp, i) {
+                    var angle = (i / sparkles.length) * 360;
+                    var rad = angle * Math.PI / 180;
+                    var dist = 50 + Math.random() * 40;
+                    var tx = Math.cos(rad) * dist;
+                    var ty = Math.sin(rad) * dist;
+                    var sparkDelay = revealDuration * phase1End;
+                    var sparkDur = revealDuration * 0.25;
+                    sp.animate([
+                      { opacity: 0, transform: "translate(0, 0) scale(0.5)", offset: 0 },
+                      { opacity: 1, transform: "translate(" + (tx * 0.5) + "px, " + (ty * 0.5) + "px) scale(1.2)", offset: 0.3 },
+                      { opacity: 0, transform: "translate(" + tx + "px, " + ty + "px) scale(0)", offset: 1 }
+                    ], { duration: sparkDur, delay: sparkDelay, easing: "ease-out", fill: "forwards" });
+                  });
+
+                  setTimeout(function() {
+                    // Cleanup tất cả animations
+                    reveal.getAnimations().forEach(function(a) { a.cancel(); });
+                    reveal.querySelectorAll("*").forEach(function(el) {
+                      el.getAnimations().forEach(function(a) { a.cancel(); });
+                    });
+                    reveal.style.display = "none";
+                    reveal.setAttribute("aria-hidden", "true");
+                    sparklesContainer.innerHTML = '';
+                    resolve();
+                  }, revealDuration + 50);
+                });
+              });
+            }, Promise.resolve());
+          }
+
+          function playMultiRewardReveal(items) {
+            var machine = document.querySelector(".airblowing");
+            var targets = Array.from(document.querySelectorAll(".spin-result-item[data-reward-index]"));
+            if (!machine || targets.length !== items.length) return Promise.resolve();
+
+            var machineRect = machine.getBoundingClientRect();
+            var startX = machineRect.left + machineRect.width * (197 / 648);
+            var startY = machineRect.top + machineRect.height * (730 / 869);
+            var elapsedDelay = 0;
+            var finishTimes = [];
+
+            targets.forEach(function(target, index) {
+              var targetRect = target.getBoundingClientRect();
+              var endX = targetRect.left + targetRect.width / 2;
+              var endY = targetRect.top + targetRect.height / 2;
+              var ball = document.createElement("div");
+              var duration = Math.max(320, 680 - index * 32);
+              var gapToNext = Math.max(90, 300 - index * 23);
+
+              ball.className = "flying-reward-ball";
+              ball.style.left = startX + "px";
+              ball.style.top = startY + "px";
+              document.body.appendChild(ball);
+
+              setTimeout(function() {
+                var lift = Math.max(70, Math.abs(startY - endY) * 0.22);
+                var flight = ball.animate([
+                  { left: startX + "px", top: startY + "px", transform: "translate(-50%, -50%) scale(0.35)", opacity: 1 },
+                  { left: (startX + endX) / 2 + "px", top: (Math.min(startY, endY) - lift) + "px", transform: "translate(-50%, -50%) scale(0.85)", opacity: 1, offset: 0.52 },
+                  { left: endX + "px", top: endY + "px", transform: "translate(-50%, -50%) scale(1)", opacity: 1, offset: 0.86 },
+                  { left: endX + "px", top: endY + "px", transform: "translate(-50%, -50%) scale(1.8)", opacity: 0 }
+                ], {
+                  duration: duration,
+                  easing: "cubic-bezier(.2,.72,.32,1)",
+                  fill: "forwards"
+                });
+
+                flight.finished.then(function() {
+                  ball.remove();
+                  target.classList.remove("reward-pending");
+                  target.classList.add("reward-revealed");
+                });
+              }, elapsedDelay);
+
+              finishTimes.push(elapsedDelay + duration);
+              elapsedDelay += gapToNext;
+            });
+
+            return new Promise(function(resolve) {
+              setTimeout(resolve, Math.max.apply(null, finishTimes) + 350);
+            });
+          }
+
+          function addToHistory(data) {
+            var tbody = document.getElementById("spinHistoryBody");
+            // Remove empty state row if present
+            var emptyRow = tbody.querySelector(".empty-history");
+            if (emptyRow) {
+              emptyRow.closest("tr").remove();
+            }
+
+            var existingRows = tbody.querySelectorAll("tr");
+            var startIndex = existingRows.length;
+
+            for (var i = data.data.length - 1; i >= 0; i--) {
+              var now = new Date();
+              var timeStr = now.toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' });
+              var newRow = document.createElement("tr");
+              newRow.classList.add("new-spin");
+              newRow.innerHTML = `
+                <td>1</td>
+                <td class="item-name">${escapeSpinHtml(data.data[i].name)}</td>
+                <td>
+                  <span class="item-code" style="background:#fff3cd;color:#856404">Chưa nhận</span>
+                </td>
+                <td class="item-time">${timeStr}</td>
+              `;
+              tbody.insertBefore(newRow, tbody.firstChild);
+            }
+
+            // Re-number rows
+            var allRows = tbody.querySelectorAll("tr");
+            allRows.forEach(function(row, idx) {
+              var firstTd = row.querySelector("td:first-child");
+              if (firstTd && !firstTd.classList.contains("empty-history")) {
+                firstTd.textContent = idx + 1;
+              }
+            });
+          }
+          function showCombo(code) {
+            $.ajax({
+              method: "GET",
+              url: "/spin-combo?code=" + code,
+              success: function(res) {
+                if(res.error) {
+                  toastr["error"](res.message || "Không thể tải dữ liệu combo", "Lỗi");
+                } else {
+                  var itemsHtml = res.data.map((item, i) => `
+                    <div class="spin-result-item" style="opacity: 1; padding: 15px;">
+                      <img class="spin-result-icon" style="opacity: 1;" src="${item.img}" alt="${item.name}">
+                      <div class="spin-result-name" style="opacity: 1;">${item.name}</div>
+                    </div>
+                  `).join('');
+                  var spinModal = document.querySelector(".spinModal");
+                  spinModal.innerHTML = `
+                  <div class="gift-container gift-container-x10">
+                    <button type="button" class="btn btn-primary btn-close-gift">X</button>
+                    <h3 style="text-align: center; color: white; margin-bottom: 20px; font-family: Pony;">Danh sách 10 vật phẩm</h3>
+                    <div class="spin-result-grid">
+                      ${itemsHtml}
+                    </div>
+                  </div>
+                  <div class="gift-background"></div>
+                  `;
+                  document.querySelector(".btn-close-gift").addEventListener("click", () => {
+                    document.querySelector(".spinModal").innerHTML = ``;
+                  });
+                }
+              },
+              error: function() {
+                toastr["error"]("Đã xảy ra lỗi khi tải dữ liệu combo", "Lỗi");
+              }
+            });
+          }
+          function copyGiftCode(code) {
+            navigator.clipboard.writeText(code).then(function() {
+              toastr["success"]("Đã copy mã: " + code, "Thành công");
+            }, function(err) {
+              // fallback
+              var textArea = document.createElement("textarea");
+              textArea.value = code;
+              document.body.appendChild(textArea);
+              textArea.select();
+              try {
+                document.execCommand('copy');
+                toastr["success"]("Đã copy mã: " + code, "Thành công");
+              } catch (err) {
+                toastr["error"]("Không thể copy mã", "Lỗi");
+              }
+              document.body.removeChild(textArea);
+            });
+          }
+      </script>
+      <%-include("../partials/footer.ejs")%>

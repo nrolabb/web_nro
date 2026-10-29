@@ -1,0 +1,133 @@
+<!-- Deposits Management Tab -->
+<div class="toolbar">
+  <div class="toolbar-left">
+    <div class="search-box" style="margin-right: 10px;">
+      <input type="date" class="form-input" id="fromDate" value="<%= fromDate || '' %>" title="Từ ngày">
+    </div>
+    <span style="margin-right: 10px; color: var(--text-muted);">-</span>
+    <div class="search-box">
+      <input type="date" class="form-input" id="toDate" value="<%= toDate || '' %>" title="Đến ngày">
+    </div>
+    
+    <select class="form-input" id="sortBy" style="margin-left: 10px; width: 140px;">
+      <option value="created_at" <%= sortBy === 'created_at' ? 'selected' : '' %>>Ngày nạp</option>
+      <option value="amount" <%= sortBy === 'amount' ? 'selected' : '' %>>Số điểm</option>
+    </select>
+    
+    <select class="form-input" id="sortOrder" style="margin-left: 10px; width: 120px;">
+      <option value="DESC" <%= sortOrder === 'DESC' ? 'selected' : '' %>>Giảm dần</option>
+      <option value="ASC" <%= sortOrder === 'ASC' ? 'selected' : '' %>>Tăng dần</option>
+    </select>
+
+    <button class="btn btn-primary btn-sm" onclick="filterDeposits()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      Lọc
+    </button>
+    <% if (fromDate || toDate || sortBy !== 'created_at' || sortOrder !== 'DESC') { %>
+    <a href="/panel/admin?type=deposits" class="btn btn-ghost btn-sm">Xoá bộ lọc</a>
+    <% } %>
+  </div>
+  <div class="toolbar-right">
+    <span class="result-count">Tổng: <strong><%= totalDeposits %></strong> giao dịch</span>
+  </div>
+</div>
+
+<div class="panel-card">
+  <div class="panel-card-body" style="padding: 0;">
+    <div class="admin-table-wrapper">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Mã GD</th>
+            <th>Tài khoản</th>
+            <th>Số điểm</th>
+            <th>Ngân hàng</th>
+            <th>Nội dung</th>
+            <th>Trạng thái</th>
+            <th>Đã cộng</th>
+            <th>Ngày tạo</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (deposits && deposits.length > 0) { %>
+            <% deposits.forEach(function(dep) { %>
+            <tr>
+              <td><%= dep.id %></td>
+              <td style="font-family: 'JetBrains Mono', monospace;"><%= dep.transaction_id %></td>
+              <td style="font-weight: 600; color: var(--text-primary);"><%= dep.username %></td>
+              <td style="font-family: 'JetBrains Mono', monospace; color: var(--success);"><%= new Intl.NumberFormat('vi-VN').format(Number(dep.amount) || 0) %> VND</td>
+              <td><%= dep.sender_bank_name || '—' %></td>
+              <td style="max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="<%= dep.description %>"><%= dep.description %></td>
+              <td>
+                <% if (dep.status === 'success') { %>
+                  <span class="badge badge-success">Thành công</span>
+                <% } else if (dep.status === 'failed: user not found') { %>
+                  <span class="badge badge-danger">Lỗi User</span>
+                <% } else { %>
+                  <span class="badge badge-warning"><%= dep.status %></span>
+                <% } %>
+              </td>
+              <td>
+                <% if (dep.is_credited === 1) { %>
+                  <span class="badge badge-success">Có</span>
+                <% } else { %>
+                  <span class="badge badge-danger">Không</span>
+                <% } %>
+              </td>
+              <td style="font-size: 12px;"><%= dep.created_at ? new Date(dep.created_at).toLocaleString('vi-VN') : '—' %></td>
+            </tr>
+            <% }); %>
+          <% } else { %>
+            <tr><td colspan="9" style="text-align: center; padding: 40px; color: var(--text-muted);">Không tìm thấy giao dịch nào</td></tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Pagination -->
+<% if (totalPages > 1) { %>
+<div class="pagination">
+  <% 
+     let queryParams = "";
+     if (fromDate) queryParams += "&fromDate=" + encodeURIComponent(fromDate);
+     if (toDate) queryParams += "&toDate=" + encodeURIComponent(toDate);
+     if (sortBy) queryParams += "&sortBy=" + encodeURIComponent(sortBy);
+     if (sortOrder) queryParams += "&sortOrder=" + encodeURIComponent(sortOrder);
+  %>
+  <% if (currentPage > 1) { %>
+    <a href="/panel/admin?type=deposits&page=<%= currentPage - 1 %><%= queryParams %>">&laquo;</a>
+  <% } %>
+  <% for (var p = 1; p <= totalPages; p++) { %>
+    <% if (p === currentPage) { %>
+      <span class="active"><%= p %></span>
+    <% } else if (Math.abs(p - currentPage) <= 2 || p === 1 || p === totalPages) { %>
+      <a href="/panel/admin?type=deposits&page=<%= p %><%= queryParams %>"><%= p %></a>
+    <% } else if (Math.abs(p - currentPage) === 3) { %>
+      <span>...</span>
+    <% } %>
+  <% } %>
+  <% if (currentPage < totalPages) { %>
+    <a href="/panel/admin?type=deposits&page=<%= currentPage + 1 %><%= queryParams %>">&raquo;</a>
+  <% } %>
+</div>
+<% } %>
+
+<script>
+  function filterDeposits() {
+    var from = document.getElementById('fromDate').value;
+    var to = document.getElementById('toDate').value;
+    var sortBy = document.getElementById('sortBy').value;
+    var sortOrder = document.getElementById('sortOrder').value;
+    
+    var url = '/panel/admin?type=deposits';
+    if (from) url += '&fromDate=' + encodeURIComponent(from);
+    if (to) url += '&toDate=' + encodeURIComponent(to);
+    if (sortBy) url += '&sortBy=' + encodeURIComponent(sortBy);
+    if (sortOrder) url += '&sortOrder=' + encodeURIComponent(sortOrder);
+    
+    window.location.href = url;
+  }
+</script>

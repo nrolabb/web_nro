@@ -1,0 +1,1329 @@
+/* ==========================================================================
+   ARENA THẦN RỒNG - GLOBAL THEME CSS
+   Glassmorphism dark theme with gold/orange accents
+   ========================================================================== */
+
+/* Google Fonts Import */
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Poppins:wght@300;400;500;600;700;800&display=swap');
+
+/* Reset & Base Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Poppins', sans-serif;
+}
+
+body {
+    min-height: 100vh;
+    background-color: #0b0c10;
+    --page-background:
+        linear-gradient(135deg, rgba(0, 0, 0, 0.4) 0%, rgba(15, 10, 5, 0.5) 100%),
+        url('../images/arena/bg.jpg');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+    overflow-x: hidden;
+    color: #ffffff;
+    padding: 0;
+    margin: 0;
+}
+
+a {
+    text-decoration: none;
+    color: inherit;
+}
+
+/* ==========================================================================
+   ARENA HEADER / NAVBAR
+   ========================================================================== */
+.arena-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1000;
+    background: rgba(4, 5, 12, 0.75);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid rgba(225, 166, 36, 0.25);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.arena-nav {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 20px;
+}
+
+.arena-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+}
+
+.arena-brand-logo {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    border: 2px solid #ffb300;
+    object-fit: cover;
+    box-shadow: 0 0 12px rgba(255, 170, 0, 0.4);
+    transition: all 0.3s ease;
+}
+
+.arena-brand:hover .arena-brand-logo {
+    border-color: #ffe600;
+    box-shadow: 0 0 20px rgba(255, 230, 0, 0.6);
+    transform: scale(1.05);
+}
+
+.arena-brand-title {
+    font-family: 'Poppins', sans-serif;
+    font-size: 1.2rem;
+    font-weight: 800;
+    background: linear-gradient(to right, #ffe57f 0%, #ffcc00 25%, #ffe57f 50%, #ffcc00 75%, #ffe57f 100%);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    color: transparent;
+    animation: goldShimmer 4s linear infinite;
+    letter-spacing: 1px;
+}
+
+/* Mobile menu toggle */
+.arena-menu-toggle {
+    display: none;
+    background: transparent;
+    border: 1.5px solid rgba(255, 255, 255, 0.3);
+    border-radius: 8px;
+    color: #ffffff;
+    padding: 6px 10px;
+    cursor: pointer;
+    font-size: 1.2rem;
+    transition: all 0.3s ease;
+}
+
+.arena-menu-toggle:hover {
+    border-color: #ffcc00;
+    color: #ffcc00;
+}
+
+/* Nav Links */
+.arena-nav-links {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.arena-nav-links li a {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border-radius: 10px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #8c92ac;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+
+.arena-nav-links li a:hover {
+    color: #ffcc00;
+    background: rgba(255, 204, 0, 0.08);
+}
+
+.arena-nav-links li a.active {
+    background: #ff4d00;
+    color: #ffffff;
+    box-shadow: 0 0 12px rgba(255, 77, 0, 0.3);
+}
+
+.arena-nav-links li a i {
+    font-size: 0.9rem;
+}
+
+/* User Area */
+.arena-user-area {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    position: relative;
+}
+
+.arena-user-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.arena-user-btn:hover {
+    background: rgba(255, 204, 0, 0.1);
+    border-color: rgba(225, 166, 36, 0.4);
+}
+
+.arena-user-avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 1.5px solid #ffb300;
+    object-fit: cover;
+}
+
+.arena-user-vnd {
+    color: #ffcc00;
+    font-weight: 700;
+}
+
+/* Dropdown */
+.arena-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    min-width: 200px;
+    background: rgba(8, 9, 20, 0.95);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(225, 166, 36, 0.3);
+    border-radius: 12px;
+    padding: 8px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6);
+    display: none;
+    z-index: 1001;
+}
+
+.arena-dropdown.show {
+    display: block;
+    animation: slideDown 0.2s ease;
+}
+
+.arena-dropdown a {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: #c0c4d8;
+    transition: all 0.2s ease;
+}
+
+.arena-dropdown a:hover {
+    background: rgba(255, 204, 0, 0.1);
+    color: #ffcc00;
+}
+
+.arena-dropdown a.danger {
+    color: #ff4757;
+}
+
+.arena-dropdown a.danger:hover {
+    background: rgba(255, 71, 87, 0.1);
+}
+
+.arena-dropdown-divider {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.08);
+    margin: 4px 0;
+}
+
+/* ==========================================================================
+   STARLIGHT PARTICLES CONTAINER
+   ========================================================================== */
+.starlight-particles-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    z-index: 2;
+    overflow: hidden;
+}
+
+.starlight-star {
+    position: absolute;
+    width: var(--star-size, 8px);
+    height: var(--star-size, 8px);
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    filter: drop-shadow(0 0 2px var(--star-glow, #ffd700));
+    animation: dynamicStarLife var(--star-life, 3.2s) ease-in-out forwards;
+    pointer-events: none;
+    transform-origin: center center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+@keyframes dynamicStarLife {
+    0% {
+        opacity: 0;
+        transform: scale(0.2) rotate(0deg) translate(0, 0);
+    }
+    35% {
+        opacity: 0.9;
+        transform: scale(1.05) rotate(30deg) translate(var(--drift-x, 3px), var(--drift-y, -5px));
+        filter: drop-shadow(0 0 3px var(--star-glow, #ffd700)) drop-shadow(0 0 5px #ffffff);
+    }
+    65% {
+        opacity: 0.75;
+        transform: scale(0.9) rotate(50deg) translate(calc(var(--drift-x, 3px) * 1.5), calc(var(--drift-y, -5px) * 1.5));
+    }
+    100% {
+        opacity: 0;
+        transform: scale(0.2) rotate(80deg) translate(calc(var(--drift-x, 3px) * 2), calc(var(--drift-y, -5px) * 2));
+    }
+}
+
+/* ==========================================================================
+   MAIN CONTENT AREA 
+   ========================================================================== */
+.arena-main {
+    padding-top: 70px;
+    min-height: 100vh;
+    position: relative;
+    z-index: 3;
+}
+
+/* ==========================================================================
+   ARENA PAGE CONTAINER (glassmorphism card for content pages)
+   ========================================================================== */
+.arena-page-container {
+    max-width: 1100px;
+    margin: 30px auto;
+    padding: 0 20px;
+}
+
+.arena-card {
+    background: rgba(8, 9, 15, 0.55);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1.5px solid rgba(225, 166, 36, 0.3);
+    border-radius: 20px;
+    padding: 28px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5), 0 0 15px rgba(225, 166, 36, 0.1);
+    position: relative;
+}
+
+.arena-card-header {
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+.arena-card-title {
+    font-family: 'Poppins', sans-serif;
+    font-size: 1.6rem;
+    font-weight: 700;
+    background: linear-gradient(to right, #ffe57f 0%, #ffcc00 25%, #ffe57f 50%, #ffcc00 75%, #ffe57f 100%);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    color: transparent;
+    animation: goldShimmer 4s linear infinite;
+    filter: drop-shadow(0 0 8px rgba(255, 204, 0, 0.35));
+    margin-bottom: 6px;
+}
+
+.arena-card-subtitle {
+    font-size: 0.85rem;
+    color: #8c92ac;
+    font-weight: 500;
+}
+
+/* ==========================================================================
+   LOGIN / REGISTER PAGE LAYOUT (Two-Panel)
+   ========================================================================== */
+.arena-auth-layout {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 60px;
+    z-index: 1;
+    position: relative;
+    padding: 24px 20px;
+    min-height: calc(100vh - 70px);
+}
+
+/* Left Panel */
+.arena-left-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.arena-left-title {
+    font-family: 'Poppins', sans-serif;
+    font-size: 2.6rem;
+    font-weight: 800;
+    background: linear-gradient(to right, #ffe57f 0%, #ffcc00 25%, #ffe57f 50%, #ffcc00 75%, #ffe57f 100%);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    color: transparent;
+    animation: goldShimmer 4s linear infinite;
+    filter: drop-shadow(0 0 12px rgba(255, 204, 0, 0.4));
+    margin-bottom: 25px;
+    letter-spacing: 1px;
+}
+
+/* Badge Rows */
+.arena-badge-row {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    width: fit-content;
+    max-width: 505px;
+    background: rgba(4, 5, 9, 0.55);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 12px 18px;
+    border-radius: 12px;
+    margin-bottom: 16px;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    transition: transform 0.25s ease, background 0.25s ease;
+}
+
+.arena-badge-row:hover {
+    transform: translateX(4px);
+    background: rgba(4, 5, 9, 0.7);
+}
+
+.arena-badge-row.row-cyan { border-left: 4px solid #00d2ff; }
+.arena-badge-row.row-yellow { border-left: 4px solid #ffcc00; }
+.arena-badge-row.row-orange { border-left: 4px solid #ff4d00; }
+
+.arena-badge {
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    text-align: center;
+    color: #040509;
+    display: inline-block;
+}
+
+.arena-badge.social { background: #00d2ff; }
+.arena-badge.quest { background: #ffcc00; }
+.arena-badge.start { background: #ff4d00; color: #ffffff; }
+
+.arena-badge-desc {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #ffffff;
+    line-height: 1.45;
+    white-space: nowrap;
+}
+
+/* Right Panel */
+.arena-right-panel {
+    width: 100%;
+    max-width: 440px;
+    position: relative;
+}
+
+/* Aura Glow */
+.arena-aura-glow {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    margin-top: -300px;
+    margin-left: -300px;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(255, 140, 0, 0.15) 0%, rgba(255, 69, 0, 0.05) 50%, rgba(0, 0, 0, 0) 70%);
+    filter: blur(40px);
+    border-radius: 50%;
+    z-index: -1;
+    animation: auraPulse 6s ease-in-out infinite alternate;
+    pointer-events: none;
+}
+
+@keyframes auraPulse {
+    0% { transform: scale(0.9) translate(-10px, -10px); opacity: 0.8; }
+    100% { transform: scale(1.1) translate(10px, 10px); opacity: 1; }
+}
+
+/* Form Card */
+.arena-form-wrapper {
+    width: 100%;
+    background: rgba(8, 9, 15, 0.45);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 2px solid #e1a624;
+    border-radius: 28px;
+    padding: 32px 28px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5), 0 0 20px rgba(225, 166, 36, 0.15);
+    position: relative;
+}
+
+/* Micro Corner Star Glints */
+.arena-form-wrapper::before {
+    content: '';
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    width: 9px;
+    height: 9px;
+    background:
+        radial-gradient(circle at center, #ffffff 20%, #ffe600 45%, transparent 70%),
+        linear-gradient(to bottom, transparent 40%, #ffffff 48%, #ffffff 52%, transparent 60%),
+        linear-gradient(to right, transparent 40%, #ffffff 48%, #ffffff 52%, transparent 60%);
+    border-radius: 50%;
+    filter: drop-shadow(0 0 2px #ffe600);
+    animation: starTwinkleCard 3.2s ease-in-out infinite;
+    pointer-events: none;
+    z-index: 5;
+}
+
+.arena-form-wrapper::after {
+    content: '';
+    position: absolute;
+    bottom: -3px;
+    left: -3px;
+    width: 8px;
+    height: 8px;
+    background:
+        radial-gradient(circle at center, #ffffff 20%, #ffe600 45%, transparent 70%),
+        linear-gradient(to bottom, transparent 40%, #ffffff 48%, #ffffff 52%, transparent 60%),
+        linear-gradient(to right, transparent 40%, #ffffff 48%, #ffffff 52%, transparent 60%);
+    border-radius: 50%;
+    filter: drop-shadow(0 0 2px #ffe600);
+    animation: starTwinkleCard 3.6s ease-in-out infinite 1.5s;
+    pointer-events: none;
+    z-index: 5;
+}
+
+@keyframes starTwinkleCard {
+    0%, 100% { opacity: 0.15; transform: scale(0.4) rotate(0deg); }
+    50% { opacity: 0.8; transform: scale(1.05) rotate(45deg); }
+}
+
+/* Card Header */
+.arena-card-logo-area {
+    text-align: center;
+    margin-bottom: 16px;
+}
+
+.arena-logo-wrapper {
+    position: relative;
+    display: inline-block;
+}
+
+.arena-sparkle {
+    position: absolute;
+    width: 9px;
+    height: 9px;
+    background:
+        radial-gradient(circle at center, #ffffff 20%, #ffe600 45%, transparent 70%),
+        linear-gradient(to bottom, transparent 40%, #ffffff 48%, #ffffff 52%, transparent 60%),
+        linear-gradient(to right, transparent 40%, #ffffff 48%, #ffffff 52%, transparent 60%);
+    border-radius: 50%;
+    filter: drop-shadow(0 0 2px #ffe600);
+    animation: starTwinkleCard 3s ease-in-out infinite;
+    font-size: 0;
+    pointer-events: none;
+}
+
+.arena-sparkle.sp-top-right { top: 6px; right: -6px; }
+.arena-sparkle.sp-bottom-left { bottom: 14px; left: -6px; animation-delay: 1.2s; }
+
+/* Logo Circle */
+.arena-logo-circle {
+    position: relative;
+    width: 115px;
+    height: 115px;
+    margin: 0 auto 8px auto;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 2.5px solid #ffb300;
+    box-shadow: 0 0 20px rgba(255, 170, 0, 0.55), inset 0 0 8px rgba(255, 255, 255, 0.3);
+    background: transparent;
+    animation: logoCelestialAura 3.5s ease-in-out infinite alternate;
+    transition: all 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.arena-logo-circle img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+    image-rendering: -webkit-optimize-contrast;
+    filter: contrast(1.16) brightness(1.06) saturate(1.22);
+    animation: logoImgBreathing 4s ease-in-out infinite alternate;
+    transition: transform 0.3s ease, filter 0.3s ease;
+}
+
+.arena-logo-circle:hover {
+    transform: scale(1.08) rotate(2deg);
+    border-color: #ffe600;
+    box-shadow: 0 0 28px rgba(255, 230, 0, 0.85), inset 0 0 14px rgba(255, 255, 255, 0.5);
+}
+
+.arena-logo-circle::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -150%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(to right, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.45) 50%, rgba(255, 255, 255, 0) 100%);
+    transform: skewX(-25deg);
+    pointer-events: none;
+    animation: shineSweep 4s infinite ease-in-out;
+}
+
+@keyframes logoCelestialAura {
+    0% { box-shadow: 0 0 14px rgba(255, 170, 0, 0.45), inset 0 0 8px rgba(0, 229, 255, 0.25); border-color: #ffb300; }
+    50% { box-shadow: 0 0 24px rgba(255, 200, 0, 0.75), 0 0 35px rgba(255, 100, 0, 0.3), inset 0 0 12px rgba(255, 255, 255, 0.4); border-color: #ffd700; }
+    100% { box-shadow: 0 0 16px rgba(255, 170, 0, 0.5), inset 0 0 8px rgba(0, 229, 255, 0.3); border-color: #ffb300; }
+}
+
+@keyframes logoImgBreathing {
+    0% { filter: contrast(1.16) brightness(1.06) saturate(1.22); }
+    100% { filter: contrast(1.20) brightness(1.10) saturate(1.28) drop-shadow(0 4px 14px rgba(255, 215, 0, 0.7)); }
+}
+
+@keyframes shineSweep {
+    0% { left: -150%; }
+    15% { left: 150%; }
+    100% { left: 150%; }
+}
+
+/* Gold Title */
+.arena-game-title {
+    font-family: 'Poppins', sans-serif;
+    font-size: 1.55rem;
+    font-weight: 700;
+    background: linear-gradient(to right, #ffe57f 0%, #ffcc00 25%, #ffe57f 50%, #ffcc00 75%, #ffe57f 100%);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    color: transparent;
+    animation: goldShimmer 4s linear infinite;
+    filter: drop-shadow(0 0 8px rgba(255, 204, 0, 0.35));
+    margin-bottom: 2px;
+}
+
+@keyframes goldShimmer {
+    0% { background-position: 0% center; }
+    100% { background-position: 200% center; }
+}
+
+.arena-game-subtitle {
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #8c92ac;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+}
+
+/* Tab Group */
+.arena-tab-group {
+    display: flex;
+    background: transparent;
+    border-radius: 12px;
+    padding: 4px;
+    margin-bottom: 18px;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+.arena-tab-btn {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: #8c92ac;
+    font-size: 0.92rem;
+    font-weight: 600;
+    padding: 9px 12px;
+    cursor: pointer;
+    border-radius: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+    text-decoration: none;
+}
+
+.arena-tab-btn i { font-size: 0.9rem; }
+.arena-tab-btn:hover { color: #ffcc00; }
+.arena-tab-btn.active {
+    background: #ff4d00;
+    color: #ffffff;
+    box-shadow: 0 0 12px rgba(255, 77, 0, 0.3);
+}
+
+/* ==========================================================================
+   FORM ELEMENTS (Shared across all pages)
+   ========================================================================== */
+.arena-form { display: flex; flex-direction: column; gap: 12px; }
+
+.arena-input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.arena-input-group label {
+    font-size: 0.8rem;
+    color: #8c92ac;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.arena-input-group label i { color: #e1a624; }
+
+.arena-input-group input,
+.arena-input-group select,
+.arena-input-group textarea {
+    background: transparent;
+    border: 1.5px solid rgba(255, 255, 255, 0.35);
+    border-radius: 12px;
+    padding: 11px 14px;
+    color: #ffffff;
+    font-size: 0.98rem;
+    font-weight: 600;
+    outline: none;
+    transition: all 0.3s ease;
+    font-family: 'Poppins', sans-serif;
+}
+
+.arena-input-group input::placeholder,
+.arena-input-group textarea::placeholder { color: #4a4e69; }
+
+.arena-input-group input:focus,
+.arena-input-group select:focus,
+.arena-input-group textarea:focus {
+    border-color: #e1a624;
+    box-shadow: 0 0 10px rgba(225, 166, 36, 0.25);
+    background: rgba(0, 0, 0, 0.3);
+}
+
+.arena-input-group select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='%238c92ac'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 36px;
+}
+
+.arena-input-group select option {
+    background: #0b0c10;
+    color: #ffffff;
+}
+
+/* Password Eye Toggle */
+.arena-password-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.arena-password-wrapper input { width: 100%; padding-right: 48px; }
+
+.arena-toggle-password {
+    position: absolute;
+    right: 18px;
+    color: #8c92ac;
+    cursor: pointer;
+    font-size: 1.1rem;
+    transition: color 0.3s ease;
+}
+
+.arena-toggle-password:hover { color: #e1a624; }
+
+/* Checkbox */
+.arena-form-options {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    font-size: 0.88rem;
+    margin-top: -2px;
+}
+
+.arena-remember-me {
+    display: flex;
+    align-items: center;
+    position: relative;
+    padding-left: 28px;
+    cursor: pointer;
+    color: #8c92ac;
+    user-select: none;
+    font-weight: 500;
+}
+
+.arena-remember-me input {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+    height: 0;
+    width: 0;
+}
+
+.arena-checkmark {
+    position: absolute;
+    top: 1px;
+    left: 0;
+    height: 18px;
+    width: 18px;
+    background-color: transparent;
+    border: 1.5px solid rgba(255, 255, 255, 0.35);
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.arena-remember-me:hover input ~ .arena-checkmark { border-color: #e1a624; }
+.arena-remember-me input:checked ~ .arena-checkmark { background-color: #e1a624; border-color: #e1a624; }
+
+.arena-checkmark:after {
+    content: "";
+    position: absolute;
+    display: none;
+    left: 5px;
+    top: 2px;
+    width: 4px;
+    height: 8px;
+    border: solid #040509;
+    border-width: 0 2.2px 2.2px 0;
+    transform: rotate(45deg);
+}
+
+.arena-remember-me input:checked ~ .arena-checkmark:after { display: block; }
+
+/* Submit Button */
+.arena-btn-submit {
+    background: #ff4d00;
+    border: none;
+    border-radius: 12px;
+    padding: 11px;
+    color: #ffffff;
+    font-size: 1.05rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+    margin-top: 5px;
+    font-family: 'Poppins', sans-serif;
+}
+
+.arena-btn-submit i { font-size: 1.1rem; }
+
+.arena-btn-submit:hover {
+    transform: translateY(-1.5px);
+    box-shadow: 0 0 20px rgba(255, 77, 0, 0.5);
+    background: #ff5e00;
+}
+
+.arena-btn-submit:active { transform: translateY(0); }
+
+.arena-btn-secondary {
+    background: transparent;
+    border: 1.5px solid rgba(255, 255, 255, 0.25);
+    border-radius: 12px;
+    padding: 10px;
+    color: #8c92ac;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+    font-family: 'Poppins', sans-serif;
+}
+
+.arena-btn-secondary:hover {
+    color: #ffcc00;
+    border-color: rgba(225, 166, 36, 0.5);
+    background: rgba(255, 204, 0, 0.05);
+}
+
+/* ==========================================================================
+   TOAST NOTIFICATIONS
+   ========================================================================== */
+.arena-toast {
+    padding: 10px 15px;
+    border-radius: 8px;
+    font-size: 0.88rem;
+    font-weight: 500;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    animation: slideDown 0.3s ease;
+    z-index: 5;
+    position: relative;
+}
+
+@keyframes slideDown {
+    from { transform: translateY(-10px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.arena-toast.success { background: rgba(46, 117, 89, 0.25); border: 1px solid #2e7559; color: #58d68d; }
+.arena-toast.error { background: rgba(231, 76, 60, 0.15); border: 1px solid #e74c3c; color: #f1948a; }
+.arena-toast.info { background: rgba(52, 152, 219, 0.15); border: 1px solid #3498db; color: #85c1e9; }
+.arena-toast.warning { background: rgba(243, 156, 18, 0.15); border: 1px solid #f39c12; color: #f8c471; }
+.arena-toast.hidden { display: none; }
+
+/* ==========================================================================
+   ARENA TABLE (BXH, History, etc.)
+   ========================================================================== */
+.arena-table-wrapper {
+    overflow-x: auto;
+    border-radius: 12px;
+}
+
+.arena-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+}
+
+.arena-table th {
+    background: rgba(225, 166, 36, 0.15);
+    color: #ffcc00;
+    font-weight: 700;
+    font-size: 0.82rem;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    padding: 12px 16px;
+    text-align: left;
+    border-bottom: 2px solid rgba(225, 166, 36, 0.3);
+}
+
+.arena-table td {
+    padding: 10px 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    color: #c0c4d8;
+}
+
+.arena-table tbody tr:hover {
+    background: rgba(255, 204, 0, 0.04);
+}
+
+.arena-table tbody tr:nth-child(even) {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+/* ==========================================================================
+   HOMEPAGE SECTIONS (Download, Pets, etc.)
+   ========================================================================== */
+.arena-section-title {
+    font-family: 'Poppins', sans-serif;
+    font-size: 1.4rem;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 24px;
+    background: linear-gradient(to right, #ffe57f 0%, #ffcc00 25%, #ffe57f 50%, #ffcc00 75%, #ffe57f 100%);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: goldShimmer 4s linear infinite;
+}
+
+/* Download Buttons */
+.arena-download-row {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-bottom: 40px;
+}
+
+.arena-download-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 28px;
+    border-radius: 14px;
+    background: rgba(8, 9, 15, 0.55);
+    backdrop-filter: blur(12px);
+    border: 1.5px solid rgba(225, 166, 36, 0.3);
+    color: #ffffff;
+    font-size: 0.95rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.arena-download-btn:hover {
+    transform: translateY(-3px);
+    border-color: #ffcc00;
+    box-shadow: 0 8px 25px rgba(255, 204, 0, 0.2);
+    background: rgba(255, 204, 0, 0.08);
+}
+
+.arena-download-btn i {
+    font-size: 1.6rem;
+    color: #ffcc00;
+}
+
+/* Pet System */
+.arena-pet-section {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.arena-pet-active {
+    width: 200px;
+    height: 200px;
+    border-radius: 16px;
+    border: 2px solid #ffb300;
+    overflow: hidden;
+    box-shadow: 0 0 20px rgba(255, 170, 0, 0.3);
+}
+
+.arena-pet-active img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.arena-pet-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    max-width: 400px;
+    justify-content: center;
+}
+
+.arena-pet-item {
+    width: 80px;
+    height: 80px;
+    border-radius: 12px;
+    border: 2px solid rgba(255, 255, 255, 0.15);
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.arena-pet-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.arena-pet-item:hover,
+.arena-pet-item.status-active {
+    border-color: #ffcc00;
+    box-shadow: 0 0 15px rgba(255, 204, 0, 0.3);
+    transform: scale(1.08);
+}
+
+/* ==========================================================================
+   ARENA FOOTER
+   ========================================================================== */
+.arena-footer {
+    background: rgba(4, 5, 12, 0.8);
+    backdrop-filter: blur(12px);
+    border-top: 1px solid rgba(225, 166, 36, 0.15);
+    padding: 24px 20px;
+    text-align: center;
+    position: relative;
+    z-index: 3;
+}
+
+.arena-footer p {
+    font-size: 0.82rem;
+    color: #5a5e78;
+    margin-bottom: 4px;
+    font-weight: 400;
+}
+
+.arena-footer a {
+    color: #e1a624;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.arena-footer a:hover { color: #ffcc00; }
+
+.arena-footer-social {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    margin-top: 10px;
+}
+
+.arena-footer-social a {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(255, 255, 255, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    color: #8c92ac;
+    transition: all 0.3s ease;
+}
+
+.arena-footer-social a:hover {
+    border-color: #ffcc00;
+    color: #ffcc00;
+    transform: scale(1.1);
+    box-shadow: 0 0 10px rgba(255, 204, 0, 0.3);
+}
+
+/* ==========================================================================
+   PROFILE PAGE
+   ========================================================================== */
+.arena-profile-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.arena-profile-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.arena-profile-label {
+    font-size: 0.78rem;
+    color: #8c92ac;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+.arena-profile-value {
+    font-size: 0.95rem;
+    color: #ffffff;
+    font-weight: 600;
+    padding: 10px 14px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    background: rgba(0, 0, 0, 0.2);
+}
+
+/* ==========================================================================
+   SPIN / VÒNG QUAY
+   ========================================================================== */
+.arena-spin-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 30px;
+    flex-wrap: wrap;
+}
+
+/* ==========================================================================
+   NẠP TIỀN
+   ========================================================================== */
+.arena-naptien-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+}
+
+.arena-naptien-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    padding: 18px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.arena-naptien-card:hover {
+    border-color: #ffcc00;
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(255, 204, 0, 0.15);
+}
+
+.arena-naptien-card.selected {
+    border-color: #ff4d00;
+    background: rgba(255, 77, 0, 0.1);
+    box-shadow: 0 0 15px rgba(255, 77, 0, 0.2);
+}
+
+/* ==========================================================================
+   UTILITY CLASSES
+   ========================================================================== */
+.arena-text-gold {
+    color: #ffcc00;
+}
+
+.arena-text-muted {
+    color: #8c92ac;
+}
+
+.arena-text-center {
+    text-align: center;
+}
+
+.arena-mt-1 { margin-top: 8px; }
+.arena-mt-2 { margin-top: 16px; }
+.arena-mt-3 { margin-top: 24px; }
+.arena-mb-1 { margin-bottom: 8px; }
+.arena-mb-2 { margin-bottom: 16px; }
+.arena-mb-3 { margin-bottom: 24px; }
+
+.arena-hidden { display: none !important; }
+
+/* ==========================================================================
+   RESPONSIVE DESIGN
+   ========================================================================== */
+@media (max-width: 900px) {
+    body {
+        align-items: flex-start;
+        overflow-y: auto;
+    }
+
+    .arena-auth-layout {
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: 40px;
+        margin-top: 10px;
+    }
+
+    .arena-left-panel {
+        align-items: center;
+        text-align: center;
+    }
+
+    .arena-badge-row {
+        justify-content: center;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .arena-right-panel {
+        max-width: 400px;
+        margin: 0 auto 40px auto;
+    }
+
+    .arena-nav-links {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        width: 100%;
+        background: rgba(4, 5, 12, 0.95);
+        backdrop-filter: blur(16px);
+        flex-direction: column;
+        padding: 10px;
+        border-bottom: 1px solid rgba(225, 166, 36, 0.2);
+    }
+
+    .arena-nav-links.show {
+        display: flex;
+    }
+
+    .arena-menu-toggle {
+        display: flex;
+    }
+
+    .arena-profile-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 480px) {
+    .arena-left-title { font-size: 2.1rem; }
+
+    .arena-badge-row {
+        flex-direction: column;
+        text-align: center;
+        gap: 10px;
+        padding: 15px;
+    }
+
+    .arena-badge-desc { white-space: normal; }
+
+    .arena-right-panel { max-width: 100%; }
+
+    .arena-download-row { flex-direction: column; align-items: center; }
+
+    .arena-pet-section { flex-direction: column; }
+}
+
+/* Content pages share a flow-based header offset and bottom footer. */
+body.arena-content-page {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    min-height: 100vh;
+    min-height: 100dvh;
+}
+.arena-content-page > .arena-header {
+    position: sticky;
+    flex-shrink: 0;
+}
+.arena-content-main {
+    flex: 1 0 auto;
+    width: 100%;
+    position: relative;
+    z-index: 3;
+}
+.arena-content-page > .arena-footer { flex-shrink: 0; }
+.arena-ranking-server { text-align: center; color: #c0c4d8; margin-bottom: 16px; }
+.arena-ranking-tabs { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-bottom: 24px; }
+.arena-ranking-tab { padding: 10px 16px; border: 1px solid #e1a624; border-radius: 10px; color: #ffcc00; }
+.arena-ranking-tab.active, .arena-ranking-tab:hover { background: #e1a624; color: #0b0c10; }
+.arena-ranking-table { white-space: nowrap; }
+.arena-ranking-name { display: inline-flex; align-items: center; gap: 10px; }
+.arena-ranking-name img { width: 32px; height: 32px; object-fit: contain; }
+.arena-ranking-medal { color: #ffcc00; }
+@media (max-width: 600px) {
+    .arena-content-page .arena-nav { flex-wrap: wrap; gap: 8px; }
+    .arena-content-page .arena-brand-title { font-size: 0.9rem; }
+    .arena-content-page .arena-user-area { margin-left: auto; max-width: 100%; }
+    .arena-content-page .arena-user-btn { flex-wrap: wrap; }
+    .arena-content-page .arena-card { padding: 16px; }
+}

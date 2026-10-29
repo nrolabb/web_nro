@@ -1,0 +1,157 @@
+<!-- Server Logs Tab -->
+<div class="panel-card">
+  <div class="panel-card-header">
+    <div class="panel-card-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+      Server Logs
+    </div>
+    <div class="log-tabs">
+      <button class="log-tab active" onclick="switchLogTab('server')" id="tabServer">server.log</button>
+      <button class="log-tab" onclick="switchLogTab('error')" id="tabError">error.log</button>
+    </div>
+  </div>
+  <div class="log-viewer">
+    <div class="log-toolbar">
+      <div class="log-toolbar-left">
+        <div class="log-status">
+          <span class="dot" id="logStatusDot"></span>
+          <span id="logStatusText">Auto-refresh: ON</span>
+        </div>
+        <input type="text" class="log-filter-input" placeholder="Lọc log..." id="logFilterInput" oninput="filterLogs()">
+      </div>
+      <div class="log-toolbar-right">
+        <button class="btn btn-sm btn-ghost" onclick="toggleAutoRefresh()" id="btnToggleRefresh">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+          Pause
+        </button>
+        <button class="btn btn-sm btn-ghost" onclick="refreshLogs()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+          Refresh
+        </button>
+        <button class="btn btn-sm btn-ghost" onclick="clearLogView()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          Clear
+        </button>
+        <button class="btn btn-sm btn-primary" onclick="scrollToBottom()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+          Bottom
+        </button>
+      </div>
+    </div>
+    <div class="log-content" id="logContent">
+      <% if (logLines && logLines.length > 0) { %>
+        <% for (var i = 0; i < logLines.length; i++) { %>
+          <div class="log-line" data-text="<%= logLines[i].toLowerCase() %>">
+            <span class="log-line-num"><%= i + 1 %></span>
+            <span class="log-line-text <%= logLines[i].includes('Error') || logLines[i].includes('error') || logLines[i].includes('ERROR') || logLines[i].includes('Exception') ? 'error' : logLines[i].includes('WARN') || logLines[i].includes('warn') ? 'warn' : logLines[i].includes('Successfully') || logLines[i].includes('success') || logLines[i].includes('Done') ? 'success' : logLines[i].includes('[') ? 'info' : '' %>"><%= logLines[i] %></span>
+          </div>
+        <% } %>
+      <% } else { %>
+        <div class="empty-state">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          <p>Không có log nào</p>
+        </div>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<script>
+  var autoRefresh = true;
+  var refreshInterval = null;
+  var currentLogTab = 'server';
+
+  function startAutoRefresh() {
+    if (refreshInterval) clearInterval(refreshInterval);
+    refreshInterval = setInterval(function() {
+      if (autoRefresh) refreshLogs();
+    }, 5000);
+  }
+
+  function toggleAutoRefresh() {
+    autoRefresh = !autoRefresh;
+    var btn = document.getElementById('btnToggleRefresh');
+    var dot = document.getElementById('logStatusDot');
+    var statusText = document.getElementById('logStatusText');
+    if (autoRefresh) {
+      btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg> Pause';
+      dot.classList.remove('paused');
+      statusText.textContent = 'Auto-refresh: ON';
+    } else {
+      btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg> Resume';
+      dot.classList.add('paused');
+      statusText.textContent = 'Auto-refresh: OFF';
+    }
+  }
+
+  async function refreshLogs() {
+    try {
+      var result = await adminApi('refresh-logs', { logType: currentLogTab });
+      if (result.success && result.lines) {
+        renderLogLines(result.lines);
+      }
+    } catch(err) {
+      console.error('Failed to refresh logs:', err);
+    }
+  }
+
+  function renderLogLines(lines) {
+    var container = document.getElementById('logContent');
+    var wasAtBottom = container.scrollTop + container.clientHeight >= container.scrollHeight - 30;
+    var filterVal = document.getElementById('logFilterInput').value.toLowerCase();
+    
+    var html = '';
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i];
+      var lowerLine = line.toLowerCase();
+      var cls = '';
+      if (lowerLine.indexOf('error') !== -1 || lowerLine.indexOf('exception') !== -1) cls = 'error';
+      else if (lowerLine.indexOf('warn') !== -1) cls = 'warn';
+      else if (lowerLine.indexOf('successfully') !== -1 || lowerLine.indexOf('done') !== -1) cls = 'success';
+      else if (line.indexOf('[') !== -1) cls = 'info';
+      
+      var display = (filterVal && lowerLine.indexOf(filterVal) === -1) ? 'none' : '';
+      html += '<div class="log-line" data-text="' + escapeAttr(lowerLine) + '" style="display:' + display + '"><span class="log-line-num">' + (i + 1) + '</span><span class="log-line-text ' + cls + '">' + escapeHtml(line) + '</span></div>';
+    }
+    container.innerHTML = html;
+    
+    if (wasAtBottom) scrollToBottom();
+  }
+
+  function escapeHtml(str) {
+    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  function escapeAttr(str) {
+    return str.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  function filterLogs() {
+    var filter = document.getElementById('logFilterInput').value.toLowerCase();
+    var lines = document.querySelectorAll('#logContent .log-line');
+    lines.forEach(function(line) {
+      var text = line.getAttribute('data-text') || '';
+      line.style.display = (!filter || text.indexOf(filter) !== -1) ? '' : 'none';
+    });
+  }
+
+  function clearLogView() {
+    document.getElementById('logContent').innerHTML = '<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><p>Log đã được xóa (chỉ xóa hiển thị)</p></div>';
+  }
+
+  function scrollToBottom() {
+    var container = document.getElementById('logContent');
+    container.scrollTop = container.scrollHeight;
+  }
+
+  function switchLogTab(tab) {
+    currentLogTab = tab;
+    document.querySelectorAll('.log-tab').forEach(function(el) { el.classList.remove('active'); });
+    document.getElementById(tab === 'server' ? 'tabServer' : 'tabError').classList.add('active');
+    refreshLogs();
+  }
+
+  // Auto-scroll to bottom on load & start auto-refresh
+  scrollToBottom();
+  startAutoRefresh();
+</script>

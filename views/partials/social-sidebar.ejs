@@ -1,0 +1,22 @@
+<link rel="stylesheet" href="/assets/arena-dashboard/social-sidebar.css?v=1">
+<aside class="social-sidebar" id="serverSocialSidebar" aria-label="Cộng đồng và Giftcode">
+ <a class="sidebar-item facebook-item" href="<%= options.config.socialLinks.facebook %>" target="_blank" rel="noopener noreferrer" aria-label="Facebook"><i class="fa-brands fa-facebook"></i><span>FACEBOOK</span></a>
+ <a class="sidebar-item zalo-item" href="<%= options.config.socialLinks.zalo %>" target="_blank" rel="noopener noreferrer" aria-label="Zalo">            <svg class="zalo-svg-icon" viewBox="0 0 32 32" width="22" height="22">
+                <path fill="#ffffff" d="M16 2.5C8.5 2.5 2.5 8 2.5 14.8c0 3.8 1.9 7.2 5 9.5-.4 1.5-1.3 3.8-1.4 4.2-.1.4.1.6.5.5 1.6-.6 4.5-2 5.7-2.6 1.2.3 2.4.5 3.7.5 7.5 0 13.5-5.5 13.5-12.3S23.5 2.5 16 2.5z"/>
+                <text x="16" y="18.8" font-family="'Segoe UI', Arial, sans-serif" font-weight="900" font-size="8.8" fill="#0068ff" text-anchor="middle" letter-spacing="-0.3">Zalo</text>
+            </svg>
+<span>ZALO</span></a>
+ <button type="button" class="sidebar-item giftcode-item" id="serverGiftcodeOpen"><i class="fa-solid fa-gift"></i><span>GIFTCODE</span></button>
+</aside>
+<div id="serverGiftcodeModal" hidden role="dialog" aria-modal="true" aria-labelledby="serverGiftcodeTitle">
+ <section class="server-giftcode-panel">
+  <header><h2 id="serverGiftcodeTitle"><i class="fa-solid fa-gift"></i> GIFTCODE SERVER</h2><button type="button" id="serverGiftcodeClose" aria-label="Đóng">×</button></header>
+  <p>Sao chép mã và nhập Giftcode trong game để nhận quà.</p>
+  <p id="serverGiftcodeNotice"></p>
+  <label id="serverGiftcodeCharacterLabel" hidden>Nhân vật <select id="serverGiftcodeCharacter"></select></label>
+  <div id="serverGiftcodeList"></div>
+  <p id="serverGiftcodeStatus" role="status" aria-live="polite"></p>
+  <button type="button" id="serverGiftcodeRefresh">Làm mới</button>
+ </section>
+</div>
+<script src="/assets/arena-dashboard/social-sidebar.js?v=1" defer></script>

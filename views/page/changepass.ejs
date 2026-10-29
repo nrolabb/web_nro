@@ -1,0 +1,72 @@
+<%- include("../partials/head.ejs") %> <%- include("../partials/sidebar.ejs") %>
+
+        <body class=" ">
+            <div class="position-relative iq-banner">
+                <div class="iq-navbar-header" style="height: 60px"></div>
+                <div class="container-fluid content-inner mt-n5 py-0">
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="/">Home</a></li>
+                            <li class="breadcrumb-item active" aria-current="page">Đổi mật khẩu</li>
+                        </ol>
+                    </nav>
+                    <div class="row justify-content-center">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h4 class="text-center">Đổi mật khẩu</h4>
+                                </div>
+                                <div class="card-body">
+                                    <!-- Replace "/process" with your form submission URL -->
+                                    <div class="mb-3">
+                                        <label for="account" class="form-label">Mật khẩu cũ</label>
+                                        <input type="password" class="form-control" id="password" name="password"
+                                            placeholder="Nhập mật khẩu cũ của bạn" />
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="coins" class="form-label">Mật khẩu mới</label>
+                                        <input type="password" class="form-control" id="newPass" name="newPass"
+                                            placeholder="Nhập mật khẩu mới của bạn" />
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="coins" class="form-label">Nhập lại khẩu mới</label>
+                                        <input type="password" class="form-control" id="reNewPass" name="reNewPass"
+                                            placeholder="Nhập lại mật khẩu mới của bạn" />
+                                    </div>
+                                    <div class="d-grid">
+                                        <button type="submit" id="submit" class="btn btn-primary">Đồng ý</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <script>
+                var oldPassword = document.getElementById("password");
+                var newPass = document.getElementById("newPass");
+                var reNewPass = document.getElementById("reNewPass");
+                var submit = document.querySelector("#submit")
+                submit.addEventListener("click", (event) => {
+                    if (reNewPass.value != newPass.value) {
+                        return toastr.error("Mật khẩu mới nhập lại không đúng", "Lỗi")
+                    }
+                    submit.disabled = true;
+                    submit.innerHTML = "Đang đổi mật khẩu ..."
+                    $.ajax({
+                        method: "POST",
+                        url: "/auth/changepassword",
+                        data: {
+                            old_pass: oldPassword.value,
+                            new_pass: newPass.value
+                        },
+                        success: (data, status) => {
+                            toastr[`${data?.error ? 'error' : 'success'}`](data?.message, `${data?.error ? "Lỗi" : "Thành Công"}`)
+                            submit.disabled = false
+                            submit.innerHTML = `Đồng ý`
+                        }
+                    })
+                })
+            </script>
+            <%- include("../partials/footer.ejs") %>
+        </body>

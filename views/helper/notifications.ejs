@@ -1,0 +1,34 @@
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+<script src="/assets/js/toast.js"></script>
+<script>
+  toastr.options = {
+    closeButton: false,
+    debug: false,
+    newestOnTop: false,
+    progressBar: true,
+    positionClass: "toast-top-right",
+    preventDuplicates: false,
+    onclick: null,
+    showDuration: "300",
+    hideDuration: "1000",
+    timeOut: "3000",
+    extendedTimeOut: "1000",
+    showEasing: "swing",
+    hideEasing: "linear",
+    showMethod: "fadeIn",
+    hideMethod: "fadeOut",
+  };
+
+  document.addEventListener("DOMContentLoaded", function () {
+    var loginMessage;
+    try {
+      loginMessage = sessionStorage.getItem("arenaLoginSuccess");
+      sessionStorage.removeItem("arenaLoginSuccess");
+    } catch (error) {
+      return;
+    }
+    if (loginMessage) {
+      toastr.success(loginMessage, "Success", { escapeHtml: true });
+    }
+  });
+</script>

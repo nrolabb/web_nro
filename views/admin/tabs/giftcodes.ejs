@@ -1,0 +1,394 @@
+<!-- Giftcodes Management Tab -->
+<div class="toolbar">
+  <div class="toolbar-left">
+    <button class="btn btn-primary btn-sm" onclick="openAddGiftcodeModal()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Thêm giftcode
+    </button>
+    <div class="search-box">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" class="form-input" placeholder="Tìm kiếm giftcode..." id="giftcodeSearch" value="<%= searchQuery || '' %>" onkeydown="if(event.key==='Enter')searchGiftcodes()">
+    </div>
+    <button class="btn btn-ghost btn-sm" onclick="searchGiftcodes()">Tìm kiếm</button>
+    <% if (searchQuery) { %>
+      <a href="/panel/admin?type=giftcodes" class="btn btn-ghost btn-sm">Xóa bộ lọc</a>
+    <% } %>
+  </div>
+  <div class="toolbar-right">
+    <span class="result-count">Tổng: <strong><%= totalGiftcodes %></strong> giftcode</span>
+  </div>
+</div>
+
+<div class="panel-card">
+  <div class="panel-card-body" style="padding:0">
+    <div class="admin-table-wrapper">
+      <table class="admin-table">
+        <thead><tr><th>ID</th><th>Mã code</th><th>Số lượt còn</th><th>Chi tiết</th><th>Ngày tạo</th><th>Hết hạn</th><th>Hành động</th></tr></thead>
+        <tbody>
+          <% if (giftcodes && giftcodes.length > 0) { %>
+            <% giftcodes.forEach(function(gc) { %>
+              <tr>
+                <td><%= gc.id %></td>
+                <td style="font-weight:600;color:var(--primary-color)"><%= gc.code %></td>
+                <td class="spin-mono"><%= gc.count_left %></td>
+                <td class="giftcode-detail-table-cell">
+                  <div class="giftcode-collapsible-detail" data-detail="<%= Buffer.from(String(gc.detail || '[]'), 'utf8').toString('hex') %>"></div>
+                </td>
+                <td style="font-size:12px"><%= gc.datecreate ? new Date(gc.datecreate).toLocaleString('vi-VN') : '—' %></td>
+                <td style="font-size:12px;color:<%= gc.expired && new Date(gc.expired) < new Date() ? 'var(--danger)' : 'var(--text-primary)' %>">
+                  <%= gc.expired ? new Date(gc.expired).toLocaleString('vi-VN') : '—' %>
+                </td>
+                <td>
+                  <div class="action-group">
+                    <button class="btn btn-ghost btn-sm" onclick="openEditGiftcodeModal(decodeGiftcode('<%= Buffer.from(JSON.stringify(gc), 'utf8').toString('hex') %>'))">Sửa</button>
+                    <button class="btn btn-ghost btn-sm" style="color:var(--danger)" onclick="deleteGiftcode(<%= gc.id %>, decodeGiftcode('<%= Buffer.from(JSON.stringify(String(gc.code)), 'utf8').toString('hex') %>'))">Xóa</button>
+                  </div>
+                </td>
+              </tr>
+            <% }); %>
+          <% } else { %>
+            <tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text-muted)">Không tìm thấy giftcode nào</td></tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<% if (totalPages > 1) { %>
+<div class="pagination">
+  <% if (currentPage > 1) { %>
+    <a href="/panel/admin?type=giftcodes&page=<%= currentPage - 1 %><%= searchQuery ? '&search=' + encodeURIComponent(searchQuery) : '' %>">&laquo;</a>
+  <% } %>
+  <% for (var p = 1; p <= totalPages; p++) { %>
+    <% if (p === currentPage) { %>
+      <span class="active"><%= p %></span>
+    <% } else if (Math.abs(p - currentPage) <= 2 || p === 1 || p === totalPages) { %>
+      <a href="/panel/admin?type=giftcodes&page=<%= p %><%= searchQuery ? '&search=' + encodeURIComponent(searchQuery) : '' %>"><%= p %></a>
+    <% } else if (Math.abs(p - currentPage) === 3) { %>
+      <span>...</span>
+    <% } %>
+  <% } %>
+  <% if (currentPage < totalPages) { %>
+    <a href="/panel/admin?type=giftcodes&page=<%= currentPage + 1 %><%= searchQuery ? '&search=' + encodeURIComponent(searchQuery) : '' %>">&raquo;</a>
+  <% } %>
+</div>
+<% } %>
+
+<script>
+  var giftcodeTemplates = decodeGiftcode('<%= Buffer.from(JSON.stringify(giftcodeTemplates || []), 'utf8').toString('hex') %>');
+  var giftcodeOptionTemplates = decodeGiftcode('<%= Buffer.from(JSON.stringify(giftcodeOptionTemplates || []), 'utf8').toString('hex') %>');
+  var giftcodeOptionCatalog = {};
+  var giftcodeRewards = [];
+  var giftcodeEditingOptionIndex = -1;
+  var giftcodeEditingOptions = [];
+  var GIFTCODE_COMBO_LIMIT = 200;
+  giftcodeOptionTemplates.forEach(function(option) { giftcodeOptionCatalog[option.id] = option.name; });
+
+  function decodeGiftcode(hex) {
+    return JSON.parse(decodeGiftcodeText(hex));
+  }
+
+  function decodeGiftcodeText(hex) {
+    var encoded = '';
+    for (var i = 0; i < hex.length; i += 2) encoded += '%' + hex.slice(i, i + 2);
+    return decodeURIComponent(encoded);
+  }
+
+  function escapeGiftcodeHtml(value) {
+    return String(value == null ? '' : value).replace(/&/g, '&amp;').replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+  }
+
+  function parseGiftcodeDetail(detail) {
+    try {
+      var parsed = typeof detail === 'string' ? JSON.parse(detail) : detail;
+      if (!Array.isArray(parsed)) return [];
+      return parsed.map(function(reward) {
+        return {
+          id: Number(reward.id),
+          quantity: Number(reward.quantity) || 1,
+          options: Array.isArray(reward.options) ? reward.options.map(function(option) {
+            return { id:Number(option.id), param:Number(option.param) || 0 };
+          }) : []
+        };
+      });
+    } catch (err) {
+      showToast('Chi tiết giftcode hiện tại không phải JSON hợp lệ', 'error');
+      return [];
+    }
+  }
+
+  function filterGiftcodeCollection(collection, keyword) {
+    var key = String(keyword || '').trim().toLocaleLowerCase('vi');
+    if (!key) return collection;
+    return collection.filter(function(entry) {
+      return String(entry.id).includes(key) || String(entry.name || '').toLocaleLowerCase('vi').includes(key);
+    });
+  }
+
+  function buildGiftcodeComboOptions(collection, placeholder, keyword, selectedId) {
+    var filtered = filterGiftcodeCollection(collection, keyword);
+    var visible = filtered.slice(0, GIFTCODE_COMBO_LIMIT);
+    if (selectedId !== '' && selectedId != null && !visible.some(function(entry) { return String(entry.id) === String(selectedId); })) {
+      var selected = collection.find(function(entry) { return String(entry.id) === String(selectedId); });
+      if (selected) {
+        if (visible.length === GIFTCODE_COMBO_LIMIT) visible.pop();
+        visible.unshift(selected);
+      }
+    }
+    var html = '<option value="">' + placeholder + '</option>' + visible.map(function(entry) {
+      return '<option value="' + entry.id + '"' + (String(entry.id) === String(selectedId) ? ' selected' : '') + '>#' + entry.id + ' - ' + escapeGiftcodeHtml(entry.name) + '</option>';
+    }).join('');
+    if (filtered.length > GIFTCODE_COMBO_LIMIT) {
+      html += '<option value="" disabled>— Đang hiển thị ' + GIFTCODE_COMBO_LIMIT + '/' + filtered.length + ', nhập từ khóa để lọc thêm —</option>';
+    }
+    return html;
+  }
+
+  function formatGiftcodeDateTime(value) {
+    var date = value ? new Date(value) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+    if (isNaN(date.getTime())) date = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+    function pad(number) { return String(number).padStart(2, '0'); }
+    return date.getFullYear() + '-' + pad(date.getMonth() + 1) + '-' + pad(date.getDate()) + 'T' + pad(date.getHours()) + ':' + pad(date.getMinutes());
+  }
+
+  function giftcodeFormHtml(prefix, giftcode) {
+    giftcode = giftcode || {};
+    var code = escapeGiftcodeHtml(giftcode.code || '');
+    var count = giftcode.count_left == null ? 1 : giftcode.count_left;
+    return (giftcode.id ? '<input type="hidden" id="' + prefix + 'GiftcodeId" value="' + giftcode.id + '">' : '') +
+      '<div class="giftcode-form-grid">' +
+        '<div class="form-group"><label class="form-label">Mã giftcode</label><input type="text" class="form-input" id="' + prefix + 'GiftcodeCode" value="' + code + '" autocomplete="off"></div>' +
+        '<div class="form-group"><label class="form-label">Số lượt sử dụng</label><input type="number" min="1" step="1" class="form-input" id="' + prefix + 'GiftcodeCount" value="' + count + '"></div>' +
+        '<div class="form-group giftcode-expired-field"><label class="form-label">Hết hạn</label><input type="datetime-local" class="form-input" id="' + prefix + 'GiftcodeExpired" value="' + formatGiftcodeDateTime(giftcode.expired) + '"></div>' +
+      '</div>' +
+      '<div class="giftcode-reward-heading"><div><strong>Phần thưởng</strong><small>Chọn vật phẩm trong item_template rồi thêm vào danh sách</small></div></div>' +
+      '<div class="giftcode-add-item-bar">' +
+        '<div><input type="text" class="form-input spin-combobox-filter" id="giftcodeItemFilter" placeholder="Lọc vật phẩm theo tên hoặc ID..." autocomplete="off" oninput="filterGiftcodeItemCombo(this.value)">' +
+        '<select class="form-input spin-template-combobox" id="giftcodeItemSelect">' + buildGiftcodeComboOptions(giftcodeTemplates, '-- Chọn vật phẩm --', '', '') + '</select></div>' +
+        '<label>Số lượng<input type="number" min="1" step="1" class="form-input" id="giftcodeNewItemQuantity" value="1"></label>' +
+        '<button type="button" class="btn btn-primary btn-sm" onclick="addGiftcodeReward()">+ Thêm item</button>' +
+      '</div>' +
+      '<div class="giftcode-datagrid"><table><thead><tr><th>#</th><th>Vật phẩm</th><th>Số lượng</th><th>Options</th><th>Hành động</th></tr></thead>' +
+        '<tbody id="giftcodeRewardRows"></tbody></table></div>';
+  }
+
+  function openAddGiftcodeModal() {
+    giftcodeRewards = [];
+    openModal('Thêm Giftcode', giftcodeFormHtml('add', {}), '<button class="btn btn-primary" onclick="submitGiftcode(\'add\')">Thêm giftcode</button>');
+    prepareGiftcodeModal();
+    renderGiftcodeRewards();
+  }
+
+  function openEditGiftcodeModal(giftcode) {
+    giftcodeRewards = parseGiftcodeDetail(giftcode.detail);
+    openModal('Sửa Giftcode', giftcodeFormHtml('edit', giftcode), '<button class="btn btn-primary" onclick="submitGiftcode(\'edit\')">Lưu thay đổi</button>');
+    prepareGiftcodeModal();
+    renderGiftcodeRewards();
+  }
+
+  function prepareGiftcodeModal() {
+    document.getElementById('modalOverlay').dataset.preventBackdropClose = 'true';
+    document.getElementById('modalContent').classList.add('giftcode-main-modal');
+    resizeGiftcodeModal(false);
+    closeGiftcodeOptionPanel();
+  }
+
+  function resizeGiftcodeModal(hasOptionPanel) {
+    var modal = document.getElementById('modalContent');
+    if (!modal || !modal.classList.contains('giftcode-main-modal')) return;
+    var narrowScreen = window.innerWidth <= 900;
+    var width = narrowScreen
+      ? 'calc(100vw - 12px)'
+      : '50vw';
+    modal.style.setProperty('width', width, 'important');
+    modal.style.setProperty('max-width', narrowScreen ? 'none' : '1180px', 'important');
+    modal.style.setProperty('margin-left', hasOptionPanel ? '0' : 'auto', 'important');
+    modal.style.setProperty('margin-right', hasOptionPanel ? '0' : 'auto', 'important');
+  }
+
+  function addGiftcodeReward() {
+    var select = document.getElementById('giftcodeItemSelect');
+    var quantityInput = document.getElementById('giftcodeNewItemQuantity');
+    var itemId = select && select.value !== '' ? Number(select.value) : NaN;
+    var quantity = quantityInput ? Number(quantityInput.value) : 1;
+    if (!Number.isInteger(itemId)) return showToast('Vui lòng chọn vật phẩm cần thêm', 'error');
+    if (!Number.isInteger(quantity) || quantity < 1) return showToast('Số lượng phải là số nguyên lớn hơn 0', 'error');
+    if (giftcodeRewards.some(function(reward) { return reward.id === itemId; })) return showToast('Vật phẩm này đã có trong danh sách', 'error');
+    giftcodeRewards.push({ id:itemId, quantity:quantity, options:[] });
+    if (select) select.innerHTML = buildGiftcodeComboOptions(giftcodeTemplates, '-- Chọn vật phẩm --', '', '');
+    if (quantityInput) quantityInput.value = 1;
+    var filter = document.getElementById('giftcodeItemFilter');
+    if (filter) filter.value = '';
+    renderGiftcodeRewards();
+  }
+
+  function removeGiftcodeReward(index) {
+    giftcodeRewards.splice(index, 1);
+    renderGiftcodeRewards();
+  }
+
+  function setGiftcodeQuantity(index, quantity) {
+    giftcodeRewards[index].quantity = Number(quantity);
+  }
+
+  function filterGiftcodeItemCombo(keyword) {
+    var select = document.getElementById('giftcodeItemSelect');
+    if (!select) return;
+    select.innerHTML = buildGiftcodeComboOptions(giftcodeTemplates, '-- Chọn vật phẩm --', keyword, select.value);
+  }
+
+  function renderGiftcodeRewards() {
+    var container = document.getElementById('giftcodeRewardRows');
+    if (!container) return;
+    container.innerHTML = giftcodeRewards.map(function(reward, index) {
+      var item = giftcodeTemplates.find(function(template) { return String(template.id) === String(reward.id); });
+      var optionSummary = reward.options.length ? reward.options.map(function(option) {
+        return (giftcodeOptionCatalog[option.id] || ('Option #' + option.id)) + ': ' + option.param;
+      }).join(', ') : 'Chưa có option';
+      return '<tr>' +
+        '<td><span class="giftcode-row-number">' + (index + 1) + '</span></td>' +
+        '<td><div class="giftcode-datagrid-item">' + (item && item.icon_id != null ? '<img src="/api/icon-x2/' + item.icon_id + '.png">' : '') +
+          '<span><strong>' + escapeGiftcodeHtml(item ? item.name : ('Item #' + reward.id)) + '</strong><small>ID: ' + reward.id + '</small></span></div></td>' +
+        '<td><input type="number" min="1" step="1" class="form-input giftcode-datagrid-number" value="' + reward.quantity + '" oninput="setGiftcodeQuantity(' + index + ',this.value)"></td>' +
+        '<td><div class="giftcode-datagrid-options"><span title="' + escapeGiftcodeHtml(optionSummary) + '">' + reward.options.length + ' option</span><button type="button" class="btn btn-ghost btn-sm" onclick="openGiftcodeOptionPanel(' + index + ')">+ Add option</button></div></td>' +
+        '<td><button type="button" class="btn btn-ghost btn-sm giftcode-grid-delete" onclick="removeGiftcodeReward(' + index + ')">Xóa</button></td>' +
+      '</tr>';
+    }).join('') || '<tr><td colspan="5" class="giftcode-datagrid-empty">Chưa có item nào được thêm</td></tr>';
+  }
+
+  function openGiftcodeOptionPanel(rewardIndex) {
+    giftcodeEditingOptionIndex = rewardIndex;
+    giftcodeEditingOptions = giftcodeRewards[rewardIndex].options.map(function(option) { return { id:option.id, param:option.param }; });
+    var overlay = document.getElementById('modalOverlay');
+    var oldPanel = document.getElementById('giftcodeOptionPanel');
+    if (oldPanel) oldPanel.remove();
+    var panel = document.createElement('div');
+    panel.className = 'modal spin-option-modal';
+    panel.id = 'giftcodeOptionPanel';
+    panel.innerHTML = '<div class="modal-header"><h3 class="modal-title">Chọn Item Options</h3><button class="modal-close" onclick="closeGiftcodeOptionPanel()">×</button></div>' +
+      '<div class="modal-body giftcode-option-body"><div class="giftcode-add-option-bar"><div><label class="form-label">Option từ item_option_template</label>' +
+        '<input type="text" class="form-input spin-combobox-filter" id="giftcodeOptionFilter" placeholder="Lọc theo tên hoặc ID..." autocomplete="off" oninput="filterGiftcodeOptionCombo(this.value)">' +
+        '<select class="form-input spin-template-combobox" id="giftcodeOptionSelect">' + buildGiftcodeComboOptions(giftcodeOptionTemplates, '-- Chọn option --', '', '') + '</select></div>' +
+        '<label>Chỉ số<input type="number" step="1" class="form-input" id="giftcodeNewOptionParam" value="0"></label>' +
+        '<button type="button" class="btn btn-primary btn-sm" onclick="addGiftcodeOption()">+ Thêm</button></div>' +
+        '<div class="giftcode-option-datagrid"><table><thead><tr><th>Option</th><th>Chỉ số</th><th>Hành động</th></tr></thead><tbody id="giftcodeOptionRows"></tbody></table></div></div>' +
+      '<div class="modal-footer"><button class="btn btn-ghost" onclick="closeGiftcodeOptionPanel()">Hủy</button><button class="btn btn-primary" onclick="saveGiftcodeOptions()">Áp dụng</button></div>';
+    overlay.appendChild(panel);
+    overlay.classList.add('spin-options-open');
+    resizeGiftcodeModal(true);
+    renderGiftcodeOptionRows();
+  }
+
+  function closeGiftcodeOptionPanel() {
+    var panel = document.getElementById('giftcodeOptionPanel');
+    if (panel) panel.remove();
+    var overlay = document.getElementById('modalOverlay');
+    if (overlay) overlay.classList.remove('spin-options-open');
+    resizeGiftcodeModal(false);
+  }
+
+  function filterGiftcodeOptionCombo(keyword) {
+    var select = document.getElementById('giftcodeOptionSelect');
+    if (select) select.innerHTML = buildGiftcodeComboOptions(giftcodeOptionTemplates, '-- Chọn option --', keyword, '');
+  }
+
+  function addGiftcodeOption() {
+    var select = document.getElementById('giftcodeOptionSelect');
+    var paramInput = document.getElementById('giftcodeNewOptionParam');
+    var numericId = select && select.value !== '' ? Number(select.value) : NaN;
+    var param = paramInput ? Number(paramInput.value) : 0;
+    if (!Number.isInteger(numericId)) return showToast('Vui lòng chọn option cần thêm', 'error');
+    if (!Number.isInteger(param)) return showToast('Chỉ số option phải là số nguyên', 'error');
+    if (giftcodeEditingOptions.some(function(option) { return option.id === numericId; })) {
+      return showToast('Option này đã được chọn', 'error');
+    }
+    giftcodeEditingOptions.push({ id:numericId, param:param });
+    select.innerHTML = buildGiftcodeComboOptions(giftcodeOptionTemplates, '-- Chọn option --', '', '');
+    paramInput.value = 0;
+    var filter = document.getElementById('giftcodeOptionFilter');
+    if (filter) filter.value = '';
+    renderGiftcodeOptionRows();
+  }
+
+  function setGiftcodeOptionParam(index, value) { giftcodeEditingOptions[index].param = Number(value); }
+  function removeGiftcodeOption(index) { giftcodeEditingOptions.splice(index, 1); renderGiftcodeOptionRows(); }
+
+  function renderGiftcodeOptionRows() {
+    var container = document.getElementById('giftcodeOptionRows');
+    if (!container) return;
+    container.innerHTML = giftcodeEditingOptions.map(function(option, index) {
+      var label = giftcodeOptionCatalog[option.id] || ('Option #' + option.id);
+      return '<tr><td><div class="giftcode-option-name"><strong>' + escapeGiftcodeHtml(label) + '</strong><small>ID: ' + option.id + '</small></div></td>' +
+        '<td><input type="number" step="1" class="form-input giftcode-datagrid-number" value="' + option.param + '" oninput="setGiftcodeOptionParam(' + index + ',this.value)"></td>' +
+        '<td><button type="button" class="btn btn-ghost btn-sm giftcode-grid-delete" onclick="removeGiftcodeOption(' + index + ')">Xóa</button></td></tr>';
+    }).join('') || '<tr><td colspan="3" class="giftcode-datagrid-empty">Chưa có option nào được thêm</td></tr>';
+  }
+
+  function saveGiftcodeOptions() {
+    giftcodeRewards[giftcodeEditingOptionIndex].options = giftcodeEditingOptions.map(function(option) {
+      return { id:Number(option.id), param:Number(option.param) || 0 };
+    });
+    closeGiftcodeOptionPanel();
+    renderGiftcodeRewards();
+  }
+
+  function renderGiftcodeTableDetails() {
+    document.querySelectorAll('.giftcode-collapsible-detail').forEach(function(container) {
+      var rewards = [];
+      try {
+        var parsed = JSON.parse(decodeGiftcodeText(container.dataset.detail || ''));
+        rewards = Array.isArray(parsed) ? parsed : [];
+      } catch (err) {
+        container.innerHTML = '<span class="giftcode-detail-invalid">Dữ liệu không hợp lệ</span>';
+        return;
+      }
+      var rows = rewards.map(function(reward) {
+        var item = giftcodeTemplates.find(function(template) { return String(template.id) === String(reward.id); });
+        var optionCount = Array.isArray(reward.options) ? reward.options.length : 0;
+        return '<div class="giftcode-detail-row"><span>' + escapeGiftcodeHtml(item ? item.name : ('Item #' + reward.id)) + ' <small>#' + reward.id + '</small></span>' +
+          '<strong>x' + (Number(reward.quantity) || 0) + '</strong><em>' + optionCount + ' option</em></div>';
+      }).join('');
+      container.innerHTML = '<details><summary>' + rewards.length + ' item <span>Xem chi tiết</span></summary><div class="giftcode-detail-content">' +
+        (rows || '<div class="giftcode-detail-empty">Không có vật phẩm</div>') + '</div></details>';
+    });
+  }
+
+  async function submitGiftcode(prefix) {
+    var code = document.getElementById(prefix + 'GiftcodeCode').value.trim();
+    var count = Number(document.getElementById(prefix + 'GiftcodeCount').value);
+    var expired = document.getElementById(prefix + 'GiftcodeExpired').value;
+    if (!code) return showToast('Vui lòng nhập mã giftcode', 'error');
+    if (!Number.isInteger(count) || count < 1) return showToast('Số lượt phải là số nguyên lớn hơn 0', 'error');
+    if (!expired) return showToast('Vui lòng chọn thời gian hết hạn', 'error');
+    if (!giftcodeRewards.length) return showToast('Giftcode phải có ít nhất một phần thưởng', 'error');
+    if (giftcodeRewards.some(function(reward) { return reward.id === '' || !Number.isInteger(reward.id); })) return showToast('Vui lòng chọn đầy đủ vật phẩm', 'error');
+    if (giftcodeRewards.some(function(reward) { return !Number.isInteger(reward.quantity) || reward.quantity < 1; })) return showToast('Số lượng vật phẩm phải là số nguyên lớn hơn 0', 'error');
+    var ids = giftcodeRewards.map(function(reward) { return reward.id; });
+    if (ids.some(function(id, index) { return ids.indexOf(id) !== index; })) return showToast('Một vật phẩm đang bị chọn nhiều lần', 'error');
+
+    var data = { code:code, count_left:count, expired:expired, detail:giftcodeRewards };
+    if (prefix === 'edit') data.id = Number(document.getElementById('editGiftcodeId').value);
+    var response = await adminApi(prefix === 'add' ? 'add_giftcode' : 'edit_giftcode', data);
+    showToast(response.message, response.success ? 'success' : 'error');
+    if (response.success) setTimeout(function() { location.reload(); }, 700);
+  }
+
+  async function deleteGiftcode(id, code) {
+    if (!confirm('Bạn có chắc chắn muốn xóa giftcode "' + code + '"?')) return;
+    var response = await adminApi('delete_giftcode', { id:id });
+    showToast(response.message, response.success ? 'success' : 'error');
+    if (response.success) setTimeout(function() { location.reload(); }, 700);
+  }
+
+  function searchGiftcodes() {
+    var query = document.getElementById('giftcodeSearch').value.trim();
+    window.location.href = '/panel/admin?type=giftcodes' + (query ? '&search=' + encodeURIComponent(query) : '');
+  }
+
+  window.addEventListener('resize', function() {
+    resizeGiftcodeModal(Boolean(document.getElementById('giftcodeOptionPanel')));
+  });
+  renderGiftcodeTableDetails();
+</script>

@@ -1,0 +1,74 @@
+<%- include('../partials/meta.ejs') %>
+<body class="dashboard-site profile-site">
+<%- include('../partials/head.ejs') %>
+<link rel="stylesheet" href="/assets/arena-dashboard/profile.css?v=2">
+<%
+const account = user[0];
+const character = player?.[0];
+const total = Math.max(0, Number(account.tongnap) || 0);
+const ranks = options.config.accountRanks;
+const rank = [...ranks].reverse().find(item => total >= item.amount);
+const nextRank = ranks.find(item => total < item.amount);
+const money = value => (Number(value) || 0).toLocaleString('vi-VN') + ' điểm';
+%>
+<main class="profile-page">
+  <h1>Trang cá nhân</h1>
+  <p class="profile-muted">Thông tin tài khoản và hạng tích lũy của bạn.</p>
+  <section class="profile-card" aria-labelledby="account-title">
+    <div class="profile-identity">
+      <img src="<%= options.getAvatar?.[character?.gender] || '/assets/images/arena/logo.jpg' %>" alt="" width="72" height="72">
+      <div><h2 id="account-title"><%= account.username %></h2><span class="profile-rank <%= rank?.key || '' %>"><%= rank?.name || 'Chưa có hạng' %></span></div>
+    </div>
+    <dl class="profile-info">
+      <div><dt>ID tài khoản</dt><dd><%= account.id %></dd></div>
+      <div><dt>Nhân vật</dt><dd><%= character?.name || 'Chưa tạo nhân vật' %></dd></div>
+      <div><dt>Số dư</dt><dd><%= money(account.vnd) %></dd></div>
+      <div><dt>Tổng Donate</dt><dd><%= money(total) %></dd></div>
+    </dl>
+    <div class="profile-actions">
+      <a class="profile-button" href="/naptien">Donate</a>
+      <button class="profile-button secondary" type="button" id="changePassword">Đổi mật khẩu</button>
+      <button class="profile-button secondary" type="button" id="activeAccount">Mở thành viên</button>
+    </div>
+    <p id="account-status" role="status"></p>
+  </section>
+  <section class="profile-card" aria-labelledby="rank-title">
+    <h2 id="rank-title">Hạng tài khoản</h2>
+    <p class="profile-muted">Hạng được tính theo tổng Donate, không phải số dư hiện tại.</p>
+    <ol class="profile-ranks">
+      <% ranks.forEach(item => { %>
+      <li class="<%= total >= item.amount ? 'reached' : '' %> <%= item.key %>" <%- rank === item ? 'aria-current="step"' : '' %>>
+        <strong><%= item.name %></strong><span><%= money(item.amount) %></span><small><%= total >= item.amount ? 'Đã đạt' : 'Chưa đạt' %></small>
+      </li>
+      <% }) %>
+    </ol>
+    <p class="profile-rank-note"><%= nextRank ? 'Donate thêm ' + money(nextRank.amount - total) + ' để đạt hạng ' + nextRank.name + '.' : 'Bạn đã đạt hạng cao nhất: Kim cương.' %></p>
+  </section>
+</main>
+<dialog id="password-panel" class="profile-dialog" aria-labelledby="password-title">
+  <div class="profile-dialog-header">
+    <h2 id="password-title">Đổi mật khẩu</h2>
+    <button type="button" class="profile-close" id="closePassword" aria-label="Đóng panel đổi mật khẩu">×</button>
+  </div>
+  <form id="password-form">
+    <div class="profile-field">
+    <label for="oldPassword">Mật khẩu hiện tại</label>
+    <input type="password" id="oldPassword" autocomplete="current-password" required>
+    </div>
+    <div class="profile-field">
+    <label for="newPassword">Mật khẩu mới</label>
+    <input type="password" id="newPassword" autocomplete="new-password" pattern="[a-zA-Z0-9]+" required aria-describedby="password-hint">
+    <p id="password-hint" class="profile-muted">Sử dụng chữ cái và chữ số, không có khoảng trắng hoặc ký tự đặc biệt.</p>
+    </div>
+    <div class="profile-field">
+    <label for="confirmPassword">Nhập lại mật khẩu mới</label>
+    <input type="password" id="confirmPassword" autocomplete="new-password" required>
+    </div>
+    <p id="password-status" role="status" aria-live="polite"></p>
+    <button type="submit" class="profile-button" id="submitPassword">Xác nhận đổi mật khẩu</button>
+  </form>
+</dialog>
+<script src="/assets/arena-dashboard/profile.js?v=1" defer></script>
+<%- include('../partials/footer.ejs') %>
+</body>
+</html>

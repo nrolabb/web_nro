@@ -1,0 +1,125 @@
+<%-include("../partials/meta.ejs")%>
+<link rel="stylesheet" href="/assets/css/admin.css">
+<body class="admin-body">
+  <%-include("../partials/sidebar.ejs")%>
+  <div class="position-relative iq-banner">
+    <div class="iq-navbar-header" style="height: 60px"></div>
+    <div class="conatiner-fluid content-inner mt-n5 py-0">
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><a href="/">Home</a></li>
+          <li class="breadcrumb-item"><a href="/panel/admin">Admin</a></li>
+          <li class="breadcrumb-item active" aria-current="page">Thống Kê</li>
+        </ol>
+      </nav>
+      <div class="row">
+        <h4 style="padding-bottom: 10px">Thông tin máy chủ</h4>
+        <div class="col-xl-4 col-lg-6">
+          <div class="card">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-center">
+                <div class="bg-success text-white rounded p-3">
+                  <svg class="icon-20" xmlns="http://www.w3.org/2000/svg" width="20px" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+                  </svg>
+                </div>
+                <div class="text-end">
+                  Tổng tài khoản
+                  <h2 class="counter"><%=totalUsers%></h2>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-xl-4 col-lg-6">
+          <div class="card">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-center">
+                <div class="bg-danger text-white rounded p-3">
+                  <svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 576 512">
+                    <!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. -->
+                    <style>
+                      svg {
+                        fill: #ffffff;
+                      }
+                    </style>
+                    <path d="M64 64C28.7 64 0 92.7 0 128V384c0 35.3 28.7 64 64 64H512c35.3 0 64-28.7 64-64V128c0-35.3-28.7-64-64-64H64zm64 320H64V320c35.3 0 64 28.7 64 64zM64 192V128h64c0 35.3-28.7 64-64 64zM448 384c0-35.3 28.7-64 64-64v64H448zm64-192c-35.3 0-64-28.7-64-64h64v64zM288 160a96 96 0 1 1 0 192 96 96 0 1 1 0-192z" />
+                  </svg>
+                </div>
+                <div class="text-end">
+                  Tổng thu nhập
+                  <h2><%=new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(allUser.reduce((acc, curr)=> acc + (Number(curr.tongnap) || 0), 0))%></h2>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-xl-4 col-lg-6">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="bg-info text-white rounded p-3">
+                            <svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 512 512"><!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. --><style>svg{fill:#ffffff}</style><path d="M256 0a256 256 0 1 1 0 512A256 256 0 1 1 256 0zM232 120V256c0 8 4 15.5 10.7 20l96 64c11 7.4 25.9 4.4 33.3-6.7s4.4-25.9-6.7-33.3L280 243.2V120c0-13.3-10.7-24-24-24s-24 10.7-24 24z"/></svg>
+                        </div>
+                        <div class="text-align">
+                            Thời gian
+                        <h2 id="time"></h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    
+        <script>
+            function updateTime() {
+                const timeElement = document.getElementById('time');
+                const currentTime = new Date();
+                timeElement.textContent = currentTime.toLocaleTimeString();
+            }
+    
+            setInterval(updateTime, 1000); // Cập nhật thời gian mỗi giây
+            updateTime(); // Cập nhật thời gian ban đầu
+        </script>
+      </div>
+      <!--last part-->
+      <div class="row">
+        <div class="col-sm-12">
+          <div class="card">
+            <div class="card-header">
+              <h4>Bảng xếp hạng nạp</h4>
+            </div>
+            <div class="card-body">
+              <div class="table-responsive">
+                <table class="table">
+                  <thead>
+                    <tr>
+                      <th>Top</th>
+                      <th>Avatar</th>
+                      <th>Tên</th>
+                      <th>Tổng Nạp</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <% allUser.sort((a, b) => (Number(b.tongnap) || 0) - (Number(a.tongnap) || 0))%> <% for (let i = 0; i < allUser.length; i++) { %> <% if (i < 3) { %>
+                    <tr>
+                      <td><%=i+1%></td>
+                      <td><img src="/assets/images/images.png" alt="Avatar" width="42" height="42" class="admin-avatar" /></td>
+                      <td><%= allUser[i].username %></td>
+                      <td><%= new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Number(allUser[i].tongnap) || 0) %></td>
+                    </tr>
+                    <% } else { %> <% break; %>
+                    <!-- Exit the loop when the first 3 users are displayed -->
+                    <% } %> <% } %>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  </main>
+  <%-include("../partials/footer.ejs")%>
+</body>
+</html>

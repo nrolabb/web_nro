@@ -1,0 +1,28 @@
+#serverSocialSidebar {position:fixed;right:0;top:55%;transform:translateY(-50%);display:flex;flex-direction:column;gap:8px;z-index:900;}
+#serverSocialSidebar .sidebar-item {display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;width:60px;height:56px;padding:6px 4px;border-radius:14px 0 0 14px;color:#fff;text-decoration:none;box-shadow:-3px 3px 10px #0006;transition:all .2s;box-sizing:border-box;cursor:pointer;border:0;font-family:inherit;}
+#serverSocialSidebar .sidebar-item i {font-size:1.25rem;line-height:1;}
+#serverSocialSidebar .sidebar-item span {font-size:.58rem;font-weight:900;letter-spacing:.2px;line-height:1;}
+#serverSocialSidebar .facebook-item {background:#1877f2;}
+#serverSocialSidebar .zalo-item {background:#0088ff;}
+#serverSocialSidebar .giftcode-item {background:#ff5400;}
+#serverSocialSidebar .sidebar-item:hover {transform:translateX(-6px);filter:brightness(1.15);}
+#serverSocialSidebar .sidebar-item:focus-visible {outline:2px solid #ffd700;outline-offset:2px;}
+#serverGiftcodeModal[hidden] {display:none;}
+#serverGiftcodeModal {position:fixed;inset:0;z-index:1500;background:#000c;backdrop-filter:blur(5px);display:flex;align-items:center;justify-content:center;padding:16px;color:#fff;}
+.server-giftcode-panel {width:100%;max-width:560px;max-height:calc(100dvh - 32px);overflow:auto;background:#0d1018;border:2px solid #ff9900;border-radius:20px;padding:22px;box-shadow:0 0 35px #ff990033;font-family:'Poppins',sans-serif;touch-action:pan-y;}
+.server-giftcode-panel header {display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.server-giftcode-panel h2 {font-size:1.15rem;color:#ffd700;margin:0;}
+.server-giftcode-panel p {font-size:.85rem;color:#cbd5e0;margin:12px 0;}
+.server-giftcode-panel button {cursor:pointer;font:inherit;color:#fff;background:#252630;border:1px solid #ffffff33;border-radius:9px;padding:8px 12px;}
+#serverGiftcodeClose {font-size:28px;padding:0 8px;background:none;border:0;}
+#serverGiftcodeCharacterLabel {display:block;margin:14px 0;font-size:.85rem;}
+#serverGiftcodeCharacterLabel[hidden] {display:none;}
+#serverGiftcodeCharacter {max-width:100%;margin-left:8px;background:#1c1d28;color:#fff;border:1px solid #ffffff33;border-radius:8px;padding:6px;}
+.server-giftcode-row {display:flex;align-items:center;gap:12px;border:1px solid #ffd70040;border-radius:12px;background:#ffd7000a;padding:12px;margin:10px 0;}
+.server-giftcode-info {flex:1;min-width:0;}
+.server-giftcode-code {display:block;color:#ffd700;font-weight:800;overflow-wrap:anywhere;user-select:all;}
+.server-giftcode-state {display:block;font-size:.78rem;color:#ffbd69;margin-top:5px;}
+.server-giftcode-state.claimed {color:#58dd99;}
+.server-giftcode-expiry {display:block;font-size:.72rem;color:#9ba4b8;margin-top:4px;}
+#serverGiftcodeStatus {min-height:1.4em;}
+@media(max-width:480px){#serverSocialSidebar .sidebar-item{width:48px;height:50px;} .server-giftcode-panel{padding:16px;}}

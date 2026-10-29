@@ -1,0 +1,50 @@
+<%-include("./partials/dashboard-meta.ejs", {title: "Trang chủ"})%>
+<body class="dashboard-site">
+<%-include("./partials/head.ejs")%>
+<main class="main-body-container">        <div id="homeView" class="dashboard-content tab-panel active-panel">
+            <!-- Download Section -->
+            <section class="dashboard-section">
+                <div class="section-hexagon-title">TẢI GAME</div>
+                
+                <div class="download-buttons-container">
+                    <a href="<%= options.config.download.pc %>" target="_blank" rel="noopener noreferrer" class="btn-download">
+                        <span class="btn-icon"><i class="fa-solid fa-desktop"></i></span>
+                        <span class="btn-text">TẢI FILE <br><strong>Windows</strong></span>
+                    </a>
+                    
+                    <a href="<%= options.config.download.ios %>" target="_blank" rel="noopener noreferrer" class="btn-download">
+                        <span class="btn-icon"><i class="fa-brands fa-apple"></i></span>
+                        <span class="btn-text">TẢI GAME <br><strong>App Store</strong></span>
+                    </a>
+                    
+                    <a href="<%= options.config.download.apk %>" target="_blank" rel="noopener noreferrer" class="btn-download">
+                        <span class="btn-icon"><i class="fa-brands fa-google-play"></i></span>
+                        <span class="btn-text">TẢI GAME <br><strong>Android APK</strong></span>
+                    </a>
+                </div>
+            </section>
+
+            <!-- Home Class Showcase Section (Single Card Carousel) -->
+            <section class="dashboard-section home-classes-section">
+                <!-- Carousel Slider Container with Left & Right Arrows -->
+                <div class="class-showcase-slider-wrap">
+                    <button class="class-slider-arrow arrow-prev" onclick="prevClassHero()" title="Xem Class trước">
+                        <i class="fa-solid fa-chevron-left"></i>
+                    </button>
+
+                    <!-- Single Class Card Container -->
+                    <div class="class-single-hero-card" id="classSingleHeroCard">
+                        <!-- Content rendered dynamically via JS -->
+                    </div>
+
+                    <button class="class-slider-arrow arrow-next" onclick="nextClassHero()" title="Xem Class kế tiếp">
+                        <i class="fa-solid fa-chevron-right"></i>
+                    </button>
+                </div>
+            </section>
+        </div>
+
+</main>
+<script src="/assets/arena-dashboard/home.js" defer></script>
+</body>
+</html>

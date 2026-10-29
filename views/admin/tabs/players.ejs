@@ -1,0 +1,173 @@
+<!-- Players Management Tab -->
+<div class="toolbar">
+  <div class="toolbar-left">
+    <div class="search-box">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" class="form-input" placeholder="Tìm theo tên player hoặc username..." id="playerSearch" value="<%= searchQuery || '' %>" onkeydown="if(event.key==='Enter')searchPlayers()">
+    </div>
+    <button class="btn btn-primary btn-sm" onclick="searchPlayers()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      Tìm kiếm
+    </button>
+    <% if (searchQuery) { %>
+    <a href="/panel/admin?type=players" class="btn btn-ghost btn-sm">Xoá bộ lọc</a>
+    <% } %>
+  </div>
+  <div class="toolbar-right">
+    <span class="result-count">Tổng: <strong><%= totalPlayers %></strong> nhân vật</span>
+  </div>
+</div>
+
+<div class="panel-card">
+  <div class="panel-card-body" style="padding: 0;">
+    <div class="admin-table-wrapper">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Tên nhân vật</th>
+            <th>Account</th>
+            <th>Giới tính</th>
+            <th>Clan</th>
+            <th>Rank</th>
+            <th>Sức mạnh</th>
+            <th>Ngày tạo</th>
+            <th>Chi tiết</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (players && players.length > 0) { %>
+            <% 
+              var genderNames = { 0: 'Trái Đất', 1: 'Namec', 2: 'Xayda' };
+              var genderClasses = { 0: 'male', 1: 'male', 2: 'female' };
+            %>
+            <% players.forEach(function(player) { %>
+            <tr>
+              <td><%= player.id %></td>
+              <td style="font-weight: 600; color: var(--text-primary);">
+                <%= player.name %>
+              </td>
+              <td>
+                <a href="/panel/admin?type=accounts&search=<%= player.account_username || '' %>" style="color: var(--accent-primary); text-decoration: none;">
+                  <%= player.account_username || 'N/A' %>
+                </a>
+              </td>
+              <td>
+                <span class="gender-icon <%= genderClasses[player.gender] || 'male' %>">
+                  <%= genderNames[player.gender] || 'N/A' %>
+                </span>
+              </td>
+              <td>
+                <% if (player.clan_id > 0) { %>
+                  <span class="badge badge-info">Clan #<%= player.clan_id %></span>
+                <% } else { %>
+                  <span style="color: var(--text-muted);">—</span>
+                <% } %>
+              </td>
+              <td>
+                <% if (player.rank > 0) { %>
+                  <span class="badge badge-purple">Rank <%= player.rank %></span>
+                <% } else { %>
+                  <span style="color: var(--text-muted);">0</span>
+                <% } %>
+              </td>
+              <td style="font-family: 'JetBrains Mono', monospace; font-size: 12px;">
+                <%
+                  var power = 0;
+                  try {
+                    if (player.data_point) {
+                      var points = player.data_point.replace(/[\[\]]/g, '').split(',');
+                      if (points.length > 1) {
+                        power = Number(points[1]) || 0;
+                      }
+                    }
+                  } catch(e) {}
+                %>
+                <%= power > 0 ? new Intl.NumberFormat('vi-VN').format(power) : '—' %>
+              </td>
+              <td style="font-size: 12px;"><%= player.create_time ? new Date(player.create_time).toLocaleString('vi-VN') : '—' %></td>
+              <td>
+                <button class="btn btn-sm btn-ghost" onclick="viewPlayerDetail(<%= player.id %>)" title="Xem chi tiết">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                  Xem
+                </button>
+              </td>
+            </tr>
+            <% }); %>
+          <% } else { %>
+            <tr><td colspan="9" style="text-align: center; padding: 40px; color: var(--text-muted);">Không tìm thấy nhân vật nào</td></tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Pagination -->
+<% if (totalPages > 1) { %>
+<div class="pagination">
+  <% if (currentPage > 1) { %>
+    <a href="/panel/admin?type=players&page=<%= currentPage - 1 %><%= searchQuery ? '&search=' + searchQuery : '' %>">&laquo;</a>
+  <% } %>
+  <% for (var p = 1; p <= totalPages; p++) { %>
+    <% if (p === currentPage) { %>
+      <span class="active"><%= p %></span>
+    <% } else if (Math.abs(p - currentPage) <= 2 || p === 1 || p === totalPages) { %>
+      <a href="/panel/admin?type=players&page=<%= p %><%= searchQuery ? '&search=' + searchQuery : '' %>"><%= p %></a>
+    <% } else if (Math.abs(p - currentPage) === 3) { %>
+      <span>...</span>
+    <% } %>
+  <% } %>
+  <% if (currentPage < totalPages) { %>
+    <a href="/panel/admin?type=players&page=<%= currentPage + 1 %><%= searchQuery ? '&search=' + searchQuery : '' %>">&raquo;</a>
+  <% } %>
+</div>
+<% } %>
+
+<script>
+  function searchPlayers() {
+    var q = document.getElementById('playerSearch').value.trim();
+    window.location.href = '/panel/admin?type=players' + (q ? '&search=' + encodeURIComponent(q) : '');
+  }
+
+  async function viewPlayerDetail(playerId) {
+    try {
+      var result = await adminApi('player-detail', { playerId: playerId });
+      if (result.success && result.player) {
+        var p = result.player;
+        var power = 0;
+        try {
+          if (p.data_point) {
+            var pts = p.data_point.replace(/[\[\]]/g, '').split(',');
+            if (pts.length > 1) power = Number(pts[1]) || 0;
+          }
+        } catch(e) {}
+
+        var genderNames = { 0: 'Trái Đất', 1: 'Namec', 2: 'Xayda' };
+        
+        var body = '<div class="server-info-grid">' +
+          '<div class="server-info-item"><span class="label">ID</span><span class="value">' + p.id + '</span></div>' +
+          '<div class="server-info-item"><span class="label">Tên</span><span class="value">' + escapeHtml(p.name) + '</span></div>' +
+          '<div class="server-info-item"><span class="label">Account</span><span class="value">' + (p.account_username || 'N/A') + '</span></div>' +
+          '<div class="server-info-item"><span class="label">Giới tính</span><span class="value">' + (genderNames[p.gender] || 'N/A') + '</span></div>' +
+          '<div class="server-info-item"><span class="label">Clan</span><span class="value">' + (p.clan_id > 0 ? 'Clan #' + p.clan_id : 'Không') + '</span></div>' +
+          '<div class="server-info-item"><span class="label">Rank</span><span class="value">' + p.rank + '</span></div>' +
+          '<div class="server-info-item"><span class="label">Sức mạnh</span><span class="value">' + (power > 0 ? power.toLocaleString('vi-VN') : '—') + '</span></div>' +
+          '<div class="server-info-item"><span class="label">Ngày tạo</span><span class="value" style="font-size:12px">' + (p.create_time ? new Date(p.create_time).toLocaleString('vi-VN') : '—') + '</span></div>' +
+          '</div>';
+        
+        openModal('Chi tiết Player — ' + escapeHtml(p.name), body, '<button class="btn btn-ghost" onclick="closeModal()">Đóng</button>');
+      } else {
+        showToast(result.message || 'Không tìm thấy player', 'error');
+      }
+    } catch(err) {
+      showToast('Lỗi khi tải chi tiết player', 'error');
+    }
+  }
+
+  function escapeHtml(str) {
+    var div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+</script>

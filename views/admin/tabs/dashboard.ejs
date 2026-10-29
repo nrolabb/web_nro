@@ -1,0 +1,150 @@
+<!-- Dashboard Tab -->
+<%
+  var dashboardOnlinePlayers = typeof onlinePlayers !== 'undefined'
+    ? onlinePlayers
+    : (typeof totalPlayers !== 'undefined' ? totalPlayers : 0);
+  var dashboardSystemMetrics = typeof systemMetrics !== 'undefined' && systemMetrics
+    ? systemMetrics
+    : {
+        cpuUsage: 0,
+        ramUsage: 0,
+        ramUsedGb: '0.0',
+        ramTotalGb: '0.0'
+      };
+%>
+<div class="stats-grid">
+  <!-- Total Accounts -->
+  <div class="stat-card purple">
+    <div class="stat-card-header">
+      <div class="stat-card-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      </div>
+    </div>
+    <div class="stat-card-label">Tổng tài khoản</div>
+    <div class="stat-card-value"><%= totalUsers %></div>
+  </div>
+
+  <!-- Total Revenue -->
+  <div class="stat-card green">
+    <div class="stat-card-header">
+      <div class="stat-card-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+      </div>
+    </div>
+    <div class="stat-card-label">Tổng thu nhập</div>
+    <div class="stat-card-value"><%= new Intl.NumberFormat('vi-VN').format(totalRevenue) %>đ</div>
+  </div>
+
+  <!-- Online Players -->
+  <div class="stat-card orange">
+    <div class="stat-card-header">
+      <div class="stat-card-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      </div>
+    </div>
+    <div class="stat-card-label">SL Player Online</div>
+    <div class="stat-card-value"><%= dashboardOnlinePlayers %></div>
+  </div>
+
+  <!-- Server Info -->
+  <div class="stat-card cyan">
+    <div class="stat-card-header">
+      <div class="stat-card-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>
+      </div>
+    </div>
+    <div class="stat-card-label">CPU / RAM</div>
+    <div class="stat-card-value"><%= dashboardSystemMetrics.cpuUsage %>% / <%= dashboardSystemMetrics.ramUsage %>%</div>
+    <div class="stat-card-footer">RAM: <%= dashboardSystemMetrics.ramUsedGb %> / <%= dashboardSystemMetrics.ramTotalGb %> GB</div>
+  </div>
+</div>
+
+<!-- Server Info Panel -->
+<div class="panel-card">
+  <div class="panel-card-header">
+    <div class="panel-card-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>
+      Thông tin máy chủ
+    </div>
+  </div>
+  <div class="panel-card-body">
+    <div class="server-info-grid">
+      <div class="server-info-item">
+        <span class="label">Tên Server</span>
+        <span class="value"><%= serverConfig.name || 'NRO ARN' %></span>
+      </div>
+      <div class="server-info-item">
+        <span class="label">IP</span>
+        <span class="value"><%= serverConfig.ip || '127.0.0.1' %></span>
+      </div>
+      <div class="server-info-item">
+        <span class="label">Port</span>
+        <span class="value"><%= serverConfig.port || 14445 %></span>
+      </div>
+      <div class="server-info-item">
+        <span class="label">CPU / RAM</span>
+        <span class="value"><%= dashboardSystemMetrics.cpuUsage %>% / <%= dashboardSystemMetrics.ramUsage %>%</span>
+      </div>
+      <div class="server-info-item">
+        <span class="label">EXP Rate</span>
+        <span class="value">x<%= serverConfig.expRate || 1 %></span>
+      </div>
+      <div class="server-info-item">
+        <span class="label">Database</span>
+        <span class="value"><%= serverConfig.dbName || 'nro_arn' %></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Top Nạp Table -->
+<div class="panel-card">
+  <div class="panel-card-header">
+    <div class="panel-card-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+      Bảng xếp hạng nạp (Top 10)
+    </div>
+  </div>
+  <div class="panel-card-body">
+    <div class="admin-table-wrapper">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Top</th>
+            <th>Username</th>
+            <th>Tổng Nạp</th>
+            <th>VND Hiện tại</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% var sorted = allUser.slice().sort(function(a, b) { return (Number(b.tongnap) || 0) - (Number(a.tongnap) || 0); }); %>
+          <% for (var i = 0; i < Math.min(sorted.length, 10); i++) { %>
+          <tr>
+            <td>
+              <% if (i === 0) { %>
+                <span class="badge badge-warning">🥇 #1</span>
+              <% } else if (i === 1) { %>
+                <span class="badge badge-info">🥈 #2</span>
+              <% } else if (i === 2) { %>
+                <span class="badge badge-purple">🥉 #3</span>
+              <% } else { %>
+                #<%= i + 1 %>
+              <% } %>
+            </td>
+            <td><%= sorted[i].username %></td>
+            <td style="color: var(--success); font-weight: 600; font-family: 'JetBrains Mono', monospace;">
+              <%= new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Number(sorted[i].tongnap) || 0) %>
+            </td>
+            <td style="font-family: 'JetBrains Mono', monospace;">
+              <%= new Intl.NumberFormat('vi-VN').format(Number(sorted[i].vnd) || 0) %>đ
+            </td>
+          </tr>
+          <% } %>
+          <% if (sorted.length === 0) { %>
+          <tr><td colspan="4" style="text-align: center; padding: 30px; color: var(--text-muted);">Chưa có dữ liệu</td></tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,172 @@
+<!-- Accounts Management Tab -->
+<div class="toolbar">
+  <div class="toolbar-left">
+    <div class="search-box">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" class="form-input" placeholder="Tìm kiếm username..." id="accountSearch" value="<%= searchQuery || '' %>" onkeydown="if(event.key==='Enter')searchAccounts()">
+    </div>
+    <button class="btn btn-primary btn-sm" onclick="searchAccounts()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      Tìm kiếm
+    </button>
+    <% if (searchQuery) { %>
+    <a href="/panel/admin?type=accounts" class="btn btn-ghost btn-sm">Xoá bộ lọc</a>
+    <% } %>
+  </div>
+  <div class="toolbar-right">
+    <span class="result-count">Tổng: <strong><%= totalAccounts %></strong> tài khoản</span>
+  </div>
+</div>
+
+<div class="panel-card">
+  <div class="panel-card-body" style="padding: 0;">
+    <div class="admin-table-wrapper">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Username</th>
+            <th>VND</th>
+            <th>Tổng Nạp</th>
+            <th>Trạng thái</th>
+            <th>Admin</th>
+            <th>Last Login</th>
+            <th>Ngày tạo</th>
+            <th>Hành động</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (accounts && accounts.length > 0) { %>
+            <% accounts.forEach(function(acc) { %>
+            <tr id="account-row-<%= acc.id %>">
+              <td><%= acc.id %></td>
+              <td style="font-weight: 600; color: var(--text-primary);"><%= acc.username %></td>
+              <td style="font-family: 'JetBrains Mono', monospace; color: var(--success);"><%= new Intl.NumberFormat('vi-VN').format(Number(acc.vnd) || 0) %></td>
+              <td style="font-family: 'JetBrains Mono', monospace;"><%= new Intl.NumberFormat('vi-VN').format(Number(acc.tongnap) || 0) %></td>
+              <td>
+                <% if (acc.ban === 1) { %>
+                  <span class="badge badge-danger">Bị ban</span>
+                <% } else if (acc.active === 0) { %>
+                  <span class="badge badge-warning">Inactive</span>
+                <% } else { %>
+                  <span class="badge badge-success">Active</span>
+                <% } %>
+              </td>
+              <td>
+                <% if (acc.is_admin === 1) { %>
+                  <span class="badge badge-purple">Admin</span>
+                <% } else { %>
+                  <span class="badge" style="background: var(--glass-bg); color: var(--text-muted);">User</span>
+                <% } %>
+              </td>
+              <td style="font-size: 12px;"><%= acc.last_time_login ? new Date(acc.last_time_login).toLocaleString('vi-VN') : '—' %></td>
+              <td style="font-size: 12px;"><%= acc.create_time ? new Date(acc.create_time).toLocaleString('vi-VN') : '—' %></td>
+              <td>
+                <div class="action-group">
+                  <button class="btn btn-sm btn-warning" onclick="openAddVndModal(<%= acc.id %>, '<%= acc.username %>')" title="Thêm VND">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                  </button>
+                  <% if (acc.ban === 1) { %>
+                  <button class="btn btn-sm btn-success" onclick="toggleBan(<%= acc.id %>, '<%= acc.username %>', 0)" title="Unban">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                  </button>
+                  <% } else { %>
+                  <button class="btn btn-sm btn-danger" onclick="toggleBan(<%= acc.id %>, '<%= acc.username %>', 1)" title="Ban">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+                  </button>
+                  <% } %>
+                  <button class="btn btn-sm btn-ghost" onclick="toggleAdmin(<%= acc.id %>, '<%= acc.username %>', <%= acc.is_admin === 1 ? 0 : 1 %>)" title="<%= acc.is_admin === 1 ? 'Gỡ Admin' : 'Set Admin' %>">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                  </button>
+                  <a href="/panel/admin?type=players&search=<%= acc.username %>" class="btn btn-sm btn-ghost" title="Xem Player">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                  </a>
+                </div>
+              </td>
+            </tr>
+            <% }); %>
+          <% } else { %>
+            <tr><td colspan="9" style="text-align: center; padding: 40px; color: var(--text-muted);">Không tìm thấy tài khoản nào</td></tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Pagination -->
+<% if (totalPages > 1) { %>
+<div class="pagination">
+  <% if (currentPage > 1) { %>
+    <a href="/panel/admin?type=accounts&page=<%= currentPage - 1 %><%= searchQuery ? '&search=' + searchQuery : '' %>">&laquo;</a>
+  <% } %>
+  <% for (var p = 1; p <= totalPages; p++) { %>
+    <% if (p === currentPage) { %>
+      <span class="active"><%= p %></span>
+    <% } else if (Math.abs(p - currentPage) <= 2 || p === 1 || p === totalPages) { %>
+      <a href="/panel/admin?type=accounts&page=<%= p %><%= searchQuery ? '&search=' + searchQuery : '' %>"><%= p %></a>
+    <% } else if (Math.abs(p - currentPage) === 3) { %>
+      <span>...</span>
+    <% } %>
+  <% } %>
+  <% if (currentPage < totalPages) { %>
+    <a href="/panel/admin?type=accounts&page=<%= currentPage + 1 %><%= searchQuery ? '&search=' + searchQuery : '' %>">&raquo;</a>
+  <% } %>
+</div>
+<% } %>
+
+<script>
+  function searchAccounts() {
+    var q = document.getElementById('accountSearch').value.trim();
+    window.location.href = '/panel/admin?type=accounts' + (q ? '&search=' + encodeURIComponent(q) : '');
+  }
+
+  function openAddVndModal(accountId, username) {
+    var body = '<div class="form-group"><label class="form-label">Tài khoản</label><input type="text" class="form-input" value="' + username + '" disabled></div><div class="form-group"><label class="form-label">Số VND cần thêm</label><input type="number" class="form-input" id="addVndAmount" placeholder="Nhập số VND..." min="0"></div>';
+    var footer = '<button class="btn btn-ghost" onclick="closeModal()">Hủy</button><button class="btn btn-primary" onclick="submitAddVnd(' + accountId + ')">Xác nhận</button>';
+    openModal('Thêm VND — ' + username, body, footer);
+    setTimeout(function() { document.getElementById('addVndAmount').focus(); }, 100);
+  }
+
+  async function submitAddVnd(accountId) {
+    var amount = parseInt(document.getElementById('addVndAmount').value);
+    if (!amount || amount <= 0) {
+      showToast('Vui lòng nhập số VND hợp lệ', 'error');
+      return;
+    }
+    var result = await adminApi('update-vnd', { accountId: accountId, amount: amount });
+    if (result.success) {
+      showToast('Đã thêm ' + amount.toLocaleString() + ' VND thành công!', 'success');
+      closeModal();
+      setTimeout(function() { location.reload(); }, 800);
+    } else {
+      showToast(result.message || 'Lỗi không xác định', 'error');
+    }
+  }
+
+  async function toggleBan(accountId, username, banValue) {
+    var action = banValue === 1 ? 'BAN' : 'UNBAN';
+    if (!confirm('Bạn có chắc muốn ' + action + ' tài khoản "' + username + '"?')) return;
+    
+    var result = await adminApi('ban-account', { accountId: accountId, ban: banValue });
+    if (result.success) {
+      showToast(action + ' tài khoản "' + username + '" thành công!', 'success');
+      setTimeout(function() { location.reload(); }, 600);
+    } else {
+      showToast(result.message || 'Lỗi', 'error');
+    }
+  }
+
+  async function toggleAdmin(accountId, username, adminValue) {
+    var action = adminValue === 1 ? 'Set Admin' : 'Gỡ Admin';
+    if (!confirm('Bạn có chắc muốn ' + action + ' cho tài khoản "' + username + '"?')) return;
+    
+    var result = await adminApi('toggle-admin', { accountId: accountId, isAdmin: adminValue });
+    if (result.success) {
+      showToast(action + ' cho "' + username + '" thành công!', 'success');
+      setTimeout(function() { location.reload(); }, 600);
+    } else {
+      showToast(result.message || 'Lỗi', 'error');
+    }
+  }
+</script>

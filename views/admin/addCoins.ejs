@@ -1,0 +1,80 @@
+<%-include("../partials/meta.ejs")%>
+<link rel="stylesheet" href="/assets/css/admin.css">
+<body class="admin-body">
+  <%- include("../partials/sidebar.ejs") %>
+  <div class="position-relative iq-banner">
+    <div class="iq-navbar-header" style="height: 60px"></div>
+    <div class="container-fluid content-inner mt-n5 py-0">
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><a href="/">Home</a></li>
+          <li class="breadcrumb-item"><a href="/panel/admin">Admin</a></li>
+          <li class="breadcrumb-item active" aria-current="page">Cộng điểm</li>
+        </ol>
+      </nav>
+      <div class="row justify-content-center">
+        <div class="col-md-6">
+          <div class="card">
+            <div class="card-header">
+              <h4 class="text-center">Cộng điểm vào tài khoản người dùng</h4>
+            </div>
+            <div class="card-body">
+              <!-- Replace "/process" with your form submission URL -->
+              <div class="mb-3">
+                <label for="account" class="form-label">Tài khoản</label>
+                <input type="text" class="form-control" id="username" name="username" placeholder="Nhập tài khoản" />
+                <span id="accountValidation" class="text-danger"></span>
+              </div>
+              <div class="mb-3">
+                <label for="coins" class="form-label">Số điểm</label>
+                <input type="number" class="form-control" id="coins" name="coins" placeholder="Nhập số điểm bạn muốn thêm" />
+                <span id="coinsValidation" class="text-danger"></span>
+              </div>
+              <div class="d-grid">
+                <button type="submit" id="submit" class="btn btn-primary">Đồng ý</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    const accountInput = document.getElementById("username");
+    const accountValidation = document.getElementById("accountValidation");
+    const submit = document.getElementById("submit")
+    accountInput.addEventListener("input", () => {
+        const inputValue = accountInput.value;
+        if (!<%- JSON.stringify(allUsers.map(user => user.username)) %>.includes(inputValue)) {
+            accountInput.classList.remove('is-valid');
+            accountInput.classList.add('is-invalid');
+            accountValidation.textContent = "Không tìm thấy tài khoản này!";
+
+        } else {
+            accountInput.classList.remove('is-invalid');
+            accountInput.classList.add('is-valid');
+            accountValidation.textContent = "";
+        }
+    });
+    submit.addEventListener("click", () =>{
+        $.ajax({
+            url: '/admin/addCoins',
+            method: 'POST',
+            data: {
+                username: accountInput.value,
+                coins: document.getElementById("coins").value
+            },
+            success: (data, status) =>{
+                toastr[`${data.error ? "error" : "success"}`](data?.message, `${data.error ? "Lỗi" : "Thành Công"}`)
+            },
+            error: (data, status) =>{
+                toastr[`${data.error ? "error" : "success"}`](data?.message, `${data.error ? "Lỗi" : "Thành Công"}`)
+            }
+        })
+    })
+  </script>
+
+  </main>
+  <%- include("../partials/footer.ejs") %>
+</body>
+</html>

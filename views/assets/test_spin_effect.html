@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Spin Effect</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+      background: #1a1a2e; 
+      display: flex; 
+      flex-direction: column;
+      align-items: center; 
+      justify-content: center; 
+      min-height: 100vh;
+      font-family: Arial, sans-serif;
+      color: white;
+    }
+    
+    /* Giả lập máy spin */
+    .airblowing {
+      width: 648px;
+      height: 869px;
+      position: relative;
+      background: linear-gradient(180deg, #2d1b69 0%, #1a1145 50%, #0d0a25 100%);
+      border-radius: 20px;
+      border: 3px solid #4a3598;
+      overflow: visible;
+      zoom: 0.6;
+    }
+    
+    /* Vị trí lỗ ra bóng */
+    .hole-marker {
+      position: absolute;
+      left: 197px;
+      top: 730px;
+      width: 50px;
+      height: 50px;
+      background: radial-gradient(circle, #333 0%, #111 70%, transparent 100%);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      border: 2px solid #555;
+    }
+    
+    /* Vị trí giữa mặt máy */
+    .center-marker {
+      position: absolute;
+      left: 324px;
+      top: 335px;
+      width: 200px;
+      height: 200px;
+      border: 2px dashed rgba(255,255,255,0.2);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+    }
+    .center-marker::after {
+      content: 'Mặt máy';
+      position: absolute;
+      bottom: -25px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 12px;
+      color: rgba(255,255,255,0.3);
+    }
+    
+    .hole-marker::after {
+      content: 'Lỗ ra';
+      position: absolute;
+      bottom: -20px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 12px;
+      color: rgba(255,255,255,0.3);
+      white-space: nowrap;
+    }
+
+    /* === Machine Reward CSS === */
+    .machine-reward {
+      position: absolute;
+      z-index: 7;
+      pointer-events: none;
+    }
+    .machine-reward-ball {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 70px;
+      height: 70px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, #fffbe8, #ffe23e 40%, #ff9800 80%, #e65100);
+      box-shadow: 0 0 20px 8px rgba(255, 226, 62, 0.6), inset 0 -8px 18px rgba(0,0,0,0.2), inset 0 4px 12px rgba(255,255,255,0.5);
+      transform: translate(-50%, -50%) scale(1);
+      opacity: 1;
+    }
+    .machine-reward-ball::after {
+      content: '';
+      position: absolute;
+      top: 12%;
+      left: 22%;
+      width: 35%;
+      height: 25%;
+      background: radial-gradient(ellipse, rgba(255,255,255,0.9), transparent);
+      border-radius: 50%;
+      transform: rotate(-15deg);
+    }
+    .machine-reward-icon {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 120px;
+      height: 120px;
+      object-fit: contain;
+      opacity: 0;
+      transform: translate(-50%, -50%) scale(0);
+      filter: drop-shadow(0 0 15px #fff) drop-shadow(0 0 30px #ffe23e) drop-shadow(0 0 50px rgba(255,150,0,0.5));
+      z-index: 2;
+    }
+    .machine-reward-name {
+      position: absolute;
+      left: 50%;
+      width: 330px;
+      color: #fff;
+      font: 700 25px Arial, sans-serif;
+      text-align: center;
+      text-shadow: 0 3px 4px #142359, 0 0 10px #246dff, 0 0 20px rgba(36,109,255,0.5);
+      opacity: 0;
+      transform: translateX(-50%);
+      z-index: 3;
+    }
+    .machine-reward-sparkles {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 0;
+      height: 0;
+      z-index: 1;
+      pointer-events: none;
+    }
+    .machine-reward-sparkle {
+      position: absolute;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #ffe23e;
+      box-shadow: 0 0 8px 2px #ffe23e;
+      opacity: 0;
+    }
+    
+    /* Buttons */
+    .controls {
+      margin-top: 20px;
+      display: flex;
+      gap: 15px;
+    }
+    button {
+      padding: 12px 30px;
+      font-size: 16px;
+      background: linear-gradient(135deg, #ff6b35, #f7c948);
+      border: none;
+      border-radius: 8px;
+      color: #1a1a2e;
+      font-weight: bold;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    button:hover { transform: scale(1.05); }
+    button:active { transform: scale(0.95); }
+    
+    .status {
+      margin-top: 15px;
+      font-size: 14px;
+      color: #aaa;
+    }
+  </style>
+</head>
+<body>
+  <h2 style="margin-bottom: 15px;">🎰 Test Hiệu Ứng Spin</h2>
+  
+  <div class="airblowing" id="machine">
+    <div class="hole-marker"></div>
+    <div class="center-marker"></div>
+    
+    <div id="machineReward" class="machine-reward" aria-hidden="true">
+      <div class="machine-reward-ball"></div>
+      <div class="machine-reward-sparkles"></div>
+      <img class="machine-reward-icon" alt="Phần thưởng">
+      <div class="machine-reward-name"></div>
+    </div>
+  </div>
+  
+  <div class="controls">
+    <button onclick="testSingle()">Test Quay 1 Lần</button>
+    <button onclick="testMultiple()">Test Quay 10 Lần</button>
+  </div>
+  <div class="status" id="status">Nhấn nút để test hiệu ứng</div>
+
+  <script>
+    // Test images - dùng emoji fallback nếu không có ảnh
+    var testItems = [
+      { name: "5 Mảnh Đội Trưởng Vàng", img: "../assets/images/spin/MxrStMQ.png" },
+      { name: "1 Trứng Link Thú", img: "../assets/images/spin/cFbZyHg.png" },
+      { name: "1 Túi Bảo Zệ", img: "../assets/images/spin/J6Q30Tz.png" },
+      { name: "20 Đá Nâng Đồ", img: "../assets/images/spin/byPkOwR.png" },
+      { name: "Capsule Link Thú", img: "../assets/images/spin/02YbcFI.png" }
+    ];
+
+    function testSingle() {
+      var item = testItems[Math.floor(Math.random() * testItems.length)];
+      document.getElementById('status').textContent = 'Đang chạy hiệu ứng cho: ' + item.name;
+      playRewardReveal([item]).then(function() {
+        document.getElementById('status').textContent = 'Hoàn thành! Nhấn lại để test tiếp.';
+      });
+    }
+
+    function testMultiple() {
+      var items = [];
+      for (var i = 0; i < 3; i++) {
+        items.push(testItems[Math.floor(Math.random() * testItems.length)]);
+      }
+      document.getElementById('status').textContent = 'Đang chạy hiệu ứng cho ' + items.length + ' items...';
+      playRewardReveal(items).then(function() {
+        document.getElementById('status').textContent = 'Hoàn thành! Nhấn lại để test tiếp.';
+      });
+    }
+
+    function playRewardReveal(items) {
+      var reveal = document.getElementById("machineReward");
+      var machine = document.querySelector(".airblowing");
+      var icon = reveal.querySelector(".machine-reward-icon");
+      var ball = reveal.querySelector(".machine-reward-ball");
+      var sparklesContainer = reveal.querySelector(".machine-reward-sparkles");
+      var name = reveal.querySelector(".machine-reward-name");
+      var isFast = items.length > 1;
+      var revealDuration = isFast ? 1500 : 3200;
+
+      return items.reduce(function(sequence, item) {
+        return sequence.then(function() {
+          return new Promise(function(resolve) {
+            var rect = machine.getBoundingClientRect();
+            // Vị trí lỗ bóng ra (dưới máy)
+            var startX = rect.left + rect.width * (197 / 648);
+            var startY = rect.top + rect.height * (730 / 869);
+            // Vị trí giữa mặt máy
+            var endX = rect.left + rect.width * (324 / 648);
+            var endY = rect.top + rect.height * (335 / 869);
+            var ballSize = Math.max(45, rect.width * (70 / 648));
+            var iconSize = Math.max(70, rect.width * (120 / 648));
+
+            // Chuẩn bị ảnh item
+            icon.src = item.img;
+            icon.alt = item.name;
+            name.textContent = item.name;
+
+            // Reset trạng thái
+            document.body.appendChild(reveal);
+            reveal.className = "machine-reward";
+            reveal.style.position = "fixed";
+            reveal.style.zIndex = "2147483647";
+            reveal.style.display = "block";
+            reveal.style.width = "1px";
+            reveal.style.height = "1px";
+            reveal.setAttribute("aria-hidden", "false");
+
+            // Đặt kích thước bóng
+            ball.style.width = ballSize + "px";
+            ball.style.height = ballSize + "px";
+            ball.style.display = "block";
+            ball.style.opacity = "1";
+
+            // Đặt kích thước icon
+            icon.style.width = iconSize + "px";
+            icon.style.height = iconSize + "px";
+            icon.style.opacity = "0";
+
+            // Vị trí tên item (dưới icon)
+            name.style.top = (iconSize * 0.7 + 20) + "px";
+
+            // Tạo sparkles (tia sáng)
+            sparklesContainer.innerHTML = '';
+            for (var s = 0; s < 12; s++) {
+              var sp = document.createElement('div');
+              sp.className = 'machine-reward-sparkle';
+              sparklesContainer.appendChild(sp);
+            }
+            var sparkles = sparklesContainer.querySelectorAll('.machine-reward-sparkle');
+
+            // === PHASE 1: Bóng bay từ lỗ lên giữa mặt máy (0% -> 45%) ===
+            var phase1End = 0.45;
+            // === PHASE 2: Bóng nổ, icon xuất hiện phóng to (45% -> 75%) ===
+            var phase2End = 0.75;
+            // === PHASE 3: Icon + tên hiện rõ rồi fade out (75% -> 100%) ===
+
+            // Animation cho container (vị trí di chuyển)
+            reveal.animate([
+              { left: startX + "px", top: startY + "px", offset: 0 },
+              { left: startX + "px", top: (startY - rect.height * 0.04) + "px", offset: 0.12 },
+              { left: endX + "px", top: endY + "px", offset: phase1End },
+              { left: endX + "px", top: endY + "px", offset: 1 }
+            ], { duration: revealDuration, easing: "ease-in-out", fill: "forwards" });
+
+            // Animation cho bóng: nhỏ -> to -> nổ tung
+            ball.animate([
+              { transform: "translate(-50%, -50%) scale(0.3)", opacity: 1, boxShadow: "0 0 10px 4px rgba(255,226,62,0.4)", offset: 0 },
+              { transform: "translate(-50%, -50%) scale(0.6)", opacity: 1, boxShadow: "0 0 15px 6px rgba(255,226,62,0.5)", offset: 0.12 },
+              { transform: "translate(-50%, -50%) scale(1)", opacity: 1, boxShadow: "0 0 25px 10px rgba(255,226,62,0.7)", offset: phase1End },
+              { transform: "translate(-50%, -50%) scale(1.1)", opacity: 1, boxShadow: "0 0 30px 15px rgba(255,226,62,0.8)", offset: phase1End + 0.04 },
+              { transform: "translate(-50%, -50%) scale(2.5)", opacity: 0, boxShadow: "0 0 60px 30px rgba(255,226,62,0)", offset: phase2End - 0.05 },
+              { transform: "translate(-50%, -50%) scale(3)", opacity: 0, offset: 1 }
+            ], { duration: revealDuration, easing: "ease-out", fill: "forwards" });
+
+            // Animation cho icon: ẩn trong bóng -> xuất hiện phóng to
+            icon.animate([
+              { opacity: 0, transform: "translate(-50%, -50%) scale(0)", offset: 0 },
+              { opacity: 0, transform: "translate(-50%, -50%) scale(0)", offset: phase1End },
+              { opacity: 1, transform: "translate(-50%, -50%) scale(1.6)", filter: "drop-shadow(0 0 20px #fff) drop-shadow(0 0 40px #ffe23e) brightness(1.3)", offset: phase1End + 0.12 },
+              { opacity: 1, transform: "translate(-50%, -50%) scale(1.3)", filter: "drop-shadow(0 0 15px #fff) drop-shadow(0 0 30px #ffe23e) brightness(1.1)", offset: phase2End },
+              { opacity: 1, transform: "translate(-50%, -50%) scale(1.35)", filter: "drop-shadow(0 0 15px #fff) drop-shadow(0 0 30px #ffe23e) brightness(1.05)", offset: 0.88 },
+              { opacity: 0, transform: "translate(-50%, -50%) scale(1.8)", filter: "drop-shadow(0 0 10px #fff) drop-shadow(0 0 20px #ffe23e) brightness(1)", offset: 1 }
+            ], { duration: revealDuration, easing: "ease-out", fill: "forwards" });
+
+            // Animation cho tên item
+            name.animate([
+              { opacity: 0, transform: "translateX(-50%) translateY(15px)", offset: 0 },
+              { opacity: 0, transform: "translateX(-50%) translateY(15px)", offset: phase2End - 0.02 },
+              { opacity: 1, transform: "translateX(-50%) translateY(0)", offset: phase2End + 0.08 },
+              { opacity: 1, transform: "translateX(-50%) translateY(0)", offset: 0.90 },
+              { opacity: 0, transform: "translateX(-50%) translateY(-10px)", offset: 1 }
+            ], { duration: revealDuration, easing: "ease-out", fill: "forwards" });
+
+            // Animation cho sparkles (tia sáng bắn ra khi bóng nổ)
+            sparkles.forEach(function(sp, i) {
+              var angle = (i / sparkles.length) * 360;
+              var rad = angle * Math.PI / 180;
+              var dist = 50 + Math.random() * 40;
+              var tx = Math.cos(rad) * dist;
+              var ty = Math.sin(rad) * dist;
+              var sparkDelay = revealDuration * phase1End;
+              var sparkDur = revealDuration * 0.25;
+              sp.animate([
+                { opacity: 0, transform: "translate(0, 0) scale(0.5)", offset: 0 },
+                { opacity: 1, transform: "translate(" + (tx * 0.5) + "px, " + (ty * 0.5) + "px) scale(1.2)", offset: 0.3 },
+                { opacity: 0, transform: "translate(" + tx + "px, " + ty + "px) scale(0)", offset: 1 }
+              ], { duration: sparkDur, delay: sparkDelay, easing: "ease-out", fill: "forwards" });
+            });
+
+            setTimeout(function() {
+              // Cleanup tất cả animations
+              reveal.getAnimations().forEach(function(a) { a.cancel(); });
+              reveal.querySelectorAll("*").forEach(function(el) {
+                el.getAnimations().forEach(function(a) { a.cancel(); });
+              });
+              reveal.style.display = "none";
+              reveal.setAttribute("aria-hidden", "true");
+              sparklesContainer.innerHTML = '';
+              resolve();
+            }, revealDuration + 50);
+          });
+        });
+      }, Promise.resolve());
+    }
+  </script>
+</body>
+</html>

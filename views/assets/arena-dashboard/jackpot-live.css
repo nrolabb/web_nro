@@ -1,0 +1,22 @@
+.jackpot-live-history { width: 100%; max-width: 1100px; overflow-x: auto; border: 1px solid #35405a; border-radius: 14px; background: #101622; }
+.jackpot-live-history table { width: 100%; min-width: 620px; border-collapse: collapse; }
+.jackpot-live-history th { color: #ffdc78; background: #1c2537; text-align: left; }
+.jackpot-live-history th, .jackpot-live-history td { padding: 15px 18px; border-bottom: 1px solid #293248; }
+.jackpot-live-history tbody tr:nth-child(even) { background: #151e2d; }
+.jackpot-live-history td:first-child, .jackpot-live-history td:last-child { white-space: nowrap; }
+.jackpot-live-history td:nth-child(4) { text-align: center; }
+#rouletteStatus { text-align: center; margin: 22px 0; color: #ffe197; }
+#rouletteRail { position: relative; }
+#rouletteRail .card-icon img { width: 48px; height: 48px; object-fit: contain; image-rendering: pixelated; }
+#rouletteRail .jackpot-winner { border-color: #ffe38b; box-shadow: inset 0 0 22px #e0a02055; }
+#caseOpeningModal .case-opening-stage { max-height: 90dvh; overflow-y: auto; }
+#caseOpeningModal #closeReward { margin-top: 8px; }
+.jackpot-rewards-details { width: 100%; max-width: 1100px; border: 1px solid #35405a; border-radius: 14px; background: #101622; }
+.jackpot-rewards-details summary { padding: 18px 20px; cursor: pointer; color: #ffdc78; font-weight: 700; }
+.jackpot-rewards-details summary:focus-visible { outline: 2px solid #ffdc78; outline-offset: -4px; border-radius: 14px; }
+.jackpot-rewards-details > p { padding: 0 20px 16px; margin: 0; color: #b7c3d8; }
+.jackpot-rewards-details .jackpot-rewards-table { border: 0; border-top: 1px solid #35405a; border-radius: 0 0 14px 14px; }
+.jackpot-reward-name { display: flex; align-items: center; gap: 12px; }
+.jackpot-reward-name img { flex-shrink: 0; height: 48px; object-fit: contain; image-rendering: pixelated; }
+.jackpot-rewards-table td:first-child { white-space: normal; }
+.jackpot-rewards-table td:nth-child(2) { text-align: center; }

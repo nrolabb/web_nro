@@ -1,0 +1,61 @@
+<%- include('../partials/meta.ejs') %>
+<body class="dashboard-site profile-site">
+<%- include('../partials/head.ejs') %>
+<link rel="stylesheet" href="/assets/arena-dashboard/profile.css?v=2">
+<link rel="stylesheet" href="/assets/arena-dashboard/history.css?v=1">
+<%
+const account=user[0];
+const money=n=>(Number(n)||0).toLocaleString('vi-VN')+' điểm';
+const date=n=>Number.isFinite(Number(n)) && Number(n)>0 ? new Date(Number(n)).toLocaleString('vi-VN',{timeZone:'Asia/Bangkok',hour12:false}) : 'Không rõ thời gian';
+%>
+<main class="history-page">
+ <h1>Lịch sử giao dịch</h1>
+ <p class="profile-muted">Biến động số dư điểm của tài khoản trên web và trong game. Thời gian GMT+7.</p>
+ <section class="profile-card">
+  <div class="history-account"><div><h2><%= account.username %></h2><p>ID tài khoản: <%= account.id %> · Nhân vật: <%= player?.[0]?.name || 'Chưa tạo nhân vật' %></p></div><a class="profile-button secondary" href="/profile">Trang cá nhân</a></div>
+  <dl class="history-summary">
+   <div><dt>Số dư hiện tại</dt><dd><%= money(account.vnd) %></dd></div>
+   <div><dt>Tổng cộng trong sổ giao dịch</dt><dd class="history-credit">+<%= money(summary.credits) %></dd></div>
+   <div><dt>Tổng trừ trong sổ giao dịch</dt><dd class="history-debit">−<%= money(summary.debits) %></dd></div>
+  </dl>
+ </section>
+ <section class="profile-card">
+  <div class="history-account"><h2>Chi tiết cộng / trừ điểm</h2><nav class="history-filters" aria-label="Lọc giao dịch">
+   <% [['all','Tất cả'],['credit','Điểm cộng'],['debit','Điểm trừ']].forEach(([key,label])=>{ %><a href="/history?type=<%= key %>" class="<%= filter===key?'selected':'' %>" <%- filter===key?'aria-current="page"':'' %>><%= label %></a><% }) %>
+  </nav></div>
+  <p class="profile-muted">Sổ giao dịch ghi nhận từ khi tính năng được bật. Giao dịch trước đó chưa có log sẽ không có số dư trước/sau.</p>
+  <div class="history-table-wrap"><table class="history-table">
+   <thead><tr><th>Mã / thời gian</th><th>Tài khoản / nhân vật</th><th>Nội dung</th><th>Biến động</th><th>Số dư trước</th><th>Số dư sau</th></tr></thead>
+   <tbody>
+   <% if (!transactions.length) { %><tr><td colspan="6" class="history-empty">Chưa có giao dịch phù hợp.</td></tr><% } %>
+   <% transactions.forEach(tx=>{ %><tr>
+    <td><strong>#<%= tx.id %></strong><small><%= date(tx.time_ms) %></small></td>
+    <td><%= tx.username %><small><%= tx.character_name || 'Chưa tạo nhân vật' %></small></td>
+    <td class="history-description"><%= options.pointDescription(tx.description) %></td>
+    <td class="history-amount <%= Number(tx.amount)>0?'history-credit':'history-debit' %>"><%= Number(tx.amount)>0?'+':'−' %><%= money(Math.abs(Number(tx.amount))) %></td>
+    <td class="history-amount"><%= money(tx.balance_before) %></td><td class="history-amount"><%= money(tx.balance_after) %></td>
+   </tr><% }) %>
+   </tbody>
+  </table></div>
+  <nav class="history-pagination" aria-label="Phân trang">
+   <% if(currentPage>1){ %><a href="/history?type=<%= filter %>&page=<%= currentPage-1 %>">← Trang trước</a><% } %>
+   <span>Trang <%= currentPage %> / <%= pages %></span>
+   <% if(currentPage<pages){ %><a href="/history?type=<%= filter %>&page=<%= currentPage+1 %>">Trang sau →</a><% } %>
+  </nav>
+ </section>
+ <details class="profile-card history-archive"><summary>Đối soát Donate ngân hàng (100 giao dịch gần nhất)</summary>
+  <p class="profile-muted">Mức Donate gốc, chưa tính khuyến mãi. Đây là thông tin đối soát, không cộng thêm vào tổng giao dịch phía trên.</p>
+  <div class="history-table-wrap"><table class="history-table"><thead><tr><th>Mã ngân hàng</th><th>Thời gian</th><th>Donate</th><th>Trạng thái</th></tr></thead><tbody>
+   <% if(!bankHistory.length){ %><tr><td colspan="4">Chưa có giao dịch ngân hàng.</td></tr><% } %>
+   <% bankHistory.forEach(tx=>{ %><tr><td><%= tx.transaction_id %></td><td><%= date(tx.time_ms) %></td><td><%= money(tx.amount) %></td><td><%= tx.is_credited?'Đã cộng số dư':tx.status %></td></tr><% }) %>
+  </tbody></table></div>
+ </details>
+ <details class="profile-card history-archive"><summary>Lịch sử phần thưởng vòng quay cũ (200 mục gần nhất)</summary>
+  <div class="history-table-wrap"><table class="history-table"><thead><tr><th>Phần thưởng</th><th>Mã / giá trị</th><th>Thời gian</th></tr></thead><tbody>
+   <% if(!rewards.length){ %><tr><td colspan="3">Chưa có phần thưởng cũ.</td></tr><% } %>
+   <% rewards.forEach(reward=>{ %><tr><td><%= reward.name %></td><td><%= reward.code %></td><td><%= date(reward.time_stamps) %></td></tr><% }) %>
+  </tbody></table></div>
+ </details>
+</main>
+<%- include('../partials/footer.ejs') %>
+</body></html>

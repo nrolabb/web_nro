@@ -1,0 +1,218 @@
+<!-- Spin Items Management Tab -->
+<div class="toolbar"><div class="toolbar-left">
+  <button class="btn btn-primary btn-sm" onclick="openAddSpinItemModal()">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    Thêm phần thưởng mới
+  </button>
+</div></div>
+
+<div class="panel-card"><div class="panel-card-body" style="padding:0"><div class="admin-table-wrapper">
+  <table class="admin-table">
+    <thead><tr><th>ID</th><th>Tên hiển thị</th><th>Item Template ID</th><th>Số lượng</th><th>Tỉ lệ</th><th>Options</th><th>Hành động</th></tr></thead>
+    <tbody>
+      <% if (spinItems && spinItems.length > 0) { %>
+        <% spinItems.forEach(function(item) { %>
+          <% let itemName = item.name || item.template_name || 'Vật phẩm ' + item.item_id; %>
+          <% let itemImg = item.image || (item.icon_id ? `/api/icon-x2/${item.icon_id}.png` : ''); %>
+          <% if (itemImg.startsWith('/api/icon/')) itemImg = itemImg.replace('/api/icon/', '/api/icon-x2/'); %>
+          <tr>
+            <td><%= item.id %></td>
+            <td style="font-weight:600;color:var(--primary-color)"><% if(itemImg) { %><img src="<%= itemImg %>" class="spin-table-icon"><% } %><%= itemName %></td>
+            <td class="spin-mono"><%= item.item_id %></td><td><%= item.quantity %></td><td><%= item.ratio %>%</td>
+            <td class="spin-options-cell" title="<%= item.item_options %>"><%= item.item_options %></td>
+            <td>
+              <button class="btn btn-ghost btn-sm" onclick="openEditSpinItemModal(decodeSpinItem('<%= Buffer.from(JSON.stringify(item), 'utf8').toString('hex') %>'))">Sửa</button>
+              <button class="btn btn-ghost btn-sm" style="color:var(--danger)" onclick="deleteSpinItem(<%= item.id %>)">Xóa</button>
+            </td>
+          </tr>
+        <% }); %>
+      <% } else { %><tr><td colspan="7" class="spin-empty-row">Không có vật phẩm nào trong Vòng Quay</td></tr><% } %>
+    </tbody>
+  </table>
+</div></div></div>
+
+<script>
+  var spinOptionRows = [];
+  var spinTemplates = decodeSpinItem('<%= Buffer.from(JSON.stringify(spinTemplates || []), 'utf8').toString('hex') %>');
+  var spinOptionTemplates = decodeSpinItem('<%= Buffer.from(JSON.stringify(spinOptionTemplates || []), 'utf8').toString('hex') %>');
+  var spinOptionCatalog = {};
+  var spinComboHtmlCache = { item: Object.create(null), option: Object.create(null) };
+  var SPIN_COMBO_RESULT_LIMIT = 200;
+  spinOptionTemplates.forEach(function(option) { spinOptionCatalog[option.id] = option.name; });
+
+  function escapeSpinHtml(value) {
+    return String(value == null ? '' : value).replace(/&/g, '&amp;').replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+  }
+
+  function decodeSpinItem(hex) {
+    var encoded = '';
+    for (var i = 0; i < hex.length; i += 2) encoded += '%' + hex.slice(i, i + 2);
+    return JSON.parse(decodeURIComponent(encoded));
+  }
+
+  function filterSpinCollection(collection, keyword) {
+    var key = String(keyword || '').trim().toLocaleLowerCase('vi');
+    if (!key) return collection;
+    return collection.filter(function(entry) {
+      return String(entry.id).includes(key) || String(entry.name || '').toLocaleLowerCase('vi').includes(key);
+    });
+  }
+
+  function buildSpinComboOptions(collection, placeholder, keyword, selectedId, cacheType) {
+    var normalizedKeyword = String(keyword || '').trim().toLocaleLowerCase('vi');
+    var cacheKey = normalizedKeyword + '|' + String(selectedId == null ? '' : selectedId);
+    var cache = spinComboHtmlCache[cacheType];
+    if (cache && cache[cacheKey]) return cache[cacheKey];
+
+    var filtered = filterSpinCollection(collection, keyword);
+    var visible = filtered.slice(0, SPIN_COMBO_RESULT_LIMIT);
+    if (selectedId !== '' && selectedId != null && !visible.some(function(entry) { return String(entry.id) === String(selectedId); })) {
+      var selectedEntry = collection.find(function(entry) { return String(entry.id) === String(selectedId); });
+      if (selectedEntry) {
+        if (visible.length === SPIN_COMBO_RESULT_LIMIT) visible.pop();
+        visible.unshift(selectedEntry);
+      }
+    }
+
+    var html = `<option value="">${placeholder}</option>` + visible.map(function(entry) {
+      var selected = String(entry.id) === String(selectedId) ? ' selected' : '';
+      return `<option value="${entry.id}"${selected}>#${entry.id} - ${escapeSpinHtml(entry.name)}</option>`;
+    }).join('');
+    if (filtered.length > SPIN_COMBO_RESULT_LIMIT) {
+      html += `<option value="" disabled>— Đang hiển thị ${SPIN_COMBO_RESULT_LIMIT}/${filtered.length}, nhập từ khóa để lọc thêm —</option>`;
+    }
+    if (cache) cache[cacheKey] = html;
+    return html;
+  }
+
+  function spinItemFormHtml(prefix, item) {
+    item = item || {};
+    var name = escapeSpinHtml(item.name || item.template_name || '');
+    var itemId = item.item_id == null ? '' : item.item_id;
+    var quantity = item.quantity == null ? 1 : item.quantity;
+    var ratio = item.ratio == null ? 1 : item.ratio;
+    var options = escapeSpinHtml(item.item_options || '[]');
+    var imageValue = String(item.image || '').replace(/^\/api\/icon\//, '/api/icon-x2/');
+    var image = escapeSpinHtml(imageValue);
+    var icon = item.icon_id ? '/api/icon-x2/' + item.icon_id + '.png' : image;
+    var templateOptions = buildSpinComboOptions(spinTemplates, '-- Chọn vật phẩm --', '', itemId, 'item');
+    return `
+      ${item.id ? `<input type="hidden" id="${prefix}SpinId" value="${item.id}">` : ''}
+      <div class="form-group">
+        <label class="form-label">Chọn vật phẩm</label>
+        <input type="text" class="form-input spin-combobox-filter" id="${prefix}SpinTemplateFilter" placeholder="Nhập từ khóa hoặc ID để lọc..." autocomplete="off" oninput="filterSpinTemplateCombo('${prefix}',this.value)">
+        <select class="form-input spin-template-combobox" id="${prefix}SpinTemplateSelect" onchange="selectSpinTemplate('${prefix}',this.value)">${templateOptions}</select>
+        <div class="spin-selected-template" id="${prefix}SpinSelectedTemplate" ${itemId === '' ? 'style="display:none"' : ''}>
+          ${icon ? `<img src="${escapeSpinHtml(icon)}">` : ''}<span>${name || 'Item #' + itemId} <small>#${itemId}</small></span>
+        </div>
+      </div>
+      <div class="form-group"><label class="form-label">Tên hiển thị</label><input type="text" class="form-input" id="${prefix}SpinName" value="${name}" placeholder="Tự điền sau khi chọn item"></div>
+      <div class="spin-form-grid">
+        <div class="form-group"><label class="form-label">Item Template ID</label><input type="number" class="form-input" id="${prefix}SpinItemId" value="${itemId}" readonly></div>
+        <div class="form-group"><label class="form-label">Số lượng</label><input type="number" min="1" class="form-input" id="${prefix}SpinQuantity" value="${quantity}"></div>
+        <div class="form-group"><label class="form-label">Tỉ lệ (%)</label><input type="number" min="0" step="0.0001" class="form-input" id="${prefix}SpinRatio" value="${ratio}"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Item Options (JSON)</label><div class="spin-option-field">
+        <textarea class="form-input" id="${prefix}SpinOptions" rows="3" readonly>${options}</textarea>
+        <button type="button" class="btn btn-ghost" onclick="openSpinOptionPanel('${prefix}')">Chọn options</button>
+      </div></div>
+      <div class="form-group"><label class="form-label">Hình ảnh URL</label><input type="text" class="form-input" id="${prefix}SpinImage" value="${image}" placeholder="Tự điền theo icon của item"></div>`;
+  }
+
+  function openAddSpinItemModal() {
+    openModal('Thêm Vật Phẩm Vòng Quay', spinItemFormHtml('add', {}), '<button class="btn btn-primary" onclick="submitSpinItem(\'add\')">Thêm</button>');
+    prepareSpinModal();
+  }
+  function openEditSpinItemModal(item) {
+    openModal('Sửa Vật Phẩm Vòng Quay', spinItemFormHtml('edit', item), '<button class="btn btn-primary" onclick="submitSpinItem(\'edit\')">Lưu</button>');
+    prepareSpinModal();
+  }
+  function prepareSpinModal() {
+    document.getElementById('modalContent').classList.add('spin-main-modal');
+    closeSpinOptionPanel();
+  }
+
+  function selectSpinTemplate(prefix, itemId) {
+    if (itemId === '') {
+      document.getElementById(prefix + 'SpinItemId').value = '';
+      document.getElementById(prefix + 'SpinSelectedTemplate').style.display = 'none';
+      return;
+    }
+    var item = spinTemplates.find(function(template) { return String(template.id) === String(itemId); });
+    if (!item) return showToast('Không tìm thấy vật phẩm đã chọn', 'error');
+    document.getElementById(prefix + 'SpinItemId').value = item.id;
+    document.getElementById(prefix + 'SpinName').value = item.name || '';
+    document.getElementById(prefix + 'SpinImage').value = '/api/icon-x2/' + item.icon_id + '.png';
+    var selected = document.getElementById(prefix + 'SpinSelectedTemplate');
+    selected.innerHTML = `<img src="/api/icon-x2/${item.icon_id}.png"><span>${escapeSpinHtml(item.name)} <small>#${item.id}</small></span>`;
+    selected.style.display = 'flex';
+  }
+
+  function filterSpinTemplateCombo(prefix, keyword) {
+    var select = document.getElementById(prefix + 'SpinTemplateSelect');
+    var selectedId = select.value || document.getElementById(prefix + 'SpinItemId').value;
+    select.innerHTML = buildSpinComboOptions(spinTemplates, '-- Chọn vật phẩm --', keyword, selectedId, 'item');
+  }
+
+  function openSpinOptionPanel(prefix) {
+    var textarea = document.getElementById(prefix + 'SpinOptions');
+    try {
+      var parsed = JSON.parse(textarea.value || '[]');
+      spinOptionRows = Array.isArray(parsed) ? parsed.map(function(row){ return { id:Number(row.id), param:Number(row.param) || 0 }; }) : [];
+    } catch (err) { return showToast('JSON options hiện tại không hợp lệ', 'error'); }
+    var overlay = document.getElementById('modalOverlay');
+    var oldPanel = document.getElementById('spinOptionPanel');
+    if (oldPanel) oldPanel.remove();
+    var panel = document.createElement('div');
+    panel.className = 'modal spin-option-modal'; panel.id = 'spinOptionPanel'; panel.dataset.targetPrefix = prefix;
+    var optionComboOptions = buildSpinComboOptions(spinOptionTemplates, '-- Chọn option --', '', '', 'option');
+    panel.innerHTML = `<div class="modal-header"><h3 class="modal-title">Chọn Item Options</h3><button class="modal-close" onclick="closeSpinOptionPanel()">×</button></div>
+      <div class="modal-body spin-option-body"><div class="form-group"><label class="form-label">Chọn option</label>
+        <input type="text" class="form-input spin-combobox-filter" id="spinOptionFilter" placeholder="Nhập từ khóa hoặc ID để lọc..." autocomplete="off" oninput="filterSpinOptionCombo(this.value)">
+        <select class="form-input spin-template-combobox" id="spinOptionSelect" onchange="addSpinOption(this.value)">${optionComboOptions}</select>
+      </div><div class="spin-option-list" id="spinOptionRows"></div></div>
+      <div class="modal-footer"><button class="btn btn-ghost" onclick="closeSpinOptionPanel()">Hủy</button><button class="btn btn-primary" onclick="saveSpinOptions()">Áp dụng</button></div>`;
+    overlay.appendChild(panel); overlay.classList.add('spin-options-open'); renderSpinOptionRows();
+  }
+  function closeSpinOptionPanel() {
+    var panel = document.getElementById('spinOptionPanel'); if (panel) panel.remove();
+    var overlay = document.getElementById('modalOverlay'); if (overlay) overlay.classList.remove('spin-options-open');
+  }
+  function addSpinOption(id) {
+    if (id === '') return;
+    spinOptionRows.push({ id:Number(id), param:0 });
+    document.getElementById('spinOptionSelect').value = '';
+    renderSpinOptionRows();
+  }
+  function filterSpinOptionCombo(keyword) {
+    var select = document.getElementById('spinOptionSelect');
+    select.innerHTML = buildSpinComboOptions(spinOptionTemplates, '-- Chọn option --', keyword, '', 'option');
+  }
+  function removeSpinOption(index) { spinOptionRows.splice(index, 1); renderSpinOptionRows(); }
+  function setSpinOptionParam(index, value) { spinOptionRows[index].param = Number(value) || 0; }
+  function renderSpinOptionRows() {
+    var container = document.getElementById('spinOptionRows'); if (!container) return;
+    container.innerHTML = spinOptionRows.map(function(row,index){ var label = spinOptionCatalog[row.id] || ('Option #' + row.id); return `<div class="spin-option-row"><div><strong>${escapeSpinHtml(label)}</strong><small>ID: ${row.id}</small></div><label>Chỉ số<input type="number" class="form-input" value="${row.param}" oninput="setSpinOptionParam(${index},this.value)"></label><button type="button" class="spin-option-remove" onclick="removeSpinOption(${index})">×</button></div>`; }).join('') || '<div class="spin-picker-empty">Chưa chọn option nào</div>';
+  }
+  function saveSpinOptions() {
+    var panel = document.getElementById('spinOptionPanel'); var prefix = panel.dataset.targetPrefix;
+    var json = spinOptionRows.map(function(row){ return { id:Number(row.id), param:Number(row.param) || 0 }; });
+    document.getElementById(prefix + 'SpinOptions').value = JSON.stringify(json); closeSpinOptionPanel();
+  }
+
+  async function submitSpinItem(prefix) {
+    var data = { name:document.getElementById(prefix+'SpinName').value.trim(), item_id:Number(document.getElementById(prefix+'SpinItemId').value), quantity:Number(document.getElementById(prefix+'SpinQuantity').value), ratio:Number(document.getElementById(prefix+'SpinRatio').value), item_options:document.getElementById(prefix+'SpinOptions').value || '[]', image:document.getElementById(prefix+'SpinImage').value.trim() };
+    if (prefix === 'edit') data.id = Number(document.getElementById('editSpinId').value);
+    if (!document.getElementById(prefix+'SpinItemId').value) return showToast('Vui lòng chọn vật phẩm từ danh sách!', 'error');
+    if (data.quantity < 1) return showToast('Số lượng phải lớn hơn 0!', 'error');
+    if (data.ratio < 0) return showToast('Tỉ lệ không được âm!', 'error');
+    var res = await adminApi(prefix === 'add' ? 'add_spin_item' : 'edit_spin_item', data);
+    showToast(res.message, res.success ? 'success' : 'error'); if (res.success) setTimeout(function(){ location.reload(); },700);
+  }
+  async function deleteSpinItem(id) {
+    if (!confirm('Bạn có chắc chắn muốn xóa vật phẩm này khỏi vòng quay?')) return;
+    var res = await adminApi('delete_spin_item',{id:id}); showToast(res.message,res.success?'success':'error');
+    if (res.success) setTimeout(function(){ location.reload(); },700);
+  }
+</script>

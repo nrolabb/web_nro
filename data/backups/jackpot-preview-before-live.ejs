@@ -1,0 +1,512 @@
+<%-include("../partials/dashboard-meta.ejs", {title: "Mở rương Jackpot"})%>
+<body class="jackpot-preview">
+<%-include("../partials/head.ejs")%>
+<p class="jackpot-preview-note">Bản xem thử giao diện · Ngọc và phần thưởng mô phỏng</p>
+<svg height="0" style="position: absolute;" width="0">
+<defs>
+<filter color-interpolation-filters="sRGB" id="removeBlackBg">
+<!-- Detect luminance: (R + G + B) -->
+<fecolormatrix result="lum" type="matrix" values="
+                    1 0 0 0 0
+                    0 1 0 0 0
+                    0 0 1 0 0
+                    4 4 4 0 -0.5
+                "></fecolormatrix>
+<!-- Hard threshold: Any pixel darker than ~12% brightness becomes completely Alpha = 0 -->
+<fecomponenttransfer in="lum" result="binaryAlpha">
+<fefunca intercept="-2" slope="80" type="linear"></fefunca>
+</fecomponenttransfer>
+<fecomposite in="SourceGraphic" in2="binaryAlpha" operator="in"></fecomposite>
+</filter>
+</defs>
+</svg>
+<main class="main-body-container">
+<div class="dashboard-content tab-panel active-panel" id="wheelView">
+<!-- Lucky Spin Section -->
+<section class="dashboard-section bottom-padding" id="wheel">
+<div class="section-hexagon-title">MỞ RƯƠNG JACKPOT</div>
+<div class="spin-container">
+<!-- JACKPOT ARENA HUD (Mini, Minor, Major, Grand Milestones) -->
+<div class="jackpot-arena-board">
+<div class="jackpot-board-header">
+<div class="jackpot-title-wrap centered-jackpot-title">
+<i class="fa-solid fa-crown jackpot-title-icon"></i>
+<span class="jackpot-title-text">JACKPOT</span>
+</div>
+<button class="btn-jackpot-info" onclick="openJackpotDetailsModal()" title="Thể Lệ &amp; Tỷ Lệ Hũ" type="button">
+<i class="fa-solid fa-question"></i>
+</button>
+</div>
+<!-- 4 Jackpot Cards Grid -->
+<div class="jackpot-grid-4">
+<!-- MINI JACKPOT -->
+<div class="jackpot-card jackpot-mini" onclick="openJackpotDetailsModal('mini')" title="Nhấp xem chi tiết Hũ Mini">
+<div class="jackpot-card-shine"></div>
+<div class="jackpot-card-glow-aura"></div>
+<div class="jackpot-card-content">
+<div class="jackpot-card-top">
+<span class="jackpot-badge-pill pill-mini">MINI</span>
+</div>
+<div class="jackpot-amount-display">
+<span class="jackpot-digits" id="jackpotAmountMini">10.000</span>
+<i class="fa-solid fa-star jackpot-star-icon star-cyan"></i>
+</div>
+</div>
+</div>
+<!-- MINOR JACKPOT -->
+<div class="jackpot-card jackpot-minor" onclick="openJackpotDetailsModal('minor')" title="Nhấp xem chi tiết Hũ Minor">
+<div class="jackpot-card-shine"></div>
+<div class="jackpot-card-glow-aura"></div>
+<div class="jackpot-card-content">
+<div class="jackpot-card-top">
+<span class="jackpot-badge-pill pill-minor">MINOR</span>
+</div>
+<div class="jackpot-amount-display">
+<span class="jackpot-digits" id="jackpotAmountMinor">50.000</span>
+<i class="fa-solid fa-star jackpot-star-icon star-purple"></i>
+</div>
+</div>
+</div>
+<!-- MAJOR JACKPOT -->
+<div class="jackpot-card jackpot-major" onclick="openJackpotDetailsModal('major')" title="Nhấp xem chi tiết Hũ Major">
+<div class="jackpot-card-shine"></div>
+<div class="jackpot-card-glow-aura"></div>
+<div class="jackpot-card-content">
+<div class="jackpot-card-top">
+<span class="jackpot-badge-pill pill-major">MAJOR</span>
+</div>
+<div class="jackpot-amount-display">
+<span class="jackpot-digits" id="jackpotAmountMajor">200.000</span>
+<i class="fa-solid fa-star jackpot-star-icon star-major"></i>
+</div>
+</div>
+</div>
+<!-- GRAND JACKPOT -->
+<div class="jackpot-card jackpot-grand" onclick="openJackpotDetailsModal('grand')" title="Nhấp xem chi tiết Hũ Grand">
+<div class="jackpot-card-shine"></div>
+<div class="jackpot-card-glow-aura"></div>
+<div class="jackpot-card-content">
+<div class="jackpot-card-top">
+<span class="jackpot-badge-pill pill-grand">GRAND</span>
+</div>
+<div class="jackpot-amount-display">
+<span class="jackpot-digits text-shimmer-grand" id="jackpotAmountGrand">1.000.000</span>
+<i class="fa-solid fa-star jackpot-star-icon star-grand"></i>
+</div>
+</div>
+</div>
+</div>
+<!-- Live Ticker Bar (Click to open History Modal) -->
+<div class="jackpot-ticker-bar clickable-ticker" onclick="openJackpotHistoryModal()" title="Nhấp để xem lịch sử trúng thưởng toàn Server">
+<div class="ticker-content" id="jackpotTickerText">
+                                🎉 Chúc mừng <strong>[Dragon_God]</strong> vừa trúng JACKPOT <strong>MAJOR</strong> nhận <strong>2.450.000 Điểm</strong>! • <strong>[Vegeta_VIP]</strong> vừa trúng JACKPOT <strong>MINI</strong> nhận <strong>128.500 Điểm</strong>!
+                            </div>
+</div>
+</div>
+<!-- Chest Slider Container -->
+<div class="chest-slider">
+<!-- Left Arrow Button -->
+<button class="arrow-btn left-arrow" onclick="changeChest(-1)"><i class="fa-solid fa-chevron-left"></i></button>
+<!-- Chest Image Wrapper with 3D Opening Lid -->
+<div class="chest-container" id="chestContainer" onclick="spinChest(1)">
+<!-- Light Ray / Glow burst behind chest when opening -->
+<div class="chest-glow-burst" id="chestGlow"></div>
+<!-- Inner Glowing Light Core & Seamless Interior Cavity -->
+<div class="chest-interior-cavity" id="chestCavity"></div>
+<div class="chest-inside-glow" id="chestInsideGlow"></div>
+<!-- Chest Base Layer (Stationary Front Wall) -->
+<div class="chest-layer chest-base-layer">
+<img alt="Gold Chest Base" class="gold-chest-image chest-img-base" src="/assets/arena-dashboard/gold_chest_black_bg_1787255514369.jpg"/>
+</div>
+<!-- Chest Lid Layer (Hinges open seamlessly at the seam) -->
+<div class="chest-layer chest-lid-layer" id="chestLidLayer">
+<img alt="Gold Chest Lid" class="gold-chest-image chest-img-lid" id="chestImage" src="/assets/arena-dashboard/gold_chest_black_bg_1787255514369.jpg"/>
+</div>
+<!-- Diamond Embedded Gems Overlay (Active on Diamond Chest) -->
+<div class="chest-diamond-gems-wrap hidden" id="diamondChestGems">
+<i class="fa-solid fa-gem d-gem-top"></i>
+<i class="fa-solid fa-gem d-gem-left"></i>
+<i class="fa-solid fa-gem d-gem-right"></i>
+<i class="fa-solid fa-gem d-gem-center"></i>
+<div class="diamond-aurora-glow"></div>
+</div>
+<!-- Unlock Flash overlay -->
+<div class="unlock-flash" id="unlockFlash"></div>
+<!-- Animated Golden Key -->
+<div class="chest-key-anim" id="chestKey">
+<i class="fa-solid fa-key golden-key-icon" id="chestKeyIcon"></i>
+</div>
+<!-- Floating Sparkles -->
+<div class="chest-particles-container" id="chestParticles"></div>
+</div>
+<!-- Right Arrow Button -->
+<button class="arrow-btn right-arrow" onclick="changeChest(1)"><i class="fa-solid fa-chevron-right"></i></button>
+</div>
+<!-- Chest Name & Interactive Tip -->
+<h3 class="chest-title-name" id="chestName">RƯƠNG ĐỒNG</h3>
+<div class="chest-req-tier-tag req-unlocked" id="chestReqTierTag">
+<i class="fa-solid fa-trophy"></i> <span id="chestReqTierName">Yêu cầu: BRONZE (Đồng)</span>
+</div>
+<div class="open-chest-tip animate-pulse" id="openChestTip" onclick="spinChest(1)">✨ NHẤP ĐỂ MỞ RƯƠNG ✨</div>
+<!-- Reward Details & Rates -->
+<div class="reward-details-area">
+<button class="btn-reward-list" onclick="openRewardModal()">
+<i class="fa-solid fa-list-ul"></i> DANH SÁCH PHẦN THƯỞNG
+                        </button>
+<div class="spin-rates-text">
+<i class="fa-solid fa-sun icon-yellow"></i> TỶ LỆ TỔNG: <span class="rate-epic">CỰC HIẾM 10%</span> | <span class="rate-rare">HIẾM 20%</span> | <span class="rate-common">BÌNH THƯỜNG 70%</span>
+</div>
+</div>
+<!-- Single Spin Action Button -->
+<div class="spin-buttons-row">
+<button class="spin-action-btn single-spin-btn" id="singleSpinBtn" onclick="spinChest(1)">
+                            💎 MỞ RƯƠNG: <span id="price1">50</span> Ngọc
+                        </button>
+</div>
+<!-- User Gem Balance -->
+<div class="user-gem-balance">
+                        Ngọc của bạn: <span class="gems-green" id="userGemsText">2.000.000</span> <i class="fa-solid fa-gem icon-blue"></i>
+</div>
+</div>
+</section>
+</div>
+</main>
+<div class="dashboard-modal hidden" id="rewardModal">
+<div class="modal-box">
+<div class="modal-header">
+<h2>📋 DANH SÁCH PHẦN THƯỞNG</h2>
+<span class="close-btn" onclick="closeRewardModal()">×</span>
+</div>
+<div class="modal-body">
+<p class="modal-desc">Mở rương sẽ nhận ngẫu nhiên các vật phẩm quý giá dưới đây:</p>
+<div class="rewards-grid">
+<div class="reward-item rarity-epic">
+<div class="reward-icon"><i class="fa-solid fa-dragon"></i></div>
+<div class="reward-name">Thần Thú Cực Hạn (Vĩnh Viễn)</div>
+<div class="reward-tag">Cực Hiếm (10%)</div>
+</div>
+<div class="reward-item rarity-rare">
+<div class="reward-icon"><i class="fa-solid fa-shield-halved"></i></div>
+<div class="reward-name">Giáp Ngọc Rồng Siêu Cấp</div>
+<div class="reward-tag">Hiếm (20%)</div>
+</div>
+<div class="reward-item rarity-common">
+<div class="reward-icon"><i class="fa-solid fa-gem"></i></div>
+<div class="reward-name">100.000 Vàng</div>
+<div class="reward-tag">Bình Thường (70%)</div>
+</div>
+<div class="reward-item rarity-common">
+<div class="reward-icon"><i class="fa-solid fa-flask"></i></div>
+<div class="reward-name">Thuốc Tăng Lực Siêu Cấp</div>
+<div class="reward-tag">Bình Thường</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="dashboard-modal hidden" id="chestLockAlertModal">
+<div class="modal-box chest-lock-modal-box">
+<div class="modal-header">
+<h2><i class="fa-solid fa-lock" style="color: #ff4757;"></i> CHƯA ĐỦ ĐIỀU KIỆN MỞ RƯƠNG</h2>
+<span class="close-btn" onclick="closeChestLockAlertModal()">×</span>
+</div>
+<div class="modal-body" style="text-align: center; padding: 20px 16px;">
+<div class="lock-alert-chest-preview" id="lockAlertChestName">RƯƠNG KIM CƯƠNG</div>
+<div class="lock-condition-compare-grid">
+<div class="compare-col">
+<span class="compare-lbl"><i class="fa-solid fa-user-shield text-cyan"></i> Hiện tại của bạn:</span>
+<div class="compare-val" id="lockAlertUserTier">SILVER (Bạc)</div>
+</div>
+<div class="compare-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+<div class="compare-col">
+<span class="compare-lbl"><i class="fa-solid fa-trophy text-gold"></i> Yêu cầu Thành Tựu:</span>
+<div class="compare-val" id="lockAlertReqTier">DIAMOND (Kim Cương)</div>
+</div>
+</div>
+<p class="lock-alert-guide-text">
+<i class="fa-solid fa-hand-point-right color-gold"></i> Hãy tích lũy thêm Điểm để nâng cấp bậc Thành Tựu và mở khóa rương quý hiếm này!
+                </p>
+<div class="modal-btn-row" style="margin-top: 20px;">
+<button class="btn-feature-action" onclick="closeChestLockAlertModal()" style="width: 100%;">
+                        ĐÃ HIỂU
+                    </button>
+</div>
+</div>
+</div>
+</div>
+<div class="case-opening-overlay hidden" id="caseOpeningModal">
+<div class="case-opening-stage">
+<!-- Stage Header Info -->
+<div class="case-header-bar">
+<div class="case-title-glow" id="rouletteChestTitle">RƯƠNG VÀNG</div>
+</div>
+<!-- The Horizontal Conveyor Belt Roulette Viewport -->
+<div class="roulette-viewport">
+<!-- Center Needle / Crosshair Indicators -->
+<div class="roulette-needle top-needle"></div>
+<div class="roulette-needle bottom-needle"></div>
+<div class="roulette-center-line"></div>
+<!-- Moving Rail of Item Cards -->
+<div class="roulette-rail" id="rouletteRail"></div>
+</div>
+</div>
+</div>
+<div class="inspect-item-overlay hidden" id="inspectItemModal">
+<!-- Dynamic Confetti & Particle Sparks Canvas -->
+<canvas class="rare-confetti-canvas" id="rareConfettiCanvas"></canvas>
+<!-- Golden / Red / Pink / Purple Screen Flash & Shockwave Ring -->
+<div class="inspect-flash-bg" id="inspectFlashBg"></div>
+<div class="inspect-shockwave" id="inspectShockwave"></div>
+<div class="inspect-card" id="inspectCard">
+<div class="inspect-rarity-header" id="inspectRarityHeader">★ VẬT PHẨM ĐẶC BIỆT CỰC HIẾM ★</div>
+<!-- Big 3D Hovering Item Graphic with Dynamic Sparkles & Embers -->
+<div class="inspect-item-view">
+<div class="inspect-ember-particles" id="inspectEmberParticles"></div>
+<div class="inspect-sparkle-stars" id="inspectSparkleStars"></div>
+<div class="inspect-icon-wrapper" id="inspectIconWrapper">
+<i class="fa-solid fa-dragon" id="inspectItemIcon"></i>
+</div>
+</div>
+<!-- Item Info Details -->
+<div class="inspect-details">
+<h2 class="inspect-item-name" id="inspectItemName">★ Thần Thú Vô Cực Shenron</h2>
+<div class="inspect-tier-badge" id="inspectTierBadge">ĐỘ HIẾM: CỰC PHẨM (VÀNG)</div>
+<!-- Float Value & Pattern Section (CS:GO Float System) -->
+<div class="inspect-meta-grid">
+<div class="meta-item">
+<span class="meta-label">Độ mòn (Exterior):</span>
+<span class="meta-val meta-wear" id="inspectWear">Factory New</span>
+</div>
+<div class="meta-item">
+<span class="meta-label">Chỉ số Float:</span>
+<span class="meta-val" id="inspectFloat">0.01429812</span>
+</div>
+<div class="meta-item">
+<span class="meta-label">Pattern Template:</span>
+<span class="meta-val" id="inspectPattern">#777 (Gold Gem)</span>
+</div>
+</div>
+</div>
+<!-- Actions Row (Balanced 3 Actions) -->
+<div class="inspect-actions">
+<button class="btn-inspect-equip" onclick="closeInspectModal()">
+<i class="fa-solid fa-gift"></i> NHẬN NGAY
+                </button>
+<button class="btn-inspect-again" onclick="reopenChest()">
+<i class="fa-solid fa-rotate-right"></i> MỞ TIẾP
+                </button>
+<button class="btn-inspect-close" onclick="closeInspectModal()">
+<i class="fa-solid fa-xmark"></i> ĐÓNG
+                </button>
+</div>
+</div>
+</div>
+<div class="dashboard-modal hidden" id="jackpotDetailsModal">
+<div class="modal-box jackpot-modal-box">
+<div class="modal-header jackpot-modal-header">
+<h2><i class="fa-solid fa-crown text-gold"></i> CHI TIẾT MỐC PHẦN THƯỞNG JACKPOT</h2>
+<span class="close-btn" onclick="closeJackpotDetailsModal()">×</span>
+</div>
+<div class="modal-body jackpot-modal-body">
+<!-- Top Summary Banner -->
+<div class="jackpot-info-banner">
+<div class="banner-icon"><i class="fa-solid fa-calculator text-gold"></i></div>
+<div class="banner-desc">
+<strong>CƠ CHẾ PHÂN BỔ TÍCH LŨY JACKPOT:</strong> Mỗi <strong>100 Ngọc</strong> mở rương, hệ thống tự động phân bổ tích lũy trực tiếp vào 4 mốc JACKPOT toàn Server theo tỷ lệ:
+                        <div class="jackpot-banner-pills-row">
+<span class="jackpot-badge-pill pill-mini">MINI: +100 ĐIỂM</span>
+<span class="jackpot-badge-pill pill-minor">MINOR: +200 ĐIỂM</span>
+<span class="jackpot-badge-pill pill-major">MAJOR: +300 ĐIỂM</span>
+<span class="jackpot-badge-pill pill-grand">GRAND: +400 ĐIỂM</span>
+</div>
+</div>
+</div>
+<!-- 4 Jackpot Tiers Detailed Showcase -->
+<div class="jackpot-tiers-detail-list">
+<!-- MINI -->
+<div class="jackpot-tier-detail-card card-tier-mini" id="tierDetail_mini" onclick="selectJackpotTestTier('mini')" title="Nhấp để chọn thử nghiệm mốc MINI">
+<div class="tier-left">
+<div class="tier-pill pill-mini">MINI JACKPOT</div>
+<div class="tier-pool-display">
+<span class="tier-pool-lbl">Tích Lũy Hiện Tại:</span>
+<strong class="tier-pool-val text-cyan" id="modalPoolMini">10.000 Điểm</strong>
+</div>
+</div>
+<div class="tier-right">
+<div class="tier-reward-title">🎁 Tỷ lệ &amp; Phần thưởng:</div>
+<ul class="tier-reward-list">
+<li>⭐ <strong>Phân bổ tích lũy:</strong> +100 Điểm / mỗi 100 Ngọc mở rương</li>
+<li>✨ <strong>Tỷ lệ trúng:</strong> 5.0% / mỗi lượt mở rương</li>
+<li>📜 Nhận toàn bộ số Điểm tích lũy cộng thẳng vào ví tài khoản!</li>
+</ul>
+</div>
+</div>
+<!-- MINOR -->
+<div class="jackpot-tier-detail-card card-tier-minor" id="tierDetail_minor" onclick="selectJackpotTestTier('minor')" title="Nhấp để chọn thử nghiệm mốc MINOR">
+<div class="tier-left">
+<div class="tier-pill pill-minor">MINOR JACKPOT</div>
+<div class="tier-pool-display">
+<span class="tier-pool-lbl">Tích Lũy Hiện Tại:</span>
+<strong class="tier-pool-val text-purple" id="modalPoolMinor">50.000 Điểm</strong>
+</div>
+</div>
+<div class="tier-right">
+<div class="tier-reward-title">🎁 Tỷ lệ &amp; Phần thưởng:</div>
+<ul class="tier-reward-list">
+<li>⭐ <strong>Phân bổ tích lũy:</strong> +200 Điểm / mỗi 100 Ngọc mở rương</li>
+<li>✨ <strong>Tỷ lệ trúng:</strong> 2.5% / mỗi lượt mở rương</li>
+<li>📜 Nhận toàn bộ số Điểm tích lũy cộng thẳng vào ví tài khoản!</li>
+</ul>
+</div>
+</div>
+<!-- MAJOR -->
+<div class="jackpot-tier-detail-card card-tier-major" id="tierDetail_major" onclick="selectJackpotTestTier('major')" title="Nhấp để chọn thử nghiệm mốc MAJOR">
+<div class="tier-left">
+<div class="tier-pill pill-major">MAJOR JACKPOT</div>
+<div class="tier-pool-display">
+<span class="tier-pool-lbl">Tích Lũy Hiện Tại:</span>
+<strong class="tier-pool-val text-orange" id="modalPoolMajor">200.000 Điểm</strong>
+</div>
+</div>
+<div class="tier-right">
+<div class="tier-reward-title">🎁 Tỷ lệ &amp; Phần thưởng:</div>
+<ul class="tier-reward-list">
+<li>⭐ <strong>Phân bổ tích lũy:</strong> +300 Điểm / mỗi 100 Ngọc mở rương</li>
+<li>✨ <strong>Tỷ lệ trúng:</strong> 0.8% / mỗi lượt mở rương</li>
+<li>🔥 Nhận toàn bộ số Điểm tích lũy cộng thẳng vào ví tài khoản!</li>
+</ul>
+</div>
+</div>
+<!-- GRAND -->
+<div class="jackpot-tier-detail-card card-tier-grand active-selected-tier" id="tierDetail_grand" onclick="selectJackpotTestTier('grand')" title="Nhấp để chọn thử nghiệm mốc GRAND">
+<div class="tier-left">
+<div class="tier-pill pill-grand">GRAND JACKPOT</div>
+<div class="tier-pool-display">
+<span class="tier-pool-lbl">KHO BÁU VÔ CỰC:</span>
+<strong class="tier-pool-val text-shimmer-grand" id="modalPoolGrand">1.000.000 Điểm</strong>
+</div>
+</div>
+<div class="tier-right">
+<div class="tier-reward-title">👑 SIÊU PHẨM HUYỀN THOẠI:</div>
+<ul class="tier-reward-list">
+<li>⭐ <strong>Phân bổ tích lũy:</strong> +400 Điểm / mỗi 100 Ngọc mở rương</li>
+<li>✨ <strong>Tỷ lệ trúng:</strong> 0.1% Toàn Server (Siêu hiếm &amp; kịch tính)</li>
+<li>📢 Toàn bộ số Điểm tích lũy cộng thẳng vào ví tài khoản!</li>
+</ul>
+</div>
+</div>
+</div>
+<!-- Test Spin Button for User Preview -->
+<div class="jackpot-modal-actions">
+<button class="btn-feature-action btn-gold-action" id="btnTestJackpotTrigger" onclick="testTriggerCurrentSelectedTier()" type="button">
+<i class="fa-solid fa-wand-magic-sparkles"></i> THỬ NGHIỆM TRÚNG THƯỞNG GRAND
+                    </button>
+<button class="btn-feature-action" onclick="closeJackpotDetailsModal()" type="button">
+                        ĐÓNG
+                    </button>
+</div>
+</div>
+</div>
+</div>
+<div class="jackpot-win-overlay hidden" id="jackpotWinModal">
+<!-- Dynamic Canvas for Gold Coins, Gem Shards & Exploding Star Particles -->
+<canvas class="jackpot-confetti-canvas" id="jackpotConfettiCanvas"></canvas>
+<div class="jackpot-golden-shockwave" id="jackpotShockwave"></div>
+<div class="jackpot-ambient-glow" id="jackpotAmbientGlow"></div>
+<div class="jackpot-win-card" id="jackpotWinCard">
+<!-- Animated Crown & 7 Floating Dragon Stars with Glowing Aura -->
+<div class="jackpot-win-crown-wrap">
+<div class="dragon-balls-halo">
+<span class="db-star star-1"><i class="fa-solid fa-star"></i></span>
+<span class="db-star star-2"><i class="fa-solid fa-star"></i></span>
+<span class="db-star star-3"><i class="fa-solid fa-star"></i></span>
+<span class="db-star star-4"><i class="fa-solid fa-star"></i></span>
+<span class="db-star star-5"><i class="fa-solid fa-star"></i></span>
+<span class="db-star star-6"><i class="fa-solid fa-star"></i></span>
+<span class="db-star star-7"><i class="fa-solid fa-star"></i></span>
+</div>
+<i class="fa-solid fa-crown jackpot-win-crown"></i>
+<div class="jackpot-sparkle-halo"></div>
+</div>
+<!-- Top Rarity Tier Banner -->
+<div class="jackpot-rarity-pill-wrap">
+<span class="jackpot-win-badge-pill" id="jackpotWinBadge">GRAND JACKPOT</span>
+<span class="jackpot-win-rarity-tag" id="jackpotWinRarityTag">Tỉ Lệ 0.1% Toàn Sever</span>
+</div>
+<!-- Headline Title -->
+<div class="jackpot-win-headline-box">
+<div class="jackpot-win-lead-title">🎉 CHÚC MỪNG BẠN QUAY THƯỞNG TRÚNG 🎉</div>
+<h1 class="jackpot-win-main-tier text-shimmer-grand" id="jackpotWinTitle">GRAND JACKPOT</h1>
+</div>
+<p class="jackpot-win-subtitle" id="jackpotWinSubtitle">Chiến binh đã kích hoạt thành công mốc kho báu vĩ đại nhất vũ trụ!</p>
+<!-- Big Prize Display Vault Box -->
+<div class="jackpot-win-prize-box">
+<div class="prize-vault-header">
+<span class="vault-label"><i class="fa-solid fa-trophy text-gold"></i> TỔNG THƯỞNG</span>
+</div>
+<div class="jackpot-win-gems-row">
+<span class="jackpot-win-amount text-shimmer-grand" id="jackpotWinAmount">+12.919.905</span>
+<i class="fa-solid fa-star jackpot-unit-star"></i>
+</div>
+</div>
+<div class="jackpot-win-btn-row">
+<button class="btn-jackpot-claim" onclick="claimJackpotWinReward()" type="button">
+<span class="btn-claim-shine"></span>
+<i class="fa-solid fa-circle-check"></i> NHẬN THƯỞNG
+                </button>
+</div>
+</div>
+</div>
+<div class="dashboard-modal hidden" id="jackpotHistoryModal" onclick="if(event.target === this) closeJackpotHistoryModal()">
+<div class="modal-box jackpot-modal-box jackpot-history-modal-box">
+<div class="modal-header jackpot-modal-header">
+<h2><i class="fa-solid fa-clock-rotate-left text-gold"></i> LỊCH SỬ TRÚNG THƯỞNG TOÀN SEVER</h2>
+<span class="close-btn" onclick="closeJackpotHistoryModal()">×</span>
+</div>
+<div class="modal-body jackpot-history-body">
+<!-- Filter Tabs -->
+<div class="jackpot-history-tabs">
+<button class="history-tab-btn active" onclick="filterJackpotHistory('all', this)" type="button">
+<i class="fa-solid fa-list-ul"></i> TẤT CẢ (<span id="historyCountAll">8</span>)
+                    </button>
+<button class="history-tab-btn tab-grand" onclick="filterJackpotHistory('grand', this)" type="button">
+<i class="fa-solid fa-crown"></i> GRAND
+                    </button>
+<button class="history-tab-btn tab-major" onclick="filterJackpotHistory('major', this)" type="button">
+<i class="fa-solid fa-fire"></i> MAJOR
+                    </button>
+<button class="history-tab-btn tab-minor" onclick="filterJackpotHistory('minor', this)" type="button">
+<i class="fa-solid fa-bolt-lightning"></i> MINOR
+                    </button>
+<button class="history-tab-btn tab-mini" onclick="filterJackpotHistory('mini', this)" type="button">
+<i class="fa-solid fa-star"></i> MINI
+                    </button>
+</div>
+<!-- History Table / Records List -->
+<div class="jackpot-history-table-wrap">
+<table class="jackpot-history-table">
+<thead>
+<tr>
+<th><i class="fa-solid fa-user-shield"></i> CHIẾN BINH</th>
+<th><i class="fa-solid fa-award"></i> MỐC JACKPOT</th>
+<th><i class="fa-solid fa-star"></i> THƯỞNG ĐIỂM</th>
+<th><i class="fa-solid fa-calendar-days"></i> THỜI GIAN</th>
+</tr>
+</thead>
+<tbody id="jackpotHistoryTableBody">
+<!-- Populated dynamically via JS -->
+</tbody>
+</table>
+</div>
+<div class="jackpot-history-footer">
+<span class="history-live-indicator"><span class="pulse-green-dot"></span> Đang đồng bộ dữ liệu thời gian thực toàn Server</span>
+<button class="btn-refresh-history" onclick="renderJackpotHistoryTable()" type="button">
+<i class="fa-solid fa-rotate-right"></i> Làm Mới
+                    </button>
+</div>
+</div>
+</div>
+</div>
+<script src="/assets/arena-dashboard/jackpot-preview.js?v=1" defer></script>
+</body>
+</html>

@@ -1,0 +1,339 @@
+<!-- Section: Admin Boss Live Status Tab -->
+<div class="panel-card" style="margin-bottom: 20px;">
+  <div class="panel-card-body" style="padding: 20px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 15px;">
+      <div>
+        <h2 style="color: var(--text-primary); margin: 0 0 4px 0; font-size: 20px; display: flex; align-items: center; gap: 8px;">
+          <span style="width: 10px; height: 10px; border-radius: 50%; background: #28a745; display: inline-block; box-shadow: 0 0 8px #28a745;"></span>
+          Danh sách Boss Đang Xuất Hiện Trực Tiếp (Admin Live Status)
+        </h2>
+        <div style="font-size: 13px; color: var(--text-muted);">
+          Theo dõi chi tiết ID, Tên Boss, Trạng thái, Bản đồ và <strong>Khu vực (Zone)</strong> thực tế trong Game Server
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <button class="btn btn-primary btn-sm" onclick="fetchAdminLiveBosses()" style="display: inline-flex; align-items: center; gap: 6px; font-weight: 600;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+          Làm mới dữ liệu
+        </button>
+      </div>
+    </div>
+
+    <!-- Stats summary bar -->
+    <%
+      var totalBosses = bosses ? bosses.length : 0;
+      var activeBosses = 0;
+      var chatBosses = 0;
+      var restBosses = 0;
+
+      if (bosses && bosses.length > 0) {
+        bosses.forEach(function(b) {
+          var st = (b.status || '').toUpperCase();
+          if (st === 'REST' || st === 'DIE' || st === 'LEAVE_MAP' || st === 'CHAT_E' || st.includes('AFK') || st.includes('CHẾT')) {
+            restBosses++;
+          } else if (st === 'CHAT_S' || st === 'CHAT' || st === 'RESPAWN' || st === 'JOIN_MAP' || st.includes('NÓI')) {
+            chatBosses++;
+          } else {
+            activeBosses++;
+          }
+        });
+      }
+    %>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 20px;">
+      <div style="background: var(--bg-hover, rgba(255,255,255,0.03)); border: 1px solid var(--border-color); padding: 12px 16px; border-radius: 8px;">
+        <div style="font-size: 12px; color: var(--text-muted);">Tổng Boss theo dõi</div>
+        <div style="font-size: 20px; font-weight: 700; color: var(--text-primary);" id="admin-stat-total"><%= totalBosses %></div>
+      </div>
+      <div style="background: rgba(40, 167, 69, 0.08); border: 1px solid rgba(40, 167, 69, 0.3); padding: 12px 16px; border-radius: 8px;">
+        <div style="font-size: 12px; color: #28a745;">Đang xuất hiện (Active)</div>
+        <div style="font-size: 20px; font-weight: 700; color: #28a745;" id="admin-stat-active"><%= activeBosses %></div>
+      </div>
+      <div style="background: rgba(255, 193, 7, 0.08); border: 1px solid rgba(255, 193, 7, 0.3); padding: 12px 16px; border-radius: 8px;">
+        <div style="font-size: 12px; color: #ffc107;">Đang nói (Chat/Spawn)</div>
+        <div style="font-size: 20px; font-weight: 700; color: #ffc107;" id="admin-stat-chat"><%= chatBosses %></div>
+      </div>
+      <div style="background: rgba(220, 53, 69, 0.08); border: 1px solid rgba(220, 53, 69, 0.3); padding: 12px 16px; border-radius: 8px;">
+        <div style="font-size: 12px; color: #dc3545;">Đã hạ / AFK (Rest)</div>
+        <div style="font-size: 20px; font-weight: 700; color: #dc3545;" id="admin-stat-rest"><%= restBosses %></div>
+      </div>
+    </div>
+
+    <!-- Search & Filter & Grouping bar -->
+    <div style="display: flex; gap: 12px; margin-bottom: 15px; flex-wrap: wrap; align-items: center; justify-content: space-between;">
+      <div style="display: flex; gap: 12px; flex: 1; min-width: 280px; flex-wrap: wrap;">
+        <input type="text" id="adminBossSearch" class="form-input" placeholder="Tìm kiếm tên Boss, Map, Khu vực hoặc ID..." onkeyup="renderAdminBossTable()" style="flex: 1; min-width: 200px; padding: 8px 12px;">
+        <select id="adminStatusFilter" class="form-input" onchange="renderAdminBossTable()" style="width: auto; padding: 8px 12px;">
+          <option value="ALL">-- Tất cả trạng thái --</option>
+          <option value="ACTIVE">Đang xuất hiện (Active)</option>
+          <option value="CHAT">Đang nói / Sắp xuất hiện</option>
+          <option value="REST">Đã hạ / AFK (Rest)</option>
+        </select>
+      </div>
+      <label style="display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; cursor: pointer; color: var(--primary-color); user-select: none; background: rgba(var(--primary-rgb), 0.08); border: 1px solid rgba(var(--primary-rgb), 0.2); padding: 6px 14px; border-radius: 6px;">
+        <input type="checkbox" id="adminGroupToggle" checked onchange="renderAdminBossTable()" style="accent-color: var(--primary-color);">
+        <span>Gom nhóm Boss cùng loại (Ví dụ: Broly, Drabura,...)</span>
+      </label>
+    </div>
+
+    <!-- Table -->
+    <div class="admin-table-wrapper">
+      <table class="admin-table" id="adminLiveBossTable">
+        <thead>
+          <tr>
+            <th style="width: 110px;">ID thực thể</th>
+            <th>Tên Boss</th>
+            <th>Trạng thái</th>
+            <th>Bản đồ (Map)</th>
+            <th style="width: 170px; color: var(--primary-color);">Khu vực / Thao tác</th>
+          </tr>
+        </thead>
+        <tbody id="adminLiveBossBody">
+          <!-- Rendered dynamically by renderAdminBossTable() -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+  var adminBossesData = <%- JSON.stringify(bosses || []) %>;
+
+  function getBaseName(name) {
+    if (!name) return 'Unknown';
+    return String(name).replace(/\s+\d+$/, '').trim();
+  }
+
+  function getStatusCategory(status) {
+    var stUpper = (status || '').toUpperCase();
+    if (stUpper === 'REST' || stUpper === 'DIE' || stUpper === 'LEAVE_MAP' || stUpper === 'CHAT_E' || stUpper.includes('AFK') || stUpper.includes('CHẾT')) {
+      return { cat: 'REST', color: '#dc3545' };
+    } else if (stUpper === 'CHAT_S' || stUpper === 'CHAT' || stUpper === 'RESPAWN' || stUpper === 'JOIN_MAP' || stUpper.includes('NÓI')) {
+      return { cat: 'CHAT', color: '#ffc107' };
+    }
+    return { cat: 'ACTIVE', color: '#28a745' };
+  }
+
+  function renderAdminBossTable() {
+    var tbody = document.getElementById('adminLiveBossBody');
+    if (!tbody) return;
+
+    var searchVal = (document.getElementById('adminBossSearch').value || '').toLowerCase().trim();
+    var statusVal = document.getElementById('adminStatusFilter').value;
+    var isGrouped = document.getElementById('adminGroupToggle') ? document.getElementById('adminGroupToggle').checked : true;
+
+    if (!adminBossesData || adminBossesData.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 30px; color: var(--text-muted);">Chưa có dữ liệu Boss Live (hoặc Server Game chưa bật / chưa ghi bosses.json)</td></tr>';
+      return;
+    }
+
+    // Filter bosses
+    var filtered = adminBossesData.filter(function(b) {
+      var stInfo = getStatusCategory(b.status);
+      var matchStatus = (statusVal === 'ALL' || stInfo.cat === statusVal);
+
+      var name = (b.name || '').toLowerCase();
+      var map = (b.map || '').toLowerCase();
+      var zone = String(b.zone || '');
+      var id = String(b.id || '');
+      var matchSearch = !searchVal || name.includes(searchVal) || map.includes(searchVal) || zone.includes(searchVal) || id.includes(searchVal);
+
+      return matchStatus && matchSearch;
+    });
+
+    if (filtered.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 30px; color: var(--text-muted);">Không tìm thấy Boss phù hợp điều kiện lọc</td></tr>';
+      return;
+    }
+
+    var html = '';
+
+    if (!isGrouped) {
+      // Flat View
+      filtered.forEach(function(b) {
+        var stInfo = getStatusCategory(b.status);
+        var mapDisplay = (!b.map || b.map === 'N/A') ? 'Chưa xuất hiện' : b.map;
+        var zoneDisplay = (b.map && b.map !== 'N/A' && b.zone != null && b.zone >= 0 && b.zone !== 'N/A') ? ('Khu ' + b.zone) : 'Chưa vào khu';
+
+        html += '<tr class="admin-boss-row">';
+        html += '  <td style="font-family: \'JetBrains Mono\', monospace;">' + b.id + '</td>';
+        html += '  <td style="font-weight: 600; color: var(--primary-color);">' + escapeAdminHtml(b.name) + '</td>';
+        html += '  <td><span style="color: ' + stInfo.color + '; font-size: 13px; font-weight: bold; padding: 2px 8px; border-radius: 4px; background: rgba(0,0,0,0.2);">' + escapeAdminHtml(b.status) + '</span></td>';
+        html += '  <td style="font-size: 13px;">' + escapeAdminHtml(mapDisplay) + '</td>';
+        html += '  <td style="font-size: 13px; font-family: \'JetBrains Mono\', monospace; font-weight: 700; color: var(--primary-color);">' + escapeAdminHtml(zoneDisplay) + '</td>';
+        html += '</tr>';
+      });
+    } else {
+      // Grouped View
+      var groupsMap = {};
+      var groupsList = [];
+
+      filtered.forEach(function(b) {
+        var baseName = getBaseName(b.name);
+        var groupKey = baseName + '_' + b.id;
+
+        if (!groupsMap[groupKey]) {
+          groupsMap[groupKey] = {
+            key: groupKey,
+            baseName: baseName,
+            id: b.id,
+            items: [],
+            activeCount: 0,
+            chatCount: 0,
+            restCount: 0,
+            mapsSet: new Set()
+          };
+          groupsList.push(groupsMap[groupKey]);
+        }
+
+        var grp = groupsMap[groupKey];
+        grp.items.push(b);
+
+        var stInfo = getStatusCategory(b.status);
+        if (stInfo.cat === 'REST') grp.restCount++;
+        else if (stInfo.cat === 'CHAT') grp.chatCount++;
+        else grp.activeCount++;
+
+        if (b.map && b.map !== 'N/A') {
+          grp.mapsSet.add(b.map);
+        }
+      });
+
+      groupsList.forEach(function(grp, idx) {
+        var domId = 'grp_' + idx + '_' + Math.abs(grp.id);
+        
+        if (grp.items.length === 1) {
+          // Single boss row
+          var b = grp.items[0];
+          var stInfo = getStatusCategory(b.status);
+          var mapDisplay = (!b.map || b.map === 'N/A') ? 'Chưa xuất hiện' : b.map;
+          var zoneDisplay = (b.map && b.map !== 'N/A' && b.zone != null && b.zone >= 0 && b.zone !== 'N/A') ? ('Khu ' + b.zone) : 'Chưa vào khu';
+
+          html += '<tr class="admin-boss-row">';
+          html += '  <td style="font-family: \'JetBrains Mono\', monospace;">' + b.id + '</td>';
+          html += '  <td style="font-weight: 600; color: var(--primary-color);">' + escapeAdminHtml(b.name) + '</td>';
+          html += '  <td><span style="color: ' + stInfo.color + '; font-size: 13px; font-weight: bold; padding: 2px 8px; border-radius: 4px; background: rgba(0,0,0,0.2);">' + escapeAdminHtml(b.status) + '</span></td>';
+          html += '  <td style="font-size: 13px;">' + escapeAdminHtml(mapDisplay) + '</td>';
+          html += '  <td style="font-size: 13px; font-family: \'JetBrains Mono\', monospace; font-weight: 700; color: var(--primary-color);">' + escapeAdminHtml(zoneDisplay) + '</td>';
+          html += '</tr>';
+        } else {
+          // Grouped multi-boss row
+          var mapsArray = Array.from(grp.mapsSet);
+          var mapsText = mapsArray.length > 0 ? (mapsArray.slice(0, 3).join(', ') + (mapsArray.length > 3 ? ' (+' + (mapsArray.length - 3) + ' map khác)' : '')) : 'Chưa xuất hiện';
+
+          html += '<tr class="admin-boss-row" style="background: rgba(var(--primary-rgb), 0.04); font-weight: 600;">';
+          html += '  <td style="font-family: \'JetBrains Mono\', monospace;">' + grp.id + '</td>';
+          html += '  <td>';
+          html += '    <div style="display: flex; align-items: center; gap: 8px;">';
+          html += '      <strong style="color: var(--primary-color); font-size: 14px;">' + escapeAdminHtml(grp.baseName) + '</strong>';
+          html += '      <span style="background: var(--primary-color); color: #fff; font-size: 11px; padding: 2px 8px; border-radius: 12px; font-weight: 700;">' + grp.items.length + ' thực thể</span>';
+          html += '    </div>';
+          html += '  </td>';
+          html += '  <td>';
+          if (grp.activeCount > 0) html += '<span style="color: #28a745; font-size: 12px; font-weight: bold; margin-right: 6px;">' + grp.activeCount + ' Active</span>';
+          if (grp.chatCount > 0) html += '<span style="color: #ffc107; font-size: 12px; font-weight: bold; margin-right: 6px;">' + grp.chatCount + ' Chat</span>';
+          if (grp.restCount > 0) html += '<span style="color: #dc3545; font-size: 12px; font-weight: bold;">' + grp.restCount + ' Rest</span>';
+          html += '  </td>';
+          html += '  <td style="font-size: 13px; color: var(--text-muted);">' + escapeAdminHtml(mapsText) + '</td>';
+          html += '  <td>';
+          html += '    <button class="btn btn-outline-primary btn-sm" onclick="toggleAdminGroupDetail(\'' + domId + '\')" style="padding: 2px 10px; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">';
+          html += '      <span id="btn-icon-' + domId + '">▶</span> Xem ' + grp.items.length + ' Boss';
+          html += '    </button>';
+          html += '  </td>';
+          html += '</tr>';
+
+          // Sub-row containing list of instances
+          html += '<tr id="detail-' + domId + '" style="display: none; background: rgba(0,0,0,0.15);">';
+          html += '  <td colspan="5" style="padding: 10px 15px;">';
+          html += '    <div style="background: var(--bg-hover, rgba(255,255,255,0.03)); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; max-height: 350px; overflow-y: auto;">';
+          html += '      <div style="font-size: 12px; font-weight: 700; color: var(--primary-color); margin-bottom: 8px;">Danh sách ' + grp.items.length + ' thực thể ' + escapeAdminHtml(grp.baseName) + ':</div>';
+          html += '      <table class="table table-sm" style="width: 100%; margin: 0; font-size: 12px;">';
+          html += '        <thead>';
+          html += '          <tr style="color: var(--text-muted); font-size: 11px; border-bottom: 1px solid var(--border-color);">';
+          html += '            <th style="width: 90px;">ID</th>';
+          html += '            <th>Tên chi tiết</th>';
+          html += '            <th style="width: 110px;">Trạng thái</th>';
+          html += '            <th>Bản đồ (Map)</th>';
+          html += '            <th style="width: 100px;">Khu vực</th>';
+          html += '          </tr>';
+          html += '        </thead>';
+          html += '        <tbody>';
+
+          grp.items.forEach(function(subB) {
+            var subSt = getStatusCategory(subB.status);
+            var subMap = (!subB.map || subB.map === 'N/A') ? 'Chưa xuất hiện' : subB.map;
+            var subZone = (subB.map && subB.map !== 'N/A' && subB.zone != null && subB.zone >= 0 && subB.zone !== 'N/A') ? ('Khu ' + subB.zone) : 'Chưa vào khu';
+
+            html += '          <tr style="border-bottom: 1px solid rgba(255,255,255,0.03);">';
+            html += '            <td style="font-family: \'JetBrains Mono\', monospace;">' + subB.id + '</td>';
+            html += '            <td style="font-weight: 600; color: var(--text-primary);">' + escapeAdminHtml(subB.name) + '</td>';
+            html += '            <td><span style="color: ' + subSt.color + '; font-size: 11px; font-weight: bold; padding: 1px 6px; border-radius: 4px; background: rgba(0,0,0,0.3);">' + escapeAdminHtml(subB.status) + '</span></td>';
+            html += '            <td>' + escapeAdminHtml(subMap) + '</td>';
+            html += '            <td style="font-family: \'JetBrains Mono\', monospace; font-weight: 700; color: var(--primary-color);">' + escapeAdminHtml(subZone) + '</td>';
+            html += '          </tr>';
+          });
+
+          html += '        </tbody>';
+          html += '      </table>';
+          html += '    </div>';
+          html += '  </td>';
+          html += '</tr>';
+        }
+      });
+    }
+
+    tbody.innerHTML = html;
+  }
+
+  function toggleAdminGroupDetail(domId) {
+    var el = document.getElementById('detail-' + domId);
+    var iconEl = document.getElementById('btn-icon-' + domId);
+    if (!el) return;
+
+    if (el.style.display === 'none') {
+      el.style.display = '';
+      if (iconEl) iconEl.innerText = '▼';
+    } else {
+      el.style.display = 'none';
+      if (iconEl) iconEl.innerText = '▶';
+    }
+  }
+
+  async function fetchAdminLiveBosses() {
+    try {
+      var res = await fetch('/api/boss-live');
+      var data = await res.json();
+      if (data && data.success) {
+        adminBossesData = data.bosses || [];
+
+        var active = 0, chat = 0, rest = 0;
+        adminBossesData.forEach(function(b) {
+          var stInfo = getStatusCategory(b.status);
+          if (stInfo.cat === 'REST') rest++;
+          else if (stInfo.cat === 'CHAT') chat++;
+          else active++;
+        });
+
+        document.getElementById('admin-stat-total').innerText = adminBossesData.length;
+        document.getElementById('admin-stat-active').innerText = active;
+        document.getElementById('admin-stat-chat').innerText = chat;
+        document.getElementById('admin-stat-rest').innerText = rest;
+
+        renderAdminBossTable();
+      }
+    } catch (e) {
+      console.error('Error refreshing admin boss live:', e);
+    }
+  }
+
+  function escapeAdminHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  // Initial render on page load
+  document.addEventListener('DOMContentLoaded', function() {
+    renderAdminBossTable();
+  });
+  // Fallback initial render
+  renderAdminBossTable();
+</script>

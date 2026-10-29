@@ -1,0 +1,99 @@
+<%-include("../partials/dashboard-meta.ejs", {title: "Mở rương Jackpot"})%>
+<body class="jackpot-preview">
+<link rel="stylesheet" href="/assets/arena-dashboard/jackpot-live.css?v=2">
+<%-include("../partials/head.ejs")%>
+<svg height="0" style="position: absolute;" width="0">
+<defs>
+<filter color-interpolation-filters="sRGB" id="removeBlackBg">
+<!-- Detect luminance: (R + G + B) -->
+<fecolormatrix result="lum" type="matrix" values="
+                    1 0 0 0 0
+                    0 1 0 0 0
+                    0 0 1 0 0
+                    4 4 4 0 -0.5
+                "></fecolormatrix>
+<!-- Hard threshold: Any pixel darker than ~12% brightness becomes completely Alpha = 0 -->
+<fecomponenttransfer in="lum" result="binaryAlpha">
+<fefunca intercept="-2" slope="80" type="linear"></fefunca>
+</fecomponenttransfer>
+<fecomposite in="SourceGraphic" in2="binaryAlpha" operator="in"></fecomposite>
+</filter>
+</defs>
+</svg>
+<main class="main-body-container"><section class="dashboard-section bottom-padding">
+<div class="section-hexagon-title">MỞ RƯƠNG JACKPOT</div>
+<div class="spin-container">
+<p>Hạng của bạn: <strong><%= jackpot.level < 0 ? 'Chưa có hạng' : jackpot.ranks[jackpot.level].name %></strong></p>
+<p>Số dư: <strong id="balance"><%= Number(jackpot.balance).toLocaleString('vi-VN') %></strong> điểm</p>
+<div class="chest-slider"><button class="arrow-btn left-arrow" onclick="changeChest(-1)" aria-label="Rương trước"><i class="fa-solid fa-chevron-left"></i></button>
+<!-- Chest Image Wrapper with 3D Opening Lid -->
+<div class="chest-container" id="chestContainer" onclick="spinChest(1)">
+<!-- Light Ray / Glow burst behind chest when opening -->
+<div class="chest-glow-burst" id="chestGlow"></div>
+<!-- Inner Glowing Light Core & Seamless Interior Cavity -->
+<div class="chest-interior-cavity" id="chestCavity"></div>
+<div class="chest-inside-glow" id="chestInsideGlow"></div>
+<!-- Chest Base Layer (Stationary Front Wall) -->
+<div class="chest-layer chest-base-layer">
+<img alt="Gold Chest Base" class="gold-chest-image chest-img-base" src="/assets/arena-dashboard/gold_chest_black_bg_1787255514369.jpg"/>
+</div>
+<!-- Chest Lid Layer (Hinges open seamlessly at the seam) -->
+<div class="chest-layer chest-lid-layer" id="chestLidLayer">
+<img alt="Gold Chest Lid" class="gold-chest-image chest-img-lid" id="chestImage" src="/assets/arena-dashboard/gold_chest_black_bg_1787255514369.jpg"/>
+</div>
+<!-- Diamond Embedded Gems Overlay (Active on Diamond Chest) -->
+<div class="chest-diamond-gems-wrap hidden" id="diamondChestGems">
+<i class="fa-solid fa-gem d-gem-top"></i>
+<i class="fa-solid fa-gem d-gem-left"></i>
+<i class="fa-solid fa-gem d-gem-right"></i>
+<i class="fa-solid fa-gem d-gem-center"></i>
+<div class="diamond-aurora-glow"></div>
+</div>
+<!-- Unlock Flash overlay -->
+<div class="unlock-flash" id="unlockFlash"></div>
+<!-- Animated Golden Key -->
+<div class="chest-key-anim" id="chestKey">
+<i class="fa-solid fa-key golden-key-icon" id="chestKeyIcon"></i>
+</div>
+<!-- Floating Sparkles -->
+<div class="chest-particles-container" id="chestParticles"></div>
+</div>
+<!-- Right Arrow Button -->
+<button class="arrow-btn right-arrow" onclick="changeChest(1)"><i class="fa-solid fa-chevron-right"></i></button>
+</div>
+
+<h3 class="chest-title-name" id="chestName"></h3>
+<p id="requirement"></p>
+<div class="spin-buttons-row"><button class="spin-action-btn single-spin-btn" id="openChest" onclick="spinChest()">MỞ RƯƠNG</button></div>
+<p id="result" role="status" aria-live="polite"></p>
+<p>Mỗi lượt nhận một phần thưởng. Quà được gửi vào mục nhận thưởng vòng quay trong game.</p>
+<details class="jackpot-rewards-details">
+<summary>Phần thưởng có thể nhận</summary>
+<p>Rương cấp cao bao gồm quà các rương cấp thấp hơn. Mỗi dòng quà có xác suất bằng nhau.</p>
+<div class="jackpot-live-history jackpot-rewards-table">
+<table class="jackpot-history-table">
+<thead><tr><th scope="col">Vật phẩm</th><th scope="col">Số lượng</th><th scope="col">Option</th><th scope="col">Tỷ lệ</th></tr></thead>
+<tbody id="rewards"></tbody>
+</table></div>
+</details>
+<h3>Lịch sử mở rương gần đây</h3>
+<div class="jackpot-live-history">
+<table class="jackpot-history-table">
+<thead><tr><th scope="col">Thời gian</th><th scope="col">Rương</th><th scope="col">Vật phẩm</th><th scope="col">Số lượng</th><th scope="col">Chi phí</th></tr></thead>
+<tbody id="history">
+<% if (!history.length) { %><tr id="historyEmpty"><td colspan="5">Chưa có lượt mở rương nào.</td></tr><% } %>
+<% history.forEach(row => { const reward = typeof row.reward === 'string' ? JSON.parse(row.reward) : row.reward; %>
+<tr><td><%= new Date(row.created_at).toLocaleString('vi-VN', {timeZone:'Asia/Bangkok'}) %></td><td><%= jackpot.ranks[row.chest_id].name %></td><td><%= reward.name %></td><td><%= reward.quantity %></td><td><%= row.cost.toLocaleString('vi-VN') %> điểm</td></tr>
+<% }); %>
+</tbody></table></div>
+</div></section></main>
+<div class="case-opening-overlay hidden" id="caseOpeningModal" role="dialog" aria-modal="true" aria-labelledby="rouletteChestTitle">
+<div class="case-opening-stage">
+<div class="case-header-bar"><h2 class="case-title-glow" id="rouletteChestTitle">MỞ RƯƠNG</h2></div>
+<div class="roulette-viewport"><div class="roulette-needle top-needle"></div><div class="roulette-needle bottom-needle"></div><div class="roulette-center-line"></div><div class="roulette-rail" id="rouletteRail"></div></div>
+<p id="rouletteStatus" role="status">Đang mở phần thưởng…</p>
+<button id="closeReward" class="spin-action-btn hidden" onclick="closeRewardReveal()" type="button">ĐÃ NHẬN</button>
+</div></div>
+<script id="jackpotData" type="application/json"><%- JSON.stringify(jackpot).replace(/</g, '\u003c') %></script>
+<script src="/assets/arena-dashboard/jackpot.js?v=4" defer></script>
+</body></html>

@@ -1,0 +1,106 @@
+<%-include("../partials/meta.ejs")%>
+
+   <body>
+      <main class="arena-main">
+         <div class="arena-auth-layout">
+            <!-- Left Panel: Game Features & Info -->
+            <div class="arena-left-panel">
+               <h1 class="arena-left-title">ARENA THẦN RỒNG</h1>
+
+               <div class="arena-badge-row row-cyan">
+                  <div class="arena-badge social">SOCIAL</div>
+                  <div class="arena-badge-desc">Cộng Đồng Lành Mạnh Bền Vững Theo Thời Gian</div>
+               </div>
+
+               <div class="arena-badge-row row-yellow">
+                  <div class="arena-badge quest">QUEST</div>
+                  <div class="arena-badge-desc">Hệ Thống Nhiệm Vụ Hoàn Thiện Giống Cốt Truyện</div>
+               </div>
+
+               <div class="arena-badge-row row-orange">
+                  <div class="arena-badge start">START</div>
+                  <div class="arena-badge-desc">Hành Trình Tìm Ngọc Rồng Bắt Đầu Ngay Tại Đây</div>
+               </div>
+            </div>
+
+            <!-- Right Panel: Login Card -->
+            <div class="arena-right-panel">
+               <div class="arena-aura-glow"></div>
+               <div class="arena-form-wrapper">
+                  <!-- Card Header -->
+                  <div class="arena-card-logo-area">
+                     <div class="arena-logo-wrapper">
+                        <span class="arena-sparkle sp-top-right"></span>
+                        <span class="arena-sparkle sp-bottom-left"></span>
+                        <div class="arena-logo-circle">
+                           <img src="../assets/images/arena/logo.jpg" alt="Arena Thần Rồng Logo">
+                        </div>
+                     </div>
+                     <h1 class="arena-game-title">ARENA THẦN RỒNG</h1>
+                     <p class="arena-game-subtitle">DRAGON SUPER PRIVATE SERVER</p>
+                  </div>
+
+                  <!-- Toast Notification -->
+                  <div id="arenaToast" class="arena-toast hidden"></div>
+
+                  <!-- Login Form -->
+                  <form class="arena-form" onsubmit="return false;">
+                     <div class="arena-input-group">
+                        <label for="username"><i class="fa-solid fa-user"></i> TÊN TÀI KHOẢN</label>
+                        <input type="text" id="username" placeholder="Nhập username game..." required autocomplete="username">
+                     </div>
+
+                     <div class="arena-input-group">
+                        <label for="password"><i class="fa-solid fa-lock"></i> MẬT KHẨU</label>
+                        <div class="arena-password-wrapper">
+                           <input type="password" id="password" placeholder="••••••••" required autocomplete="current-password">
+                           <i class="fa-solid fa-eye arena-toggle-password" onclick="togglePasswordVisibility('password', this)"></i>
+                        </div>
+                     </div>
+
+                     <button type="button" id="submit" class="arena-btn-submit">
+                        <i class="fa-solid fa-right-to-bracket"></i> Đăng Nhập
+                     </button>
+                  </form>
+
+                  <p style="text-align: center; margin-top: 16px; font-size: 0.88rem; color: #8c92ac;">
+                     Bạn chưa có tài khoản? <a href="/register" style="color: #ffcc00; font-weight: 600;">Đăng ký ngay</a>
+                  </p>
+               </div>
+            </div>
+         </div>
+      </main>
+
+      <script>
+         document.querySelector("#submit").addEventListener("click", ()=>{
+            var username = document.getElementById("username").value;
+            var password = document.getElementById("password").value;
+            if (!username || !password) {
+               toastr["error"]("Vui lòng nhập đầy đủ tài khoản và mật khẩu!", "Error");
+               return;
+            }
+            $.ajax({
+               url: "/auth/login",
+               method: "POST",
+               data: { username, password },
+               success: (data, status) =>{
+                  if(data.error){
+                     toastr["error"](data?.message, "Error")
+                  } else {
+                     try {
+                        sessionStorage.setItem("arenaLoginSuccess", data?.message || "Đăng nhập thành công");
+                     } catch (error) {
+                        // Storage may be disabled; navigation must still proceed.
+                     }
+                     window.location.href = "/";
+                  }
+               },
+               error: (xhr)=>{
+                  var msg = xhr.responseJSON?.message || "Đã xảy ra lỗi tại máy chủ!";
+                  toastr["error"](msg, "Error");
+               }
+            })
+         })
+      </script>
+
+      <%-include("../partials/footer.ejs")%>

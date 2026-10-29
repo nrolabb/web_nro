@@ -1,0 +1,136 @@
+<%-include("../partials/meta.ejs")%>
+   <script src="https://www.google.com/recaptcha/api.js?render=6Ld4ANEpAAAAAO_bx6CnxGcc8O_VSQ38CgVR6_Jx"></script>
+
+   <body>
+      <main class="arena-main">
+         <div class="arena-auth-layout">
+            <!-- Left Panel: Game Features & Info -->
+            <div class="arena-left-panel">
+               <h1 class="arena-left-title">ARENA THẦN RỒNG</h1>
+
+               <div class="arena-badge-row row-cyan">
+                  <div class="arena-badge social">SOCIAL</div>
+                  <div class="arena-badge-desc">Cộng Đồng Lành Mạnh Bền Vững Theo Thời Gian</div>
+               </div>
+
+               <div class="arena-badge-row row-yellow">
+                  <div class="arena-badge quest">QUEST</div>
+                  <div class="arena-badge-desc">Hệ Thống Nhiệm Vụ Hoàn Thiện Giống Cốt Truyện</div>
+               </div>
+
+               <div class="arena-badge-row row-orange">
+                  <div class="arena-badge start">START</div>
+                  <div class="arena-badge-desc">Hành Trình Tìm Ngọc Rồng Bắt Đầu Ngay Tại Đây</div>
+               </div>
+            </div>
+
+            <!-- Right Panel: Register Card -->
+            <div class="arena-right-panel">
+               <div class="arena-aura-glow"></div>
+               <div class="arena-form-wrapper">
+                  <!-- Card Header -->
+                  <div class="arena-card-logo-area">
+                     <div class="arena-logo-wrapper">
+                        <span class="arena-sparkle sp-top-right"></span>
+                        <span class="arena-sparkle sp-bottom-left"></span>
+                        <div class="arena-logo-circle">
+                           <img src="../assets/images/arena/logo.jpg" alt="Arena Thần Rồng Logo">
+                        </div>
+                     </div>
+                     <h1 class="arena-game-title">ĐĂNG KÝ TÀI KHOẢN</h1>
+                     <p class="arena-game-subtitle">DRAGON SUPER PRIVATE SERVER</p>
+                  </div>
+
+                  <!-- Toast Notification -->
+                  <div id="arenaToast" class="arena-toast hidden"></div>
+
+                  <!-- Register Form -->
+                  <form class="arena-form" onsubmit="return false;">
+                     <div class="arena-input-group">
+                        <label for="username"><i class="fa-solid fa-user"></i> TÊN TÀI KHOẢN</label>
+                        <input type="text" id="username" placeholder="Nhập tài khoản (5–12 ký tự)" required minlength="5" maxlength="12" autocomplete="username">
+                     </div>
+
+                     <div class="arena-input-group">
+                        <label for="password"><i class="fa-solid fa-lock"></i> MẬT KHẨU</label>
+                        <div class="arena-password-wrapper">
+                           <input type="password" id="password" placeholder="Nhập mật khẩu (5–12 ký tự)" required minlength="5" maxlength="12" autocomplete="new-password">
+                           <i class="fa-solid fa-eye-slash arena-toggle-password" onclick="togglePasswordVisibility('password', this)"></i>
+                        </div>
+                     </div>
+
+                     <div class="arena-input-group">
+                        <label for="confirmPassword"><i class="fa-solid fa-lock"></i> NHẬP LẠI MẬT KHẨU</label>
+                        <div class="arena-password-wrapper">
+                           <input type="password" id="confirmPassword" placeholder="Nhập lại mật khẩu" required minlength="5" maxlength="12" autocomplete="new-password">
+                           <i class="fa-solid fa-eye-slash arena-toggle-password" onclick="togglePasswordVisibility('confirmPassword', this)"></i>
+                        </div>
+                     </div>
+
+                     <div class="arena-form-options">
+                        <label class="arena-remember-me">
+                           <input type="checkbox" id="termsAgree" required>
+                           <span class="arena-checkmark"></span>
+                           Tôi đồng ý với điều khoản dịch vụ
+                        </label>
+                     </div>
+
+                     <button type="button" id="submit" class="arena-btn-submit" style="background: linear-gradient(135deg, #ff4d00, #ff8c00);">
+                        <i class="fa-solid fa-user-plus"></i> Đăng Ký
+                     </button>
+                  </form>
+
+                  <p style="text-align: center; margin-top: 16px; font-size: 0.88rem; color: #8c92ac;">
+                     Bạn đã có tài khoản? <a href="/login" style="color: #ffcc00; font-weight: 600;">Đăng nhập</a>
+                  </p>
+               </div>
+            </div>
+         </div>
+      </main>
+
+      <script>
+         document.querySelector("#submit").addEventListener("click", (event) => {
+            event.preventDefault();
+            var username = document.getElementById("username").value;
+            var password = document.getElementById("password").value;
+            var confirmPassword = document.getElementById("confirmPassword").value;
+            if (!username || !password || !confirmPassword) {
+               toastr["error"]("Vui lòng nhập đầy đủ thông tin!", "Error");
+               return;
+            }
+            if (username.length < 5 || username.length > 12) {
+               toastr["error"]("Tài khoản phải dài từ 5 đến 12 ký tự!", "Error");
+               return;
+            }
+            if (password.length < 5 || password.length > 12) {
+               toastr["error"]("Mật khẩu phải dài từ 5 đến 12 ký tự!", "Error");
+               return;
+            }
+            if (password !== confirmPassword) {
+               toastr["error"]("Mật khẩu nhập lại không khớp!", "Error");
+               document.getElementById("confirmPassword").focus();
+               return;
+            }
+            grecaptcha.execute("6Ld4ANEpAAAAAO_bx6CnxGcc8O_VSQ38CgVR6_Jx").then(function (token) {
+               $.ajax({
+                  url: "/auth/register",
+                  method: "POST",
+                  data: { username, password, confirmPassword, captcha: token },
+                  success: (data, status) => {
+                     if (data.error) {
+                        toastr["error"](data?.message, "Error")
+                     } else {
+                        toastr["success"](data?.message, "Success")
+                        setTimeout(() => { window.location.href = "/login" }, 2000)
+                     }
+                  },
+                  error: (xhr) => {
+                     var msg = xhr.responseJSON?.message || "Đã xảy ra lỗi tại máy chủ!";
+                     toastr["error"](msg, "Error");
+                  }
+               })
+            })
+         })
+      </script>
+
+      <%-include("../partials/footer.ejs")%>

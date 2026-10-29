@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel - NRO ARN</title>
+  <link rel="icon" href="https://www.dragonsuper.online/image/icon1.png" type="image/x-icon">
+  <link rel="stylesheet" href="/assets/css/admin-panel.css">
+</head>
+<body class="admin-panel-body">
+
+  <!-- Sidebar Overlay (mobile) -->
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+  <!-- Sidebar -->
+  <aside class="admin-sidebar" id="adminSidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo">N</div>
+      <div>
+        <div class="sidebar-title">NRO ARN</div>
+        <div class="sidebar-subtitle">Admin Panel</div>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="sidebar-nav-label">Tổng quan</div>
+      <a href="/panel/admin?type=home" class="sidebar-nav-item <%= activeTab === 'home' ? 'active' : '' %>" id="nav-home">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+        </svg>
+        Dashboard
+      </a>
+
+      <div class="sidebar-nav-label">Quản lý</div>
+      <a href="/panel/admin?type=accounts" class="sidebar-nav-item <%= activeTab === 'accounts' ? 'active' : '' %>" id="nav-accounts">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+        </svg>
+        Tài khoản
+      </a>
+      <a href="/panel/admin?type=players" class="sidebar-nav-item <%= activeTab === 'players' ? 'active' : '' %>" id="nav-players">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M6 9l6 6 6-6"/><circle cx="12" cy="5" r="3"/>
+          <path d="M12 12v9"/>
+        </svg>
+        Player
+      </a>
+      <a href="/panel/admin?type=giftcodes" class="sidebar-nav-item <%= activeTab === 'giftcodes' ? 'active' : '' %>" id="nav-giftcodes">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-6"/><path d="M4 12h16"/><path d="M12 12v8"/><path d="M10 6a2 2 0 1 0-4 0v6h8V6a2 2 0 1 0-4 0"/>
+        </svg>
+        Giftcode
+      </a>
+      <a href="/panel/admin?type=bosses" class="sidebar-nav-item <%= activeTab === 'bosses' ? 'active' : '' %>" id="nav-bosses">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><path d="M12 18v-6"/><path d="M9 15l3-3 3 3"/>
+        </svg>
+        Quản lý Boss
+      </a>
+      <a href="/panel/admin?type=boss_live" class="sidebar-nav-item <%= activeTab === 'boss_live' ? 'active' : '' %>" id="nav-boss-live">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+        </svg>
+        Boss Live Status
+      </a>
+      <a href="/panel/admin?type=spin_items" class="sidebar-nav-item <%= activeTab === 'spin_items' ? 'active' : '' %>" id="nav-spin-items">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/><path d="M12 2v20"/><path d="M2 12h20"/>
+        </svg>
+        Vòng Quay
+      </a>
+      <a href="/panel/admin?type=deposits" class="sidebar-nav-item <%= activeTab === 'deposits' ? 'active' : '' %>" id="nav-deposits">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="5" width="20" height="14" rx="2" ry="2"/><line x1="2" y1="10" x2="22" y2="10"/>
+        </svg>
+        Lịch sử Donate
+      </a>
+
+      <div class="sidebar-nav-label">Hệ thống</div>
+      <a href="/panel/admin?type=commands" class="sidebar-nav-item <%= activeTab === 'commands' ? 'active' : '' %>" id="nav-commands">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/>
+        </svg>
+        Danh sách lệnh
+      </a>
+      <a href="/panel/admin?type=logs" class="sidebar-nav-item <%= activeTab === 'logs' ? 'active' : '' %>" id="nav-logs">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/>
+        </svg>
+        Server Log
+      </a>
+      <a href="/" class="sidebar-nav-item" id="nav-website">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+        </svg>
+        Về Website
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <div class="sidebar-user-avatar"><%= adminUser ? adminUser.substring(0, 1).toUpperCase() : 'A' %></div>
+        <div class="sidebar-user-info">
+          <div class="sidebar-user-name"><%= adminUser || 'Admin' %></div>
+          <div class="sidebar-user-role">Administrator</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="admin-main">
+    <!-- Header -->
+    <header class="admin-header">
+      <div class="admin-header-left">
+        <button class="sidebar-toggle" onclick="toggleSidebar()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+          </svg>
+        </button>
+        <h1 class="admin-header-title"><%= pageTitle || 'Dashboard' %></h1>
+      </div>
+      <div class="admin-header-right">
+        <span class="header-badge online">Server Online</span>
+        <span class="header-time" id="headerTime"></span>
+      </div>
+    </header>
+
+    <!-- Content -->
+    <div class="admin-content">
+      <%- contentPartial %>
+    </div>
+  </main>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Modal Overlay -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal" id="modalContent">
+      <!-- Dynamic modal content -->
+    </div>
+  </div>
+
+  <script>
+    // ========== Time Display ==========
+    function updateHeaderTime() {
+      var el = document.getElementById('headerTime');
+      if (el) {
+        var now = new Date();
+        el.textContent = now.toLocaleString('vi-VN', { 
+          hour: '2-digit', minute: '2-digit', second: '2-digit',
+          day: '2-digit', month: '2-digit', year: 'numeric'
+        });
+      }
+    }
+    setInterval(updateHeaderTime, 1000);
+    updateHeaderTime();
+
+    // ========== Sidebar Toggle ==========
+    function toggleSidebar() {
+      document.getElementById('adminSidebar').classList.toggle('open');
+      document.getElementById('sidebarOverlay').classList.toggle('active');
+    }
+
+    // ========== Toast Notifications ==========
+    function showToast(message, type) {
+      type = type || 'info';
+      var container = document.getElementById('toastContainer');
+      var icons = {
+        success: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>',
+        error: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>',
+        info: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>'
+      };
+      var toast = document.createElement('div');
+      toast.className = 'toast ' + type;
+      toast.innerHTML = (icons[type] || icons.info) + '<span>' + message + '</span>';
+      container.appendChild(toast);
+      setTimeout(function() {
+        toast.style.animation = 'slideOut 0.3s ease forwards';
+        setTimeout(function() { toast.remove(); }, 300);
+      }, 3000);
+    }
+
+    // ========== Modal ==========
+    function openModal(title, bodyHtml, footerHtml) {
+      var overlay = document.getElementById('modalOverlay');
+      var modal = document.getElementById('modalContent');
+      modal.innerHTML = '<div class="modal-header"><h3 class="modal-title">' + title + '</h3><button class="modal-close" onclick="closeModal()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div><div class="modal-body">' + bodyHtml + '</div>' + (footerHtml ? '<div class="modal-footer">' + footerHtml + '</div>' : '');
+      overlay.classList.add('active');
+    }
+
+    function closeModal() {
+      var overlay = document.getElementById('modalOverlay');
+      overlay.classList.remove('active');
+      delete overlay.dataset.preventBackdropClose;
+    }
+
+    // Close modal on overlay click
+    document.getElementById('modalOverlay').addEventListener('click', function(e) {
+      if (e.target === this && this.dataset.preventBackdropClose !== 'true') closeModal();
+    });
+
+    // ========== API Helper ==========
+    async function adminApi(action, data) {
+      try {
+        var body = Object.assign({ action: action }, data || {});
+        var res = await fetch('/panel/admin-api', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+        return await res.json();
+      } catch(err) {
+        console.error(err);
+        return { success: false, message: 'Lỗi kết nối server' };
+      }
+    }
+  </script>
+</body>
+</html>
