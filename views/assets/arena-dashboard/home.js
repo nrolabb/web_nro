@@ -4,6 +4,7 @@
             {
                 id: 'goku',
                 classKey: 'traidat',
+                avatarPrefix: 'TD',
                 heroName: 'SON GOKU',
                 raceName: 'HỆ TRÁI ĐẤT',
                 roleName: 'CÂN BẰNG & BIẾN HÓA',
@@ -19,7 +20,6 @@
                 fillClass: 'fill-blue',
                 icon: 'fa-earth-asia',
                 charIcon: 'fa-bolt-lightning',
-                image: '/assets/images/avatars/td.png',
                 stats: {
                     damage: 85,
                     ki: 100,
@@ -75,6 +75,7 @@
             {
                 id: 'piccolo',
                 classKey: 'namec',
+                avatarPrefix: 'NM',
                 heroName: 'PICCOLO',
                 raceName: 'HỆ NAMEC',
                 roleName: 'HỒI PHỤC & HỖ TRỢ',
@@ -90,7 +91,6 @@
                 fillClass: 'fill-green',
                 icon: 'fa-dna',
                 charIcon: 'fa-hand-sparkles',
-                image: '/assets/images/avatars/nm.png',
                 stats: {
                     damage: 70,
                     ki: 85,
@@ -146,6 +146,7 @@
             {
                 id: 'vegeta',
                 classKey: 'xayda',
+                avatarPrefix: 'XD',
                 heroName: 'VEGETA',
                 raceName: 'HỆ XAYDA',
                 roleName: 'BẠO KÍCH & SÁT THƯƠNG',
@@ -161,7 +162,6 @@
                 fillClass: 'fill-orange',
                 icon: 'fa-fire',
                 charIcon: 'fa-meteor',
-                image: '/assets/images/avatars/xd.png',
                 stats: {
                     damage: 100,
                     ki: 65,
@@ -240,15 +240,9 @@
                                 <div class="hero-energy-beam"></div>
                                 <div class="hero-stage-pedestal" style="background: radial-gradient(ellipse at 50% 85%, ${hero.color}66 0%, ${hero.color}15 50%, transparent 75%);"></div>
 
-                                ${hero.image ? `
-                                    <div class="hero-character-img-wrap">
-                                        <img src="${hero.image}" alt="${hero.heroName}" class="hero-character-img" />
-                                    </div>
-                                ` : `
-                                    <div class="hero-character-icon-art">
-                                        <i class="fa-solid ${hero.charIcon}"></i>
-                                    </div>
-                                `}
+                                <div class="hero-character-img-wrap">
+                                    <img src="/assets/images/avatars/${hero.avatarPrefix}_0.png" alt="${hero.heroName}" class="hero-character-img" />
+                                </div>
                             </div>
 
                             <!-- LORE QUOTE BUBBLE -->
@@ -292,16 +286,10 @@
                                          data-skill-index="${sIdx + 1}">
                                         <div class="hero-skill-slot-num">0${sIdx + 1}</div>
                                         <div class="hero-skill-icon-wrap" style="color: ${skill.isPlaceholder ? '#64748b' : hero.color};">
-                                            ${skill.image ? `
-                                                <div class="hero-skill-icon-frame">
-                                                    <img src="${skill.image}" alt="${skill.name}" class="hero-skill-img-icon" />
-                                                    <div class="skill-icon-shine"></div>
-                                                </div>
-                                            ` : `
-                                                <div class="hero-skill-slot-empty">
-                                                    <i class="fa-solid ${skill.icon || 'fa-plus'}"></i>
-                                                </div>
-                                            `}
+                                            <div class="hero-skill-icon-frame">
+                                                <img src="/assets/images/avatars/${hero.avatarPrefix}_${sIdx + 1}.png" alt="${skill.name}" class="hero-skill-img-icon" />
+                                                <div class="skill-icon-shine"></div>
+                                            </div>
                                         </div>
                                         <div class="hero-skill-info">
                                             <div class="hero-skill-name-row">
