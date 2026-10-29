@@ -7,17 +7,29 @@ async function getPools(db) {
     return rows.map(row => ({ ...config.jackpotPools[row.chest_id], amount: Number(row.amount) }));
 }
 
-// The caller must hold an active transaction. Lock serializes all players of this chest.
+// The caller must hold an active transaction. Lock every pool in stable order so each spin
+// contributes to all four tiers without losing concurrent updates.
 async function drawPool(db, chestId, randomInt = crypto.randomInt) {
     const settings = config.jackpotPools[chestId];
-    const [[pool]] = await db.query('SELECT amount FROM jackpot_pool WHERE chest_id = ? FOR UPDATE', [chestId]);
-    if (!pool) throw new Error('Hũ Jackpot chưa được khởi tạo');
-    const amount = Number(pool.amount) + settings.increment;
-    if (!Number.isSafeInteger(amount) || amount > 2147483647) throw new Error('Hũ Jackpot vượt giới hạn số dư VNĐ');
+    const contribution = Math.floor(config.jackpotPrice / 10);
+    const [pools] = await db.query('SELECT chest_id, amount FROM jackpot_pool ORDER BY chest_id FOR UPDATE');
+    if (pools.length !== 4 || pools.some((pool, index) => Number(pool.chest_id) !== index) || !settings) {
+        throw new Error('Chưa khởi tạo đủ 4 hũ Jackpot');
+    }
     const won = randomInt(10000) === 0;
-    const remaining = won ? settings.base : amount;
-    await db.query('UPDATE jackpot_pool SET amount = ? WHERE chest_id = ?', [remaining, chestId]);
-    return { won, payout: won ? amount : 0, amount: remaining, chestId };
+    let jackpotAmount = 0;
+    let remaining = 0;
+    for (const pool of pools) {
+        const id = Number(pool.chest_id);
+        const amount = Number(pool.amount) + contribution;
+        if (!Number.isSafeInteger(amount) || amount > 2147483647) throw new Error('Hũ Jackpot vượt giới hạn số dư VNĐ');
+        const isWinningPool = id === chestId;
+        if (isWinningPool) jackpotAmount = amount;
+        const updatedAmount = isWinningPool && won ? settings.base : amount;
+        if (isWinningPool) remaining = updatedAmount;
+        await db.query('UPDATE jackpot_pool SET amount = ? WHERE chest_id = ?', [updatedAmount, id]);
+    }
+    return { won, payout: won ? jackpotAmount : 0, amount: remaining, chestId, contribution };
 }
 
 module.exports = { getPools, drawPool };

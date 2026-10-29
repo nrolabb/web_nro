@@ -30,11 +30,10 @@ if (!validRanks) {
 const jackpotPools = accountRanks.map((rank, index) => {
     const prefix = 'JACKPOT_' + rank.key.toUpperCase();
     const base = Number(process.env[prefix + '_BASE_VND'] || [10000, 50000, 200000, 1000000][index]);
-    const increment = Number(process.env[prefix + '_INCREMENT_VND'] || 100);
-    if (![base, increment].every(value => Number.isSafeInteger(value) && value > 0 && value <= 2147483647)) {
-        throw new Error(prefix + ': mức khởi điểm và mức cộng phải là số nguyên dương hợp lệ');
+    if (!Number.isSafeInteger(base) || base <= 0 || base > 2147483647) {
+        throw new Error(prefix + ': mức khởi điểm phải là số nguyên dương hợp lệ');
     }
-    return { chestId: index, base, increment };
+    return { chestId: index, base };
 });
 
 function socialUrl(name) {
