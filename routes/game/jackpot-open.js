@@ -20,9 +20,10 @@ module.exports = {
             const [[locked]] = await db.query('SELECT vnd, tongnap FROM account WHERE id = ? FOR UPDATE', [account.id]);
             const [[previous]] = await db.query('SELECT reward, chest_id, cost, created_at FROM jackpot_history WHERE account_id = ? AND request_id = ?', [account.id, requestId]);
             if (previous) {
+                const pools = await poolService.getPools(db);
                 await db.commit();
                 return res.json({ reward: typeof previous.reward === 'string' ? JSON.parse(previous.reward) : previous.reward, balance: locked.vnd,
-                    receipt: { chestId: previous.chest_id, cost: previous.cost, createdAt: previous.created_at } });
+                    receipt: { chestId: previous.chest_id, cost: previous.cost, createdAt: previous.created_at }, pools });
             }
             const fail = async message => { await db.rollback(); return res.status(400).json({ message }); };
             if (rankLevel(locked.tongnap) < chestId) return await fail('Bạn chưa đạt hạng để mở rương này.');
@@ -45,9 +46,10 @@ module.exports = {
             }
             await db.query('INSERT INTO jackpot_history (account_id, request_id, chest_id, cost, reward) VALUES (?, ?, ?, ?, ?)', [account.id, requestId, chestId, config.jackpotPrice, JSON.stringify(reward)]);
             const [[saved]] = await db.query('SELECT chest_id, cost, created_at FROM jackpot_history WHERE account_id = ? AND request_id = ?', [account.id, requestId]);
+            const pools = await poolService.getPools(db);
             await db.commit();
             res.json({ reward, balance: newBalance,
-                receipt: { chestId: saved.chest_id, cost: saved.cost, createdAt: saved.created_at } });
+                receipt: { chestId: saved.chest_id, cost: saved.cost, createdAt: saved.created_at }, pools });
         } catch (err) {
             if (db) await db.rollback();
             console.error('Jackpot:', err.message);

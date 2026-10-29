@@ -65,6 +65,7 @@ async function spinChest() {
   const data = await response.json();
   if (!response.ok) { if (response.status < 500) pending = null; throw new Error(data.message || 'Không thể mở rương. Hãy tải lại trang.'); }
   jackpot.balance = data.balance; pending = null;
+  if (Array.isArray(data.pools) && data.pools.length === 4) renderJackpotPools(data.pools);
   const receipt = data.receipt || { chestId: chestIndex, cost: jackpot.price, createdAt: new Date().toISOString() };
   appendHistory(data.reward, receipt);
   document.getElementById('balance').textContent = money(jackpot.balance);

@@ -14,7 +14,7 @@ async function drawPool(db, chestId, randomInt = crypto.randomInt) {
     if (!pool) throw new Error('Hũ Jackpot chưa được khởi tạo');
     const amount = Number(pool.amount) + settings.increment;
     if (!Number.isSafeInteger(amount) || amount > 2147483647) throw new Error('Hũ Jackpot vượt giới hạn số dư VNĐ');
-    const won = randomInt(100) === 0;
+    const won = randomInt(10000) === 0;
     const remaining = won ? settings.base : amount;
     await db.query('UPDATE jackpot_pool SET amount = ? WHERE chest_id = ?', [remaining, chestId]);
     return { won, payout: won ? amount : 0, amount: remaining, chestId };
