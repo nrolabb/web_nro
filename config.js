@@ -54,6 +54,7 @@ if (!Number.isFinite(jackpotChancePercent) || jackpotChancePercent < 0 || jackpo
 }
 // Resolution is 1 in 100,000,000 draws, supporting percentage steps down to 0.000001%.
 const jackpotChanceThreshold = Math.round(jackpotChancePercent * 1_000_000);
+console.info(`[Jackpot] Tỷ lệ đang áp dụng: ${jackpotChancePercent}% (${jackpotChanceThreshold}/100000000)`);
 
 function socialUrl(name) {
     const value = process.env[name] || 'https://ngocrongarena.com/';
