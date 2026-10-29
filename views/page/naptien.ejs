@@ -113,7 +113,7 @@
     <section class="donnet-view-panel">
       <h1 class="section-hexagon-title">DONATE ỦNG HỘ</h1>
       <div class="donnet-card-container">
-        <div class="donnet-thanks-banner">Cảm ơn bạn đã đồng hành cùng Arena Thần Rồng! Donate lần đầu <%= promotion.firstTopupBonus %>%, các lần sau <%= promotion.regularTopupBonus %>%.</div>
+        <div class="donnet-thanks-banner">Cảm ơn bạn đã đồng hành cùng Arena Thần Rồng! Mỗi 1 VNĐ Donate được cộng 1 điểm.</div>
         <div class="donnet-form-area">
           <div class="donnet-form-group"><label for="donnetUsernameInput" class="donnet-field-label">Tài khoản nhận điểm</label><input id="donnetUsernameInput" class="donnet-text-input" value="<%= user[0].username %>" readonly></div>
           <div class="donnet-form-group"><label for="donnetAmountSelect" class="donnet-field-label">Mức Donate</label><div class="donnet-select-wrapper"><select id="donnetAmountSelect" class="donnet-select-input">
@@ -122,10 +122,10 @@
               const getGiftcodeTag = (amount) => amount >= 1000000 ? `GIFTCODE${amount / 1000000}M` : `GIFTCODE${amount / 1000}k`;
               topupAmounts.forEach(amount => { 
             %>
-              <option value="<%= amount %>" <%= amount === 50000 ? 'selected' : '' %>><%= amount.toLocaleString('vi-VN') %> VNĐ -> <%= Math.floor(amount * promotion.multiplier).toLocaleString('vi-VN') %> Điểm + <%= getGiftcodeTag(amount) %></option>
+              <option value="<%= amount %>" <%= amount === 50000 ? 'selected' : '' %>><%= amount.toLocaleString('vi-VN') %> VNĐ -> <%= amount.toLocaleString('vi-VN') %> Điểm + <%= getGiftcodeTag(amount) %></option>
             <% }) %>
           </select><i class="fa-solid fa-chevron-down select-caret-icon"></i></div></div>
-          <p id="donate-rate" class="donnet-qr-subtitle"><%= promotion.isFirstTopup ? 'Donate lần đầu' : 'Donate các lần sau' %>: nhận <%= promotion.isFirstTopup ? promotion.firstTopupBonus : promotion.regularTopupBonus %>% điểm.</p>
+          <p id="donate-rate" class="donnet-qr-subtitle">Tỷ lệ quy đổi: 1 VNĐ = 1 điểm.</p>
           <button class="btn-create-qr" id="btn-pay">Tạo mã QR</button>
         </div>
         <div class="donnet-qr-subtitle"><i class="fa-solid fa-qrcode"></i> Chuyển khoản đúng nội dung để được cộng điểm tự động</div>
@@ -231,14 +231,6 @@
             // Thanh toán thành công
             clearInterval(paymentCheckInterval);
             initialDonationTotal = Number(data.tongnap);
-            // Update the next Donate preview immediately after the first payment.
-            const regularRate = <%= promotion.regularTopupBonus %>;
-            const getGiftcodeTag = (amount) => amount >= 1000000 ? `GIFTCODE${amount / 1000000}M` : `GIFTCODE${amount / 1000}k`;
-            for (const option of document.getElementById('donnetAmountSelect').options) {
-              const amount = Number(option.value);
-              option.textContent = `${amount.toLocaleString('vi-VN')} VNĐ -> ${Math.floor(amount * regularRate / 100).toLocaleString('vi-VN')} Điểm + ${getGiftcodeTag(amount)}`;
-            }
-            document.getElementById('donate-rate').textContent = `Donate các lần sau: nhận ${regularRate}% điểm`;
             initialBalance = data.vnd; // Cập nhật số dư
             
             // Đóng popup QR

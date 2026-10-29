@@ -33,12 +33,6 @@ module.exports = {
     const userId = Number(match[1]);
     if (!Number.isSafeInteger(userId) || userId <= 0) return res.status(400).json({ success: false });
 
-    const firstBonus = Number(process.env.FIRST_TOPUP_BONUS || 200);
-    const regularBonus = Number(process.env.REGULAR_TOPUP_BONUS || 150);
-    if (![firstBonus, regularBonus].every(v => Number.isFinite(v) && v > 0 && v <= 1000)) {
-      return res.status(503).json({ success: false, message: 'Payment configuration error' });
-    }
-
     let db;
     try {
       db = await sql.promise().getConnection();
@@ -49,8 +43,7 @@ module.exports = {
         return res.status(404).json({ success: false, message: 'Payment account not found' });
       }
       const account = accounts[0];
-      const isFirstTopup = Number(account.tongnap) === 0;
-      const credited = Math.floor(amount * (isFirstTopup ? firstBonus : regularBonus) / 100);
+      const credited = amount;
       if (!Number.isSafeInteger(credited) || credited <= 0 || credited > MAX_INT || Number(account.vnd) + credited > MAX_INT || Number(account.tongnap) + amount > MAX_INT) {
         await db.rollback();
         return res.status(400).json({ success: false, message: 'Payment amount exceeds account limits' });

@@ -46,7 +46,7 @@ const { transfer, WalletError } = require('../helper/wallet');
    const sql={promise:()=>({getConnection:async()=>wrapped})};
    await require('../routes/api/sepay').run({req:request,res,sql});
    assert.equal(response.success,true);
-   const expected=Math.floor(20000*Number(process.env.FIRST_TOPUP_BONUS || 200)/100);
+   const expected=20000;
    const [[after]]=await db.query('SELECT vnd,tongnap FROM account WHERE id=?',[ids[0]]);
    assert.equal(after.vnd,9500+expected);assert.equal(after.tongnap,20000);
    await require('../routes/api/sepay').run({req:request,res,sql});

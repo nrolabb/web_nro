@@ -1,6 +1,22 @@
 const jackpot = JSON.parse(document.getElementById('jackpotData').textContent);
 let chestIndex = 0, busy = false, pending = null, revealing = false;
 const money = n => Number(n).toLocaleString('vi-VN');
+function renderJackpotPools(pools) {
+ const ids = ['jackpotAmountMini', 'jackpotAmountMinor', 'jackpotAmountMajor', 'jackpotAmountGrand'];
+ pools.forEach((pool, index) => {
+  const amount = document.getElementById(ids[index]);
+  if (amount) amount.textContent = money(pool.amount);
+ });
+}
+renderJackpotPools(jackpot.pools);
+setInterval(async () => {
+ try {
+  const response = await fetch('/jackpot/pools', { cache: 'no-store' });
+  if (!response.ok) return;
+  const data = await response.json();
+  if (Array.isArray(data.pools) && data.pools.length === 4) renderJackpotPools(data.pools);
+ } catch (_) {}
+}, 30000);
 function changeChest(direction = 0) {
  if (busy || pending || revealing) return;
  chestIndex = (chestIndex + direction + 4) % 4; renderChest();

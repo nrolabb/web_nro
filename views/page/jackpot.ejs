@@ -21,7 +21,23 @@
 </defs>
 </svg>
 <main class="main-body-container"><section class="dashboard-section bottom-padding">
-<div class="section-hexagon-title">MỞ RƯƠNG JACKPOT</div>
+<div class="section-hexagon-title">VÒNG QUAY MAY MẮN</div>
+<div class="jackpot-arena-board" aria-label="Số dư các hũ Jackpot">
+<div class="jackpot-board-header">
+<div class="jackpot-title-wrap centered-jackpot-title"><i class="fa-solid fa-crown jackpot-title-icon" aria-hidden="true"></i><span class="jackpot-title-text">JACKPOT</span></div>
+<span class="btn-jackpot-info" title="Mỗi lượt mở rương có cơ hội trúng hũ Jackpot" aria-label="Thông tin Jackpot">?</span>
+</div>
+<div class="jackpot-grid-4">
+<% const jackpotTiers = [{key:'mini',name:'MINI',star:'star-cyan'},{key:'minor',name:'MINOR',star:'star-purple'},{key:'major',name:'MAJOR',star:'star-major'},{key:'grand',name:'GRAND',star:'star-grand'}]; jackpotTiers.forEach((tier, index) => { const pool = jackpot.pools[index]; %>
+<div class="jackpot-card jackpot-<%= tier.key %>" title="Hũ <%= tier.name %>">
+<div class="jackpot-card-shine"></div><div class="jackpot-card-glow-aura"></div>
+<div class="jackpot-card-content"><div class="jackpot-card-top"><span class="jackpot-badge-pill pill-<%= tier.key %>"><%= tier.name %></span></div>
+<div class="jackpot-amount-display"><span class="jackpot-digits <%= tier.key === 'grand' ? 'text-shimmer-grand' : '' %>" id="jackpotAmount<%= tier.name.charAt(0) + tier.name.slice(1).toLowerCase() %>"><%= Number(pool.amount).toLocaleString('vi-VN') %></span><i class="fa-solid fa-star jackpot-star-icon <%= tier.star %>" aria-hidden="true"></i></div></div>
+</div>
+<% }); %>
+</div>
+<div class="jackpot-ticker-bar"><div class="ticker-content">Mỗi lượt mở rương đều góp vào Jackpot — thử vận may của bạn!</div></div>
+</div>
 <div class="spin-container">
 <p>Hạng của bạn: <strong><%= jackpot.level < 0 ? 'Chưa có hạng' : jackpot.ranks[jackpot.level].name %></strong></p>
 <p>Số dư: <strong id="balance"><%= Number(jackpot.balance).toLocaleString('vi-VN') %></strong> điểm</p>

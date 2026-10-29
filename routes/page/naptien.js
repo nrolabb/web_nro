@@ -30,20 +30,9 @@ module.exports = {
       const accountName = process.env.BANK_ACCOUNT_NAME || config.accountName;
       const bankName = process.env.BANK_NAME || config.bankName;
       
-      const firstTopupBonus = Number(process.env.FIRST_TOPUP_BONUS || 200);
-      const regularTopupBonus = Number(process.env.REGULAR_TOPUP_BONUS || 150);
-      const tongnap = Number(userInfo[0]?.tongnap || 0);
-      const isFirstTopup = tongnap === 0;
-
       res.render("page/naptien.ejs", {
         user: userInfo,
         donationHistory,
-        promotion: {
-          firstTopupBonus,
-          regularTopupBonus,
-          isFirstTopup,
-          multiplier: isFirstTopup ? (firstTopupBonus / 100) : (regularTopupBonus / 100)
-        },
         paymentAccount: {
           bankBin,
           bankName,
