@@ -2,6 +2,13 @@ const jackpot = JSON.parse(document.getElementById('jackpotData').textContent);
 let chestIndex = 0, busy = false, pending = null, revealing = false;
 const money = n => Number(n).toLocaleString('vi-VN');
 const chestPrice = index => Number(jackpot.prices?.[index] ?? jackpot.price);
+function syncAccountBalance(balance) {
+ const formatted = money(balance);
+ const pageBalance = document.getElementById('balance');
+ const headerBalance = document.getElementById('header-user-vnd');
+ if (pageBalance) pageBalance.textContent = formatted;
+ if (headerBalance) headerBalance.textContent = formatted;
+}
 const poolTiers = [
  { id: 'jackpotAmountMini', selector: '.jackpot-mini', color: 'floating-add-mini' },
  { id: 'jackpotAmountMinor', selector: '.jackpot-minor', color: 'floating-add-minor' },
@@ -77,7 +84,7 @@ function renderChest() {
  button.textContent = busy ? 'ĐANG MỞ RƯƠNG…' : pending ? 'THỬ LẠI LƯỢT MỞ' : jackpot.level < chestIndex ? 'CHƯA ĐỦ HẠNG' : 'MỞ RƯƠNG · ' + money(chestPrice(chestIndex)) + ' điểm';
  document.getElementById('diamondChestGems').classList.toggle('hidden', chestIndex !== 3);
  document.getElementById('chestContainer').style.filter = ['sepia(.7)', 'grayscale(1)', 'none', 'hue-rotate(130deg)'][chestIndex];
- document.getElementById('balance').textContent = money(jackpot.balance);
+ syncAccountBalance(jackpot.balance);
  const pool = jackpot.rewards.filter(item => item.chest_id <= chestIndex);
  const list = document.getElementById('rewards'); list.replaceChildren();
  if (!pool.length) {
@@ -115,7 +122,7 @@ async function spinChest() {
   if (Array.isArray(data.pools) && data.pools.length === 4) renderJackpotPools(data.pools, true);
   const receipt = data.receipt || { chestId: chestIndex, cost: chestPrice(chestIndex), createdAt: new Date().toISOString() };
   appendHistory(data.reward, receipt);
-  document.getElementById('balance').textContent = money(jackpot.balance);
+  syncAccountBalance(jackpot.balance);
   await animateChestOpen();
   await animateReward(data.reward);
   result.textContent = data.reward.type === 'jackpot'
