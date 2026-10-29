@@ -159,7 +159,7 @@ async function animateChestOpen() {
 }
 async function animateReward(winner) {
  const modal = document.getElementById('caseOpeningModal'), rail = document.getElementById('rouletteRail');
- const close = document.getElementById('closeReward'), status = document.getElementById('rouletteStatus');
+ const status = document.getElementById('rouletteStatus');
  const pool = jackpot.rewards.filter(item => item.chest_id <= chestIndex);
  if (!pool.length) pool.push(winner);
  const jackpotPreview = {
@@ -205,15 +205,81 @@ async function animateReward(winner) {
  status.textContent = winner.type === 'jackpot'
   ? 'JACKPOT! ' + winner.name + ' — +' + money(winner.amount) + ' điểm đã cộng vào tài khoản.'
   : 'Bạn nhận được ' + winner.name + ' × ' + winner.quantity + '. Vào game nhận thưởng vòng quay.';
- close.classList.remove('hidden'); close.focus();
+ await delay(650);
+ modal.classList.add('hidden');
+ showRewardReveal(winner);
+}
+function showRewardReveal(winner) {
+ const modal = document.getElementById('rewardRevealModal');
+ const card = document.getElementById('rewardRevealCard');
+ const icon = document.getElementById('rewardRevealIcon');
+ const jackpotWin = winner.type === 'jackpot';
+ const tier = jackpotWin ? 'diamond' : ['blue', 'purple', 'pink', 'gold'][winner.chest_id] || 'blue';
+ card.className = 'reward-reveal-card reward-tier-' + tier;
+ document.getElementById('rewardRevealHeading').textContent = jackpotWin ? 'JACKPOT! CHÚC MỪNG BẠN' : 'MỞ RƯƠNG THÀNH CÔNG';
+ document.getElementById('rewardRevealName').textContent = winner.name;
+ document.getElementById('rewardRevealDescription').textContent = jackpotWin
+  ? '+' + money(winner.amount) + ' điểm đã được cộng vào tài khoản.'
+  : 'Số lượng: × ' + winner.quantity + ' · Quà đã gửi vào mục nhận thưởng vòng quay trong game.';
+ icon.replaceChildren();
+ if (jackpotWin) {
+  const gem = document.createElement('i'); gem.className = 'fa-solid fa-gem'; gem.setAttribute('aria-hidden', 'true'); icon.append(gem);
+ } else {
+  const img = document.createElement('img'); img.src = '/api/icon/' + winner.icon_id + '.png'; img.alt = winner.name; icon.append(img);
+ }
+ const options = document.getElementById('rewardRevealOptions'); options.replaceChildren();
+ if (!jackpotWin && Array.isArray(winner.options) && winner.options.length) {
+  const label = document.createElement('span'); label.textContent = winner.options.map(option => 'Option ' + option.id + ': ' + option.param).join(' · '); options.append(label);
+ }
+ modal.classList.remove('hidden');
+ launchRewardConfetti(jackpotWin ? 'diamond' : tier);
+ document.getElementById('closeReward').focus();
+}
+let rewardConfettiFrame = null;
+function launchRewardConfetti(tier) {
+ const canvas = document.getElementById('rewardConfetti'), ctx = canvas.getContext('2d');
+ canvas.width = window.innerWidth * (window.devicePixelRatio || 1);
+ canvas.height = window.innerHeight * (window.devicePixelRatio || 1);
+ ctx.scale(window.devicePixelRatio || 1, window.devicePixelRatio || 1);
+ const width = window.innerWidth, height = window.innerHeight;
+ const colors = tier === 'diamond' ? ['#baf7ff', '#3ddcff', '#fff', '#8a75ff'] :
+  tier === 'gold' ? ['#ffe36e', '#ffad32', '#fff', '#ffef9c'] :
+  tier === 'pink' ? ['#ff75e1', '#d32ce6', '#fff', '#ff9fcf'] :
+  tier === 'purple' ? ['#c39cff', '#8847ff', '#fff', '#ef9cff'] : ['#73d9ff', '#4b69ff', '#fff', '#b4ecff'];
+ const particles = Array.from({ length: tier === 'diamond' || tier === 'gold' ? 110 : 70 }, () => ({
+  x: width / 2 + (Math.random() - .5) * 240, y: height * .46 + (Math.random() - .5) * 100,
+  vx: (Math.random() - .5) * 9, vy: -Math.random() * 10 - 2,
+  size: Math.random() * 7 + 3, rotation: Math.random() * 6.28,
+  spin: (Math.random() - .5) * .22, color: colors[Math.floor(Math.random() * colors.length)], life: 1
+ }));
+ if (rewardConfettiFrame) cancelAnimationFrame(rewardConfettiFrame);
+ const started = performance.now();
+ function frame(now) {
+  ctx.clearRect(0, 0, width, height);
+  const elapsed = now - started;
+  for (const p of particles) {
+   p.x += p.vx; p.y += p.vy; p.vy += .16; p.rotation += p.spin; p.life -= .006;
+   ctx.save(); ctx.globalAlpha = Math.max(0, p.life); ctx.translate(p.x, p.y); ctx.rotate(p.rotation);
+   ctx.fillStyle = p.color; ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * .7); ctx.restore();
+  }
+  if (elapsed < 5200 && particles.some(p => p.life > 0)) rewardConfettiFrame = requestAnimationFrame(frame);
+  else { ctx.clearRect(0, 0, width, height); rewardConfettiFrame = null; }
+ }
+ rewardConfettiFrame = requestAnimationFrame(frame);
 }
 function closeRewardReveal() {
  if (busy) return;
- document.getElementById('caseOpeningModal').classList.add('hidden'); revealing = false; renderChest(); document.getElementById('openChest').focus();
+ document.getElementById('caseOpeningModal').classList.add('hidden');
+ document.getElementById('rewardRevealModal').classList.add('hidden');
+ if (rewardConfettiFrame) cancelAnimationFrame(rewardConfettiFrame);
+ const ctx = document.getElementById('rewardConfetti').getContext('2d'); ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+ revealing = false; renderChest(); document.getElementById('openChest').focus();
 }
-document.getElementById('caseOpeningModal').addEventListener('keydown', event => {
+document.addEventListener('keydown', event => {
  if (event.key === 'Escape') closeRewardReveal();
- if (event.key === 'Tab') { event.preventDefault(); document.getElementById('closeReward').focus(); }
+ if (event.key === 'Tab' && !document.getElementById('rewardRevealModal').classList.contains('hidden')) {
+  event.preventDefault(); document.getElementById('closeReward').focus();
+ }
 });
 function appendHistory(reward, receipt) {
  document.getElementById('historyEmpty')?.remove();

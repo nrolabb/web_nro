@@ -1,6 +1,6 @@
 <%-include("../partials/dashboard-meta.ejs", {title: "Mở rương Jackpot"})%>
 <body class="jackpot-preview">
-<link rel="stylesheet" href="/assets/arena-dashboard/jackpot-live.css?v=4">
+<link rel="stylesheet" href="/assets/arena-dashboard/jackpot-live.css?v=5">
 <%-include("../partials/head.ejs")%>
 <svg height="0" style="position: absolute;" width="0">
 <defs>
@@ -109,8 +109,18 @@
 <div class="case-header-bar"><h2 class="case-title-glow" id="rouletteChestTitle">MỞ RƯƠNG</h2></div>
 <div class="roulette-viewport"><div class="roulette-needle top-needle"></div><div class="roulette-needle bottom-needle"></div><div class="roulette-center-line"></div><div class="roulette-rail" id="rouletteRail"></div></div>
 <p id="rouletteStatus" role="status">Đang mở phần thưởng…</p>
-<button id="closeReward" class="spin-action-btn hidden" onclick="closeRewardReveal()" type="button">ĐÃ NHẬN</button>
+</div></div>
+<div class="reward-reveal-overlay hidden" id="rewardRevealModal" role="dialog" aria-modal="true" aria-labelledby="rewardRevealName">
+<canvas class="reward-confetti" id="rewardConfetti" aria-hidden="true"></canvas>
+<div class="reward-reveal-card" id="rewardRevealCard">
+<div class="reward-reveal-glow" aria-hidden="true"></div>
+<div class="reward-reveal-heading" id="rewardRevealHeading">PHẦN THƯỞNG CỦA BẠN</div>
+<div class="reward-reveal-icon" id="rewardRevealIcon"></div>
+<h2 id="rewardRevealName"></h2>
+<p id="rewardRevealDescription"></p>
+<div class="reward-reveal-options" id="rewardRevealOptions"></div>
+<button id="closeReward" class="spin-action-btn" onclick="closeRewardReveal()" type="button">ĐÃ NHẬN</button>
 </div></div>
 <script id="jackpotData" type="application/json"><%- JSON.stringify(jackpot).replace(/</g, '\u003c') %></script>
-<script src="/assets/arena-dashboard/jackpot.js?v=7" defer></script>
+<script src="/assets/arena-dashboard/jackpot.js?v=8" defer></script>
 </body></html>

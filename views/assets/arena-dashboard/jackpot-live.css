@@ -52,3 +52,48 @@
     text-align: center;
     text-shadow: 0 0 10px #ffbd3d66;
 }
+.reward-reveal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    padding: 20px;
+    background: radial-gradient(ellipse at center, #111b31ed 0%, #05070dee 72%);
+    backdrop-filter: blur(9px);
+}
+.reward-reveal-overlay.hidden { display: none; }
+.reward-confetti { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.reward-reveal-card {
+    --reward-accent: #7bdfff;
+    position: relative;
+    isolation: isolate;
+    width: min(440px, 100%);
+    padding: 28px 24px 24px;
+    overflow: hidden;
+    text-align: center;
+    color: #f4f8ff;
+    border: 2px solid color-mix(in srgb, var(--reward-accent), transparent 20%);
+    border-radius: 24px;
+    background: linear-gradient(155deg, #182337f5, #090e19f5 72%);
+    box-shadow: 0 0 45px color-mix(in srgb, var(--reward-accent), transparent 65%), inset 0 0 32px color-mix(in srgb, var(--reward-accent), transparent 92%);
+    animation: rewardCardReveal .65s cubic-bezier(.16, 1, .3, 1) both;
+}
+.reward-reveal-glow { position: absolute; z-index: -1; top: -115px; left: 50%; width: 250px; height: 220px; transform: translateX(-50%); background: var(--reward-accent); opacity: .18; filter: blur(65px); }
+.reward-tier-blue { --reward-accent: #55cfff; }
+.reward-tier-purple { --reward-accent: #ad72ff; }
+.reward-tier-pink { --reward-accent: #ff70d5; }
+.reward-tier-gold, .reward-tier-diamond { --reward-accent: #ffd84d; }
+.reward-tier-diamond { --reward-accent: #55eaff; }
+.reward-reveal-heading { color: var(--reward-accent); font-size: .9rem; font-weight: 900; letter-spacing: .13em; text-shadow: 0 0 14px var(--reward-accent); }
+.reward-reveal-icon { display: grid; place-items: center; width: 132px; height: 132px; margin: 18px auto; border: 1px solid color-mix(in srgb, var(--reward-accent), transparent 38%); border-radius: 50%; background: radial-gradient(circle, color-mix(in srgb, var(--reward-accent), transparent 80%), #080d17 70%); box-shadow: 0 0 34px color-mix(in srgb, var(--reward-accent), transparent 63%), inset 0 0 26px color-mix(in srgb, var(--reward-accent), transparent 88%); animation: rewardIconFloat 2.2s ease-in-out infinite; }
+.reward-reveal-icon img { width: 88px; height: 88px; object-fit: contain; image-rendering: pixelated; filter: drop-shadow(0 0 13px color-mix(in srgb, var(--reward-accent), transparent 30%)); }
+.reward-reveal-icon i { color: #aaf7ff; font-size: 66px; filter: drop-shadow(0 0 11px #19cfff) drop-shadow(0 0 24px #168bff); }
+.reward-reveal-card h2 { margin: 10px 0; color: #fff; font-size: clamp(1.3rem, 5vw, 1.8rem); text-shadow: 0 0 13px color-mix(in srgb, var(--reward-accent), transparent 28%); }
+.reward-reveal-card p { margin: 8px 0; color: #d5deef; line-height: 1.55; }
+.reward-reveal-options { color: #aebbd1; font-size: .9rem; }
+.reward-reveal-card #closeReward { margin-top: 20px; min-width: 180px; }
+@keyframes rewardCardReveal { from { opacity: 0; transform: translateY(24px) scale(.78); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes rewardIconFloat { 0%, 100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-6px) scale(1.035); } }
+@media (prefers-reduced-motion: reduce) { .reward-reveal-card, .reward-reveal-icon { animation: none; } }
