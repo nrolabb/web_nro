@@ -45,3 +45,10 @@
 .jackpot-reward-name img { flex-shrink: 0; height: 48px; object-fit: contain; image-rendering: pixelated; }
 .jackpot-rewards-table td:first-child { white-space: normal; }
 .jackpot-rewards-table td:nth-child(2) { text-align: center; }
+.chest-price-info {
+    margin: 8px 0 12px;
+    color: #ffe57f;
+    font-weight: 800;
+    text-align: center;
+    text-shadow: 0 0 10px #ffbd3d66;
+}

@@ -71,6 +71,7 @@ function renderChest() {
  const rank = jackpot.ranks[chestIndex];
  document.getElementById('chestName').textContent = 'RƯƠNG ' + rank.name.toUpperCase();
  document.getElementById('requirement').textContent = 'Yêu cầu hạng ' + rank.name + ' · Tổng Donate từ ' + money(rank.amount) + ' điểm';
+ document.getElementById('chestPrice').textContent = 'Giá mở rương: ' + money(chestPrice(chestIndex)) + ' điểm/lượt';
  const button = document.getElementById('openChest');
  button.disabled = busy || revealing || jackpot.level < chestIndex || (!pending && jackpot.balance < chestPrice(chestIndex));
  button.textContent = busy ? 'ĐANG MỞ RƯƠNG…' : pending ? 'THỬ LẠI LƯỢT MỞ' : jackpot.level < chestIndex ? 'CHƯA ĐỦ HẠNG' : 'MỞ RƯƠNG · ' + money(chestPrice(chestIndex)) + ' điểm';
@@ -161,12 +162,20 @@ async function animateReward(winner) {
  const close = document.getElementById('closeReward'), status = document.getElementById('rouletteStatus');
  const pool = jackpot.rewards.filter(item => item.chest_id <= chestIndex);
  if (!pool.length) pool.push(winner);
+ const jackpotPreview = {
+  type: 'jackpot',
+  name: 'JACKPOT ' + jackpot.ranks[chestIndex].name,
+  amount: Number(jackpot.pools[chestIndex]?.amount ?? 0),
+  quantity: 1,
+  chest_id: chestIndex
+ };
  rail.replaceChildren(); rail.style.transform = 'translateX(0px)';
  close.classList.add('hidden'); status.textContent = 'Đang mở phần thưởng…';
  document.getElementById('rouletteChestTitle').textContent = 'RƯƠNG ' + jackpot.ranks[chestIndex].name.toUpperCase();
  // Only the API award can occupy the winning position. Other cards are visual decoration.
  for (let i = 0; i < 65; i++) {
-  const item = i === 50 ? winner : pool[Math.floor(Math.random() * pool.length)];
+  // Always show the eligible Jackpot among the roulette cards; only the API result at slot 50 wins.
+  const item = i === 50 ? winner : i === 35 ? jackpotPreview : pool[Math.floor(Math.random() * pool.length)];
   const card = document.createElement('div');
   card.className = 'roulette-card tier-' + ['blue', 'purple', 'pink', 'gold'][item.chest_id] + (item.type === 'jackpot' ? ' jackpot-prize-card' : '');
   const icon = document.createElement('div'); icon.className = 'card-icon';
@@ -176,7 +185,7 @@ async function animateReward(winner) {
    const img = document.createElement('img'); img.src = '/api/icon/' + item.icon_id + '.png'; img.alt = ''; icon.append(img);
   }
   const name = document.createElement('div'); name.className = 'card-name'; name.textContent = item.name;
-  const qty = document.createElement('div'); qty.className = 'card-tier-label'; qty.textContent = item.type === 'jackpot' ? money(item.amount) + ' điểm' : '× ' + item.quantity;
+  const qty = document.createElement('div'); qty.className = 'card-tier-label'; qty.textContent = item.type === 'jackpot' ? (i === 35 && item !== winner ? 'CƠ HỘI 0,01% · ' : '') + money(item.amount) + ' điểm' : '× ' + item.quantity;
   const bar = document.createElement('div'); bar.className = 'card-tier-bar'; card.append(icon, name, qty, bar); rail.append(card);
  }
  revealing = true; modal.classList.remove('hidden');

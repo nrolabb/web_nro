@@ -1,6 +1,6 @@
 <%-include("../partials/dashboard-meta.ejs", {title: "Mở rương Jackpot"})%>
 <body class="jackpot-preview">
-<link rel="stylesheet" href="/assets/arena-dashboard/jackpot-live.css?v=3">
+<link rel="stylesheet" href="/assets/arena-dashboard/jackpot-live.css?v=4">
 <%-include("../partials/head.ejs")%>
 <svg height="0" style="position: absolute;" width="0">
 <defs>
@@ -80,6 +80,7 @@
 
 <h3 class="chest-title-name" id="chestName"></h3>
 <p id="requirement"></p>
+<p class="chest-price-info" id="chestPrice">Giá mở rương: <%= Number(jackpot.prices[0]).toLocaleString('vi-VN') %> điểm/lượt</p>
 <div class="spin-buttons-row"><button class="spin-action-btn single-spin-btn" id="openChest" onclick="spinChest()">MỞ RƯƠNG</button></div>
 <p id="result" role="status" aria-live="polite"></p>
 <p>Mỗi lượt nhận một phần thưởng. Quà được gửi vào mục nhận thưởng vòng quay trong game.</p>
@@ -111,5 +112,5 @@
 <button id="closeReward" class="spin-action-btn hidden" onclick="closeRewardReveal()" type="button">ĐÃ NHẬN</button>
 </div></div>
 <script id="jackpotData" type="application/json"><%- JSON.stringify(jackpot).replace(/</g, '\u003c') %></script>
-<script src="/assets/arena-dashboard/jackpot.js?v=5" defer></script>
+<script src="/assets/arena-dashboard/jackpot.js?v=7" defer></script>
 </body></html>
