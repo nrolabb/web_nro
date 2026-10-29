@@ -170,7 +170,7 @@ async function animateReward(winner) {
   chest_id: chestIndex
  };
  rail.replaceChildren(); rail.style.transform = 'translateX(0px)';
- close.classList.add('hidden'); status.textContent = 'Đang mở phần thưởng…';
+ status.textContent = 'Đang mở phần thưởng…';
  document.getElementById('rouletteChestTitle').textContent = 'RƯƠNG ' + jackpot.ranks[chestIndex].name.toUpperCase();
  // Only the API award can occupy the winning position. Other cards are visual decoration.
  for (let i = 0; i < 65; i++) {
