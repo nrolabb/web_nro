@@ -232,14 +232,18 @@ async function animateReward(winner) {
  revealing = true; modal.classList.remove('hidden');
  const winningCard = rail.children[50];
  const itemStep = rail.children[1].offsetLeft - rail.children[0].offsetLeft;
+ const centerMarker = modal.querySelector('.roulette-center-line');
+ const markerRect = centerMarker.getBoundingClientRect();
+ const markerCenterX = markerRect.left + markerRect.width / 2;
+ const winningCardRect = winningCard.getBoundingClientRect();
+ const targetX = winningCardRect.left + winningCardRect.width / 2 - markerCenterX;
  const viewportWidth = rail.parentElement.clientWidth;
  await new Promise(resolve => {
   let start, lastCardIndex = -1;
   function frame(now) {
    if (start === undefined) start = now;
    const progress = Math.min((now - start) / 5500, 1);
-   const target = winningCard.offsetLeft + winningCard.offsetWidth / 2 - viewportWidth / 2;
-   const eased = 1 - Math.pow(1 - progress, 4.2), currentX = target * eased;
+   const eased = 1 - Math.pow(1 - progress, 4.2), currentX = targetX * eased;
    rail.style.transform = 'translateX(' + -currentX + 'px)';
    const passingIndex = Math.floor((currentX + viewportWidth / 2) / itemStep);
    if (passingIndex !== lastCardIndex) { lastCardIndex = passingIndex; SoundFX.playCaseTick(1 - progress * .85); }
