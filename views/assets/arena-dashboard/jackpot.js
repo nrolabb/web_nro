@@ -1,6 +1,7 @@
 const jackpot = JSON.parse(document.getElementById('jackpotData').textContent);
 let chestIndex = 0, busy = false, pending = null, revealing = false;
 const money = n => Number(n).toLocaleString('vi-VN');
+const chestPrice = index => Number(jackpot.prices?.[index] ?? jackpot.price);
 const poolTiers = [
  { id: 'jackpotAmountMini', selector: '.jackpot-mini', color: 'floating-add-mini' },
  { id: 'jackpotAmountMinor', selector: '.jackpot-minor', color: 'floating-add-minor' },
@@ -71,8 +72,8 @@ function renderChest() {
  document.getElementById('chestName').textContent = 'RƯƠNG ' + rank.name.toUpperCase();
  document.getElementById('requirement').textContent = 'Yêu cầu hạng ' + rank.name + ' · Tổng Donate từ ' + money(rank.amount) + ' điểm';
  const button = document.getElementById('openChest');
- button.disabled = busy || revealing || jackpot.level < chestIndex || (!pending && jackpot.balance < jackpot.price);
- button.textContent = busy ? 'ĐANG MỞ RƯƠNG…' : pending ? 'THỬ LẠI LƯỢT MỞ' : jackpot.level < chestIndex ? 'CHƯA ĐỦ HẠNG' : 'MỞ RƯƠNG · ' + money(jackpot.price) + ' điểm';
+ button.disabled = busy || revealing || jackpot.level < chestIndex || (!pending && jackpot.balance < chestPrice(chestIndex));
+ button.textContent = busy ? 'ĐANG MỞ RƯƠNG…' : pending ? 'THỬ LẠI LƯỢT MỞ' : jackpot.level < chestIndex ? 'CHƯA ĐỦ HẠNG' : 'MỞ RƯƠNG · ' + money(chestPrice(chestIndex)) + ' điểm';
  document.getElementById('diamondChestGems').classList.toggle('hidden', chestIndex !== 3);
  document.getElementById('chestContainer').style.filter = ['sepia(.7)', 'grayscale(1)', 'none', 'hue-rotate(130deg)'][chestIndex];
  document.getElementById('balance').textContent = money(jackpot.balance);
@@ -100,7 +101,7 @@ function newRequestId() {
  return Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('').replace(/^(.{8})(.{4})(.{4})(.{4})(.{12})$/, '$1-$2-$3-$4-$5');
 }
 async function spinChest() {
- if (busy || revealing || jackpot.level < chestIndex || (!pending && jackpot.balance < jackpot.price)) return;
+ if (busy || revealing || jackpot.level < chestIndex || (!pending && jackpot.balance < chestPrice(chestIndex))) return;
  busy = true;
  pending = pending || { chestId: chestIndex, requestId: newRequestId(), token: jackpot.token }; renderChest();
  const result = document.getElementById('result'); result.textContent = 'Đang mở rương…';
@@ -111,7 +112,7 @@ async function spinChest() {
   if (!response.ok) { if (response.status < 500) pending = null; throw new Error(data.message || 'Không thể mở rương. Hãy tải lại trang.'); }
   jackpot.balance = data.balance; pending = null;
   if (Array.isArray(data.pools) && data.pools.length === 4) renderJackpotPools(data.pools, true);
-  const receipt = data.receipt || { chestId: chestIndex, cost: jackpot.price, createdAt: new Date().toISOString() };
+  const receipt = data.receipt || { chestId: chestIndex, cost: chestPrice(chestIndex), createdAt: new Date().toISOString() };
   appendHistory(data.reward, receipt);
   document.getElementById('balance').textContent = money(jackpot.balance);
   await animateChestOpen();

@@ -14,7 +14,7 @@ module.exports = {
             const [history] = await global.sql.promise().query('SELECT chest_id, cost, reward, created_at FROM jackpot_history WHERE account_id = ? ORDER BY id DESC LIMIT 30', [info[0].id]);
             res.render('page/jackpot.ejs', {
                 user: info, options, history,
-                jackpot: { level: rankLevel(info[0].tongnap), balance: info[0].vnd, price: config.jackpotPrice,
+                jackpot: { level: rankLevel(info[0].tongnap), balance: info[0].vnd, prices: config.jackpotPrices.map(item => item.price),
                     ranks: config.accountRanks, rewards: pool, pools,
                     token: require('jsonwebtoken').sign({ purpose: 'jackpot', accountId: info[0].id }, config.jwt_secretkey, { expiresIn: '2h' }) }
             });

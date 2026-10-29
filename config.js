@@ -36,6 +36,17 @@ const jackpotPools = accountRanks.map((rank, index) => {
     return { chestId: index, base };
 });
 
+const legacyJackpotPrice = process.env.JACKPOT_PRICE_VND?.trim();
+const jackpotPrices = accountRanks.map((rank, index) => {
+    const name = 'JACKPOT_' + rank.key.toUpperCase() + '_PRICE_VND';
+    const rawPrice = process.env[name]?.trim() || legacyJackpotPrice || '1000';
+    const price = Number(rawPrice);
+    if (!Number.isSafeInteger(price) || price <= 0 || price > 2147483647) {
+        throw new Error(name + ' không hợp lệ');
+    }
+    return { chestId: index, price };
+});
+
 function socialUrl(name) {
     const value = process.env[name] || 'https://ngocrongarena.com/';
     try { const url = new URL(value); if (['https:', 'http:'].includes(url.protocol)) return url.href; } catch (_) {}
@@ -44,11 +55,7 @@ function socialUrl(name) {
 module.exports = {
     socialLinks: { facebook: socialUrl('SOCIAL_FACEBOOK_URL'), zalo: socialUrl('SOCIAL_ZALO_URL') },
     jackpotPools,
-    jackpotPrice: (() => {
-        const price = Number(process.env.JACKPOT_PRICE_VND || 1000);
-        if (!Number.isSafeInteger(price) || price <= 0 || price > 2147483647) throw new Error('JACKPOT_PRICE_VND không hợp lệ');
-        return price;
-    })(),
+    jackpotPrices,
     accountRanks: (validRanks ? configuredRanks : accountRanks).map(({ name, key, amount }) => ({ name, key, amount })),
     host: process.env.HOST || "127.0.0.1",
     port: Number(process.env.PORT) || 3000,
