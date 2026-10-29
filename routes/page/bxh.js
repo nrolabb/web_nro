@@ -35,8 +35,13 @@ module.exports = {
                 queryDatabase(`
                 SELECT *
                 FROM player
-                ORDER BY JSON_EXTRACT(data_task, '$[0]') DESC,
-                         CASE WHEN JSON_EXTRACT(data_task, '$[0]') = JSON_EXTRACT(data_task, '$[0]', '$[1]') THEN JSON_EXTRACT(data_task, '$[1]') ELSE NULL END DESC
+                WHERE JSON_VALID(data_task)
+                  AND JSON_TYPE(data_task) = 'ARRAY'
+                  AND JSON_LENGTH(data_task) >= 3
+                ORDER BY CAST(JSON_UNQUOTE(JSON_EXTRACT(data_task, '$[0]')) AS SIGNED) DESC,
+                         CAST(JSON_UNQUOTE(JSON_EXTRACT(data_task, '$[1]')) AS SIGNED) DESC,
+                         CAST(JSON_UNQUOTE(JSON_EXTRACT(data_task, '$[2]')) AS SIGNED) DESC,
+                         id ASC
                 LIMIT 10;
                 `)
             ]);
