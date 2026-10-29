@@ -3,6 +3,37 @@ let chestIndex = 0, busy = false, pending = null, revealing = false;
 const money = n => Number(n).toLocaleString('vi-VN');
 const chestPrice = index => Number(jackpot.prices?.[index] ?? jackpot.price);
 const jackpotChanceText = Number(jackpot.chancePercent ?? 0.01).toLocaleString('vi-VN', { maximumFractionDigits: 6 });
+const SoundFX = {
+ ctx: null,
+ init() {
+  try {
+   const AudioCtx = window.AudioContext || window.webkitAudioContext;
+   if (!this.ctx && AudioCtx) this.ctx = new AudioCtx();
+   if (this.ctx?.state === 'suspended') this.ctx.resume().catch(() => {});
+  } catch (_) {}
+ },
+ tone(type, from, to, duration, volume, offset = 0) {
+  if (!this.ctx) return;
+  try {
+   const now = this.ctx.currentTime + offset, osc = this.ctx.createOscillator(), gain = this.ctx.createGain();
+   osc.type = type; osc.frequency.setValueAtTime(from, now);
+   (type === 'sine' && to > from ? osc.frequency.exponentialRampToValueAtTime(to, now + duration) : osc.frequency.exponentialRampToValueAtTime(Math.max(1, to), now + duration));
+   gain.gain.setValueAtTime(volume, now); gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+   osc.connect(gain); gain.connect(this.ctx.destination); osc.start(now); osc.stop(now + duration);
+  } catch (_) {}
+ },
+ playKeyInsert() { this.tone('sine', 1400, 2600, .18, .3); },
+ playUnlock() { this.tone('triangle', 900, 220, .1, .5); this.tone('sawtooth', 1500, 320, .23, .5, .05); },
+ playChestOpen() { this.tone('sawtooth', 100, 180, .6, .3); },
+ playCaseTick(rate = 1) { this.tone('triangle', 850 + rate * 300, 200, .04, .38); },
+ playItemStop() { this.tone('triangle', 280, 80, .3, .4); },
+ playGoldDropSound() {
+  if (!this.ctx) return;
+  [1046.5, 1318.51, 1567.98, 2093, 3135.96].forEach((frequency, index) => this.tone('sine', frequency, frequency, 2.8, .35 / (index + 1)));
+  this.tone('sine', 130, 35, .9, .7);
+  [523.25, 659.25, 783.99, 1046.5, 1318.51].forEach((frequency, index) => this.tone('sawtooth', frequency, frequency, 2.5, .25, .1 + index * .06));
+ }
+};
 function syncAccountBalance(balance) {
  const formatted = money(balance);
  const pageBalance = document.getElementById('balance');
@@ -111,6 +142,7 @@ function newRequestId() {
 }
 async function spinChest() {
  if (busy || revealing || jackpot.level < chestIndex || (!pending && jackpot.balance < chestPrice(chestIndex))) return;
+ SoundFX.init();
  busy = true;
  pending = pending || { chestId: chestIndex, requestId: newRequestId(), token: jackpot.token }; renderChest();
  const result = document.getElementById('result'); result.textContent = 'Đang mở rương…';
@@ -151,18 +183,19 @@ function chestParticles(count) {
 }
 async function animateChestOpen() {
  const key = document.getElementById('chestKey');
+ SoundFX.playKeyInsert();
  key.classList.add('key-flying'); chestParticles(6);
  await delay(450);
  key.classList.remove('key-flying'); key.classList.add('key-inserted');
  await delay(200);
- key.classList.add('key-turning'); document.getElementById('unlockFlash').classList.add('flash-active');
+ key.classList.add('key-turning'); SoundFX.playUnlock(); document.getElementById('unlockFlash').classList.add('flash-active');
  await delay(300);
  document.getElementById('unlockFlash').classList.remove('flash-active'); key.classList.add('key-fadeout');
  document.getElementById('chestContainer').classList.add('chest-opening');
  document.getElementById('chestLidLayer').classList.add('open-lid-anim');
  document.getElementById('chestCavity').classList.add('active-cavity');
  document.getElementById('chestInsideGlow').classList.add('active-glow');
- document.getElementById('chestGlow').classList.add('active'); chestParticles(24);
+ document.getElementById('chestGlow').classList.add('active'); SoundFX.playChestOpen(); chestParticles(24);
  await delay(1050);
 }
 async function animateReward(winner) {
@@ -198,18 +231,24 @@ async function animateReward(winner) {
  }
  revealing = true; modal.classList.remove('hidden');
  const winningCard = rail.children[50];
+ const itemStep = rail.children[1].offsetLeft - rail.children[0].offsetLeft;
+ const viewportWidth = rail.parentElement.clientWidth;
  await new Promise(resolve => {
-  let start;
+  let start, lastCardIndex = -1;
   function frame(now) {
    if (start === undefined) start = now;
    const progress = Math.min((now - start) / 5500, 1);
-   const target = winningCard.offsetLeft + winningCard.offsetWidth / 2 - rail.parentElement.clientWidth / 2;
-   rail.style.transform = 'translateX(' + (-target * (1 - Math.pow(1 - progress, 4.2))) + 'px)';
+   const target = winningCard.offsetLeft + winningCard.offsetWidth / 2 - viewportWidth / 2;
+   const eased = 1 - Math.pow(1 - progress, 4.2), currentX = target * eased;
+   rail.style.transform = 'translateX(' + -currentX + 'px)';
+   const passingIndex = Math.floor((currentX + viewportWidth / 2) / itemStep);
+   if (passingIndex !== lastCardIndex) { lastCardIndex = passingIndex; SoundFX.playCaseTick(1 - progress * .85); }
    if (progress < 1) requestAnimationFrame(frame); else resolve();
   }
   requestAnimationFrame(frame);
  });
  winningCard.classList.add('jackpot-winner');
+ if (winner.type !== 'jackpot') SoundFX.playItemStop();
  status.textContent = winner.type === 'jackpot'
   ? 'JACKPOT! ' + winner.name + ' — +' + money(winner.amount) + ' điểm đã cộng vào tài khoản.'
   : 'Bạn nhận được ' + winner.name + ' × ' + winner.quantity + '. Vào game nhận thưởng vòng quay.';
@@ -223,7 +262,18 @@ function showRewardReveal(winner) {
  const icon = document.getElementById('rewardRevealIcon');
  const jackpotWin = winner.type === 'jackpot';
  const tier = jackpotWin ? 'diamond' : ['blue', 'purple', 'pink', 'gold'][winner.chest_id] || 'blue';
- card.className = 'reward-reveal-card reward-tier-' + tier;
+ const jackpotTier = ['mini', 'minor', 'major', 'grand'][winner.chest_id] || 'mini';
+ card.className = 'reward-reveal-card reward-tier-' + tier + (jackpotWin ? ' jackpot-celebration-card jackpot-reveal-' + jackpotTier : '');
+ modal.setAttribute('aria-labelledby', jackpotWin ? 'jackpotWinTitle' : 'rewardRevealName');
+ document.querySelectorAll('.jackpot-only').forEach(element => element.classList.toggle('hidden', !jackpotWin));
+ document.getElementById('rewardRevealHeading').classList.toggle('hidden', jackpotWin);
+ document.getElementById('rewardRevealIcon').classList.toggle('hidden', jackpotWin);
+ document.getElementById('rewardRevealName').classList.toggle('hidden', jackpotWin);
+ document.getElementById('rewardRevealDescription').classList.toggle('hidden', jackpotWin);
+ document.getElementById('rewardRevealOptions').classList.toggle('hidden', jackpotWin);
+ const close = document.getElementById('closeReward');
+ close.className = jackpotWin ? 'jackpot-claim-btn' : 'spin-action-btn';
+ close.innerHTML = jackpotWin ? '<span class="btn-claim-shine" aria-hidden="true"></span><i class="fa-solid fa-circle-check" aria-hidden="true"></i> ĐÃ CỘNG ĐIỂM · ĐÓNG' : 'ĐÃ NHẬN';
  document.getElementById('rewardRevealHeading').textContent = jackpotWin ? 'JACKPOT! CHÚC MỪNG BẠN' : 'MỞ RƯƠNG THÀNH CÔNG';
  document.getElementById('rewardRevealName').textContent = winner.name;
  document.getElementById('rewardRevealDescription').textContent = jackpotWin
@@ -239,9 +289,42 @@ function showRewardReveal(winner) {
  if (!jackpotWin && Array.isArray(winner.options) && winner.options.length) {
   const label = document.createElement('span'); label.textContent = winner.options.map(option => 'Option ' + option.id + ': ' + option.param).join(' · '); options.append(label);
  }
+ if (jackpotWin) {
+  const badge = document.getElementById('jackpotWinBadge');
+  const badgeStyle = {
+   mini: ['MINI JACKPOT', 'linear-gradient(135deg,#00e5ff,#00b4db)', '#00e5ff'],
+   minor: ['MINOR JACKPOT', 'linear-gradient(135deg,#a855f7,#6366f1)', '#a855f7'],
+   major: ['MAJOR JACKPOT', 'linear-gradient(135deg,#ff5722,#f43f5e)', '#ff5722'],
+   grand: ['GRAND JACKPOT', 'linear-gradient(135deg,#ffd700,#ff8800)', '#ffd700']
+  }[jackpotTier];
+  badge.textContent = badgeStyle[0]; badge.style.background = badgeStyle[1]; badge.style.boxShadow = '0 0 25px ' + badgeStyle[2];
+  const title = document.getElementById('jackpotWinTitle');
+  title.textContent = badgeStyle[0];
+  title.className = 'jackpot-win-main-tier jackpot-title-' + jackpotTier;
+  document.getElementById('jackpotWinRarityTag').textContent = 'TỈ LỆ ' + jackpotChanceText + '% / LƯỢT MỞ';
+  document.getElementById('jackpotWinSubtitle').textContent = 'Bạn đã kích hoạt hũ Jackpot của rương ' + jackpot.ranks[winner.chest_id].name + '!';
+  document.getElementById('jackpotRevealShockwave').classList.remove('active');
+  void document.getElementById('jackpotRevealShockwave').offsetWidth;
+  document.getElementById('jackpotRevealShockwave').classList.add('active');
+  SoundFX.playGoldDropSound();
+ }
  modal.classList.remove('hidden');
- launchRewardConfetti(jackpotWin ? 'diamond' : tier);
- document.getElementById('closeReward').focus();
+ launchRewardConfetti(jackpotWin ? 'jackpot' : tier);
+ if (jackpotWin) animateJackpotAmount(winner.amount);
+ close.focus();
+}
+let jackpotAmountFrame = null;
+function animateJackpotAmount(targetAmount) {
+ if (jackpotAmountFrame) cancelAnimationFrame(jackpotAmountFrame);
+ const amount = document.getElementById('jackpotWinAmount'), start = performance.now(), duration = 1700;
+ const step = now => {
+  const progress = Math.min((now - start) / duration, 1);
+  const eased = 1 - Math.pow(1 - progress, 3);
+  amount.textContent = '+' + money(Math.round(Number(targetAmount) * eased));
+  if (progress < 1) jackpotAmountFrame = requestAnimationFrame(step);
+  else { amount.textContent = '+' + money(targetAmount); jackpotAmountFrame = null; }
+ };
+ amount.textContent = '+0'; jackpotAmountFrame = requestAnimationFrame(step);
 }
 let rewardConfettiFrame = null;
 function launchRewardConfetti(tier) {
@@ -250,11 +333,11 @@ function launchRewardConfetti(tier) {
  canvas.height = window.innerHeight * (window.devicePixelRatio || 1);
  ctx.scale(window.devicePixelRatio || 1, window.devicePixelRatio || 1);
  const width = window.innerWidth, height = window.innerHeight;
- const colors = tier === 'diamond' ? ['#baf7ff', '#3ddcff', '#fff', '#8a75ff'] :
+ const colors = tier === 'jackpot' ? ['#ffd700', '#ff9d00', '#fff6bd', '#ff5722', '#00e5ff'] : tier === 'diamond' ? ['#baf7ff', '#3ddcff', '#fff', '#8a75ff'] :
   tier === 'gold' ? ['#ffe36e', '#ffad32', '#fff', '#ffef9c'] :
   tier === 'pink' ? ['#ff75e1', '#d32ce6', '#fff', '#ff9fcf'] :
   tier === 'purple' ? ['#c39cff', '#8847ff', '#fff', '#ef9cff'] : ['#73d9ff', '#4b69ff', '#fff', '#b4ecff'];
- const particles = Array.from({ length: tier === 'diamond' || tier === 'gold' ? 110 : 70 }, () => ({
+ const particles = Array.from({ length: tier === 'jackpot' ? 190 : tier === 'diamond' || tier === 'gold' ? 110 : 70 }, () => ({
   x: width / 2 + (Math.random() - .5) * 240, y: height * .46 + (Math.random() - .5) * 100,
   vx: (Math.random() - .5) * 9, vy: -Math.random() * 10 - 2,
   size: Math.random() * 7 + 3, rotation: Math.random() * 6.28,
@@ -280,6 +363,7 @@ function closeRewardReveal() {
  document.getElementById('caseOpeningModal').classList.add('hidden');
  document.getElementById('rewardRevealModal').classList.add('hidden');
  if (rewardConfettiFrame) cancelAnimationFrame(rewardConfettiFrame);
+ if (jackpotAmountFrame) cancelAnimationFrame(jackpotAmountFrame);
  const ctx = document.getElementById('rewardConfetti').getContext('2d'); ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
  revealing = false; renderChest(); document.getElementById('openChest').focus();
 }

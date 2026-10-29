@@ -1,6 +1,6 @@
 <%-include("../partials/dashboard-meta.ejs", {title: "Mở rương Jackpot"})%>
 <body class="jackpot-preview">
-<link rel="stylesheet" href="/assets/arena-dashboard/jackpot-live.css?v=5">
+<link rel="stylesheet" href="/assets/arena-dashboard/jackpot-live.css?v=6">
 <%-include("../partials/head.ejs")%>
 <svg height="0" style="position: absolute;" width="0">
 <defs>
@@ -112,8 +112,18 @@
 </div></div>
 <div class="reward-reveal-overlay hidden" id="rewardRevealModal" role="dialog" aria-modal="true" aria-labelledby="rewardRevealName">
 <canvas class="reward-confetti" id="rewardConfetti" aria-hidden="true"></canvas>
+<div class="jackpot-golden-shockwave" id="jackpotRevealShockwave" aria-hidden="true"></div>
+<div class="jackpot-ambient-glow" aria-hidden="true"></div>
 <div class="reward-reveal-card" id="rewardRevealCard">
 <div class="reward-reveal-glow" aria-hidden="true"></div>
+<div class="jackpot-crown-wrap jackpot-only hidden" aria-hidden="true">
+<div class="dragon-balls-halo"><span class="db-star star-1">✦</span><span class="db-star star-2">✦</span><span class="db-star star-3">✦</span><span class="db-star star-4">✦</span><span class="db-star star-5">✦</span><span class="db-star star-6">✦</span><span class="db-star star-7">✦</span></div>
+<i class="fa-solid fa-crown jackpot-win-crown"></i>
+</div>
+<div class="jackpot-rarity-pill-wrap jackpot-only hidden"><span id="jackpotWinBadge" class="jackpot-win-badge-pill"></span><span id="jackpotWinRarityTag" class="jackpot-win-rarity-tag"></span></div>
+<div class="jackpot-win-headline-box jackpot-only hidden"><div class="jackpot-win-lead-title">🎉 CHÚC MỪNG BẠN QUAY THƯỞNG TRÚNG 🎉</div><h1 class="jackpot-win-main-tier" id="jackpotWinTitle"></h1></div>
+<p class="jackpot-win-subtitle jackpot-only hidden" id="jackpotWinSubtitle"></p>
+<div class="jackpot-win-prize-box jackpot-only hidden"><div class="prize-vault-header"><span class="vault-label"><i class="fa-solid fa-trophy" aria-hidden="true"></i> TỔNG THƯỞNG</span></div><div class="jackpot-win-gems-row"><span class="jackpot-win-amount" id="jackpotWinAmount">+0</span><i class="fa-solid fa-star jackpot-unit-star" aria-hidden="true"></i></div></div>
 <div class="reward-reveal-heading" id="rewardRevealHeading">PHẦN THƯỞNG CỦA BẠN</div>
 <div class="reward-reveal-icon" id="rewardRevealIcon"></div>
 <h2 id="rewardRevealName"></h2>
@@ -122,5 +132,5 @@
 <button id="closeReward" class="spin-action-btn" onclick="closeRewardReveal()" type="button">ĐÃ NHẬN</button>
 </div></div>
 <script id="jackpotData" type="application/json"><%- JSON.stringify(jackpot).replace(/</g, '\u003c') %></script>
-<script src="/assets/arena-dashboard/jackpot.js?v=11" defer></script>
+<script src="/assets/arena-dashboard/jackpot.js?v=12" defer></script>
 </body></html>
