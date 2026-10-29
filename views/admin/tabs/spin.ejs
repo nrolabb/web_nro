@@ -13,8 +13,7 @@
       <% if (spinItems && spinItems.length > 0) { %>
         <% spinItems.forEach(function(item) { %>
           <% let itemName = item.name || item.template_name || 'Vật phẩm ' + item.item_id; %>
-          <% let itemImg = item.image || (item.icon_id ? `/api/icon-x2/${item.icon_id}.png` : ''); %>
-          <% if (itemImg.startsWith('/api/icon/')) itemImg = itemImg.replace('/api/icon/', '/api/icon-x2/'); %>
+          <% let itemImg = item.icon_id != null ? `/api/icon/${item.icon_id}.png` : (item.image || ''); %>
           <tr>
             <td><%= item.id %></td>
             <td style="font-weight:600;color:var(--primary-color)"><% if(itemImg) { %><img src="<%= itemImg %>" class="spin-table-icon"><% } %><%= itemName %></td>
@@ -93,9 +92,9 @@
     var quantity = item.quantity == null ? 1 : item.quantity;
     var ratio = item.ratio == null ? 1 : item.ratio;
     var options = escapeSpinHtml(item.item_options || '[]');
-    var imageValue = String(item.image || '').replace(/^\/api\/icon\//, '/api/icon-x2/');
+    var imageValue = String(item.image || '').replace(/^\/api\/icon-x2\//, '/api/icon/');
     var image = escapeSpinHtml(imageValue);
-    var icon = item.icon_id ? '/api/icon-x2/' + item.icon_id + '.png' : image;
+    var icon = item.icon_id != null ? '/api/icon/' + item.icon_id + '.png' : image;
     var templateOptions = buildSpinComboOptions(spinTemplates, '-- Chọn vật phẩm --', '', itemId, 'item');
     return `
       ${item.id ? `<input type="hidden" id="${prefix}SpinId" value="${item.id}">` : ''}
@@ -143,9 +142,9 @@
     if (!item) return showToast('Không tìm thấy vật phẩm đã chọn', 'error');
     document.getElementById(prefix + 'SpinItemId').value = item.id;
     document.getElementById(prefix + 'SpinName').value = item.name || '';
-    document.getElementById(prefix + 'SpinImage').value = '/api/icon-x2/' + item.icon_id + '.png';
+    document.getElementById(prefix + 'SpinImage').value = '/api/icon/' + item.icon_id + '.png';
     var selected = document.getElementById(prefix + 'SpinSelectedTemplate');
-    selected.innerHTML = `<img src="/api/icon-x2/${item.icon_id}.png"><span>${escapeSpinHtml(item.name)} <small>#${item.id}</small></span>`;
+    selected.innerHTML = `<img src="/api/icon/${item.icon_id}.png"><span>${escapeSpinHtml(item.name)} <small>#${item.id}</small></span>`;
     selected.style.display = 'flex';
   }
 

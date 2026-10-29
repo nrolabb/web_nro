@@ -402,7 +402,7 @@
               <div id="anireward" class="anireward">
                 <% for(let i=0; i<15; i++) { %>
                   <% let item = (itemsList && itemsList.length > 0) ? itemsList[i % itemsList.length] : null; %>
-                  <% let imgSrc = item && item.image ? item.image : (item && item.icon_id ? `/api/icon/${item.icon_id}.png` : '../assets/images/spin/default.png'); %>
+                  <% let imgSrc = item && item.icon_id != null ? `/api/icon/${item.icon_id}.png` : (item && item.image ? item.image : '../assets/images/spin/default.png'); %>
                   <div class="anireward__item anireward__item--<%= i+1 %>"
                        style="background-image: url('../assets/images/spin/itemBubble.png'); background-size: 100% 100%; display: flex; align-items: center; justify-content: center;">
                     <img src="<%= imgSrc %>" style="width: 65%; height: 65%; object-fit: contain;">

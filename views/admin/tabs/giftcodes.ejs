@@ -249,7 +249,7 @@
       }).join(', ') : 'Chưa có option';
       return '<tr>' +
         '<td><span class="giftcode-row-number">' + (index + 1) + '</span></td>' +
-        '<td><div class="giftcode-datagrid-item">' + (item && item.icon_id != null ? '<img src="/api/icon-x2/' + item.icon_id + '.png">' : '') +
+        '<td><div class="giftcode-datagrid-item">' + (item && item.icon_id != null ? '<img src="/api/icon/' + item.icon_id + '.png">' : '') +
           '<span><strong>' + escapeGiftcodeHtml(item ? item.name : ('Item #' + reward.id)) + '</strong><small>ID: ' + reward.id + '</small></span></div></td>' +
         '<td><input type="number" min="1" step="1" class="form-input giftcode-datagrid-number" value="' + reward.quantity + '" oninput="setGiftcodeQuantity(' + index + ',this.value)"></td>' +
         '<td><div class="giftcode-datagrid-options"><span title="' + escapeGiftcodeHtml(optionSummary) + '">' + reward.options.length + ' option</span><button type="button" class="btn btn-ghost btn-sm" onclick="openGiftcodeOptionPanel(' + index + ')">+ Add option</button></div></td>' +

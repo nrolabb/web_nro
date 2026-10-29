@@ -62,8 +62,11 @@ app.use((req, res, next) => {
 // Cho phép truy cập vào tài nguyên tĩnh trong thư mục /views/assets
 app.use("/assets", express.static(path.join(__dirname, "/views/assets")));
 // Serve only the vendor files used by pages, not the entire installed dependency tree.
-app.use("/api/icon-x2", express.static("C:/NRO_Server/SERVER_NRO_ARN/data/icon/x2"));
-app.use("/api/icon", express.static("C:/NRO_Server/SERVER_NRO_ARN/data/icon/x4"));
+const gameDataDir = process.env.NRO_GAME_DATA_DIR
+  ? path.resolve(process.env.NRO_GAME_DATA_DIR)
+  : path.resolve(__dirname, "../SERVER_NRO_ARN/data");
+app.use("/api/icon-x2", express.static(path.join(gameDataDir, "icon/x2")));
+app.use("/api/icon", express.static(path.join(gameDataDir, "icon/x4")));
 
 // Use a pool so a MySQL restart or idle timeout cannot permanently leave the
 // running website with a closed connection.

@@ -44,7 +44,9 @@ module.exports = {
         return {
           id: item.id,
           name: item.name || item.template_name || ('Vật phẩm ' + itemId),
-          img: item.image || (item.icon_id ? `/api/icon/${item.icon_id}.png` : ''),
+          img: item.icon_id != null
+            ? `/api/icon/${item.icon_id}.png`
+            : (item.image || ''),
           ratio,
           params: [{ quantity, options, id: itemId }]
         };
