@@ -2,6 +2,7 @@ const jackpot = JSON.parse(document.getElementById('jackpotData').textContent);
 let chestIndex = 0, busy = false, pending = null, revealing = false;
 const money = n => Number(n).toLocaleString('vi-VN');
 const chestPrice = index => Number(jackpot.prices?.[index] ?? jackpot.price);
+const jackpotChanceText = Number(jackpot.chancePercent ?? 0.01).toLocaleString('vi-VN', { maximumFractionDigits: 6 });
 function syncAccountBalance(balance) {
  const formatted = money(balance);
  const pageBalance = document.getElementById('balance');
@@ -192,7 +193,7 @@ async function animateReward(winner) {
    const img = document.createElement('img'); img.src = '/api/icon/' + item.icon_id + '.png'; img.alt = ''; icon.append(img);
   }
   const name = document.createElement('div'); name.className = 'card-name'; name.textContent = item.name;
-  const qty = document.createElement('div'); qty.className = 'card-tier-label'; qty.textContent = item.type === 'jackpot' ? (i === 35 && item !== winner ? 'CƠ HỘI 0,01% · ' : '') + money(item.amount) + ' điểm' : '× ' + item.quantity;
+  const qty = document.createElement('div'); qty.className = 'card-tier-label'; qty.textContent = item.type === 'jackpot' ? (i === 35 && item !== winner ? 'CƠ HỘI ' + jackpotChanceText + '% · ' : '') + money(item.amount) + ' điểm' : '× ' + item.quantity;
   const bar = document.createElement('div'); bar.className = 'card-tier-bar'; card.append(icon, name, qty, bar); rail.append(card);
  }
  revealing = true; modal.classList.remove('hidden');

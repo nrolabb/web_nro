@@ -27,7 +27,7 @@ async function drawPool(db, chestId, spinPrice, randomInt = crypto.randomInt) {
     if (pools.length !== 4 || pools.some((pool, index) => Number(pool.chest_id) !== index) || !settings) {
         throw new Error('Chưa khởi tạo đủ 4 hũ Jackpot');
     }
-    const won = randomInt(10000) === 0;
+    const won = config.jackpotChanceThreshold > 0 && randomInt(100_000_000) < config.jackpotChanceThreshold;
     let jackpotAmount = 0;
     let remaining = 0;
     for (const pool of pools) {

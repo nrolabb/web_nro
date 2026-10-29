@@ -47,6 +47,14 @@ const jackpotPrices = accountRanks.map((rank, index) => {
     return { chestId: index, price };
 });
 
+const jackpotChancePercent = Number(process.env.JACKPOT_CHANCE_PERCENT?.trim() || '0.01');
+if (!Number.isFinite(jackpotChancePercent) || jackpotChancePercent < 0 || jackpotChancePercent > 100 ||
+    !Number.isInteger(jackpotChancePercent * 1_000_000)) {
+    throw new Error('JACKPOT_CHANCE_PERCENT phải từ 0 đến 100, tối đa 6 chữ số thập phân');
+}
+// Resolution is 1 in 100,000,000 draws, supporting percentage steps down to 0.000001%.
+const jackpotChanceThreshold = Math.round(jackpotChancePercent * 1_000_000);
+
 function socialUrl(name) {
     const value = process.env[name] || 'https://ngocrongarena.com/';
     try { const url = new URL(value); if (['https:', 'http:'].includes(url.protocol)) return url.href; } catch (_) {}
@@ -56,6 +64,8 @@ module.exports = {
     socialLinks: { facebook: socialUrl('SOCIAL_FACEBOOK_URL'), zalo: socialUrl('SOCIAL_ZALO_URL') },
     jackpotPools,
     jackpotPrices,
+    jackpotChancePercent,
+    jackpotChanceThreshold,
     accountRanks: (validRanks ? configuredRanks : accountRanks).map(({ name, key, amount }) => ({ name, key, amount })),
     host: process.env.HOST || "127.0.0.1",
     port: Number(process.env.PORT) || 3000,
