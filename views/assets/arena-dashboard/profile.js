@@ -1,4 +1,24 @@
 (() => {
+  const referralForm = document.getElementById('referral-form');
+  referralForm?.addEventListener('submit', async event => {
+    event.preventDefault();
+    const button = referralForm.querySelector('button');
+    if (button.disabled) return;
+    const message = document.getElementById('referral-status');
+    button.disabled = true;
+    message.textContent = 'Đang kiểm tra mã giới thiệu...';
+    try {
+      const response = await fetch('/auth/referral', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: document.getElementById('referral-code').value.trim() })
+      });
+      if (response.redirected) { location.href = '/login'; return; }
+      const result = await response.json();
+      message.textContent = result.message;
+      if (!result.error) referralForm.remove();
+    } catch (_) { message.textContent = 'Không thể nhập mã. Vui lòng thử lại.'; }
+    finally { button.disabled = false; }
+  });
   const panel = document.getElementById('password-panel');
   const form = document.getElementById('password-form');
   const status = document.getElementById('password-status');

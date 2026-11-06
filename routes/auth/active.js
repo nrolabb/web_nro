@@ -1,44 +1,31 @@
-var { isLogin } = require("../../middleware/auth.middleware")
-var { active_coins } = require("../../config")
+const { isLogin } = require('../../middleware/auth.middleware');
+const { active_coins } = require('../../config');
+const { requireOffline, creditReferrer, ReferralError } = require('../../helper/referrals');
 module.exports = {
-    name: "active",
-    middleware: [isLogin],
-    method: "post",
-    run: async ({ req, res, sql }) => {
-        const accountId = req.auth?.id;
-        if (!accountId) return res.status(401).json({ error: true, message: 'Vui lòng đăng nhập lại.' });
-        sql.query("SELECT id, active, vnd FROM account WHERE id = ?", [accountId], (err, result) => {
-            if (err) return res.status(500).json({ error: true, message: 'Không thể kiểm tra tài khoản.' });
-            if (!result.length) {
-                return res.redirect("/login")
-            }
-            let currentCoins = result[0].vnd;
-            currentCoins = parseInt(currentCoins)
-            if (result[0].active == 1) {
-                return res.json({
-                    error: false,
-                    message: `Bạn đã kích hoạt rồi`
-                })
-            }
-            if (currentCoins < active_coins) {
-                return res.json({
-                    error: true,
-                    message: `Bạn còn thiếu ${active_coins - currentCoins} coins để kích hoạt!`
-                })
-            }
-            sql.query("UPDATE account SET active = ?, vnd = vnd - ?, balance_note = 'Mở thành viên trên web' WHERE id = ? AND active = 0 AND vnd >= ?", [1, active_coins, accountId, active_coins], (err, resp) => {
-                if (err || !resp.affectedRows) {
-                    console.log(err)
-                    return res.json({
-                        error: true,
-                        message: `Không thể kích hoạt tài khoản này!`
-                    })
-                }
-                return res.json({
-                    error: false,
-                    message: `Kích hoạt thành công !`
-                })
-            })
-        })
-    },
+  name: 'active', middleware: [isLogin], method: 'POST',
+  run: async ({ req, res, sql }) => {
+    let db;
+    try {
+      db = await sql.promise().getConnection();
+      await db.beginTransaction();
+      const [rows] = await db.query('SELECT id, active, vnd, xacnhan_gioithieu, last_time_login, last_time_logout FROM account WHERE id = ? FOR UPDATE', [req.auth.id]);
+      const account = rows[0];
+      if (!account) throw new ReferralError('Không tìm thấy tài khoản.');
+      if (Number(account.active) === 1) {
+        await db.rollback();
+        return res.json({ error: false, message: 'Bạn đã kích hoạt rồi' });
+      }
+      requireOffline(account);
+      if (Number(account.vnd) < active_coins) throw new ReferralError(`Bạn còn thiếu ${active_coins - Number(account.vnd)} coins để kích hoạt!`);
+      const [result] = await db.query("UPDATE account SET active = 1, vnd = vnd - ?, balance_note = 'Mở thành viên trên web' WHERE id = ? AND active = 0 AND vnd >= ?", [active_coins, account.id, active_coins]);
+      if (result.affectedRows !== 1) throw new ReferralError('Không thể kích hoạt tài khoản này!');
+      if (Number(account.xacnhan_gioithieu)) await creditReferrer(db, account.xacnhan_gioithieu);
+      await db.commit();
+      return res.json({ error: false, message: 'Kích hoạt thành công!' });
+    } catch (error) {
+      if (db) await db.rollback();
+      if (!(error instanceof ReferralError)) console.error('Activation failed:', error.code || error.name);
+      return res.json({ error: true, message: error instanceof ReferralError ? error.message : 'Không thể kích hoạt tài khoản. Vui lòng thử lại.' });
+    } finally { if (db) db.release(); }
+  }
 };

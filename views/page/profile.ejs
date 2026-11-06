@@ -1,7 +1,7 @@
 <%- include('../partials/meta.ejs') %>
 <body class="dashboard-site profile-site">
 <%- include('../partials/head.ejs') %>
-<link rel="stylesheet" href="/assets/arena-dashboard/profile.css?v=2">
+<link rel="stylesheet" href="/assets/arena-dashboard/profile.css?v=3">
 <%
 const account = user[0];
 const character = player?.[0];
@@ -31,6 +31,25 @@ const money = value => (Number(value) || 0).toLocaleString('vi-VN') + ' điểm'
       <button class="profile-button secondary" type="button" id="activeAccount">Mở thành viên</button>
     </div>
     <p id="account-status" role="status"></p>
+  </section>
+  <section class="profile-card" id="referral" aria-labelledby="referral-title">
+    <h2 id="referral-title">Giới thiệu bạn bè</h2>
+    <details>
+      <summary class="profile-button secondary">Xem mã giới thiệu</summary>
+      <p>Mã giới thiệu của bạn: <strong class="referral-code"><%= account.gioithieu %></strong></p>
+    </details>
+    <p class="profile-muted">Khi nhập mã thành công, cả hai bên đều nhận quà tại NPC nhà → Nhận quà Vòng Quay. Người giới thiệu nhận thêm 10.000 VNĐ khi tài khoản được giới thiệu đã kích hoạt hoặc kích hoạt sau đó.</p>
+    <% if (Number(account.xacnhan_gioithieu)) { %>
+      <p>Bạn đã nhập mã giới thiệu rồi.</p>
+    <% } else { %>
+      <form id="referral-form">
+        <label for="referral-code">Nhập mã giới thiệu</label>
+        <input id="referral-code" name="code" type="text" maxlength="255" autocomplete="off" required aria-describedby="referral-hint">
+        <p id="referral-hint" class="profile-muted">Mỗi tài khoản chỉ nhập một lần, không dùng mã của chính mình. Vui lòng thoát game trước khi nhập mã.</p>
+        <button class="profile-button" type="submit">Nhập mã giới thiệu</button>
+      </form>
+    <% } %>
+    <p id="referral-status" role="status" aria-live="polite"></p>
   </section>
   <section class="profile-card" aria-labelledby="rank-title">
     <h2 id="rank-title">Hạng tài khoản</h2>
@@ -68,7 +87,7 @@ const money = value => (Number(value) || 0).toLocaleString('vi-VN') + ' điểm'
     <button type="submit" class="profile-button" id="submitPassword">Xác nhận đổi mật khẩu</button>
   </form>
 </dialog>
-<script src="/assets/arena-dashboard/profile.js?v=1" defer></script>
+<script src="/assets/arena-dashboard/profile.js?v=2" defer></script>
 <%- include('../partials/footer.ejs') %>
 </body>
 </html>

@@ -38,3 +38,9 @@
 .profile-dialog .profile-button { position: static; width: 100%; margin: 0; min-height: 48px; line-height: 1.5; white-space: normal; }
 #password-status, #account-status { font-size: 14px; color: #ffda70; }
 @media (max-width: 600px) { .profile-card { padding: 20px; } .profile-ranks { grid-template-columns: repeat(2, minmax(0, 1fr)); } .profile-info { grid-template-columns: 1fr; gap: 18px; } .profile-page { padding: 24px 12px 40px; } }
+#referral-form { display: flex; flex-direction: column; gap: 12px; margin-top: 20px; }
+#referral-form input { box-sizing: border-box; width: 100%; padding: 12px; border: 1px solid #655576; border-radius: 8px; background: #14111e; color: #fff; font: inherit; }
+#referral-form .profile-button { align-self: flex-start; }
+#referral-form input:focus { outline: 2px solid #ffd36a; }
+.referral-code { overflow-wrap: anywhere; }
+#referral-status { color: #ffda70; }
