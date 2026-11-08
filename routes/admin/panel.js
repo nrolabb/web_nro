@@ -134,7 +134,7 @@ module.exports = {
     switch (type) {
       case "home": {
         try {
-          const [totalUsersResult, revenueResult, onlinePlayersResult, systemMetrics] =
+          const [totalUsersResult, revenueResult, onlinePlayersResult, systemMetrics, topUsers] =
             await Promise.all([
               queryDatabase("SELECT COUNT(*) AS totalUsers FROM account"),
               queryDatabase("SELECT COALESCE(SUM(tongnap), 0) AS totalRevenue FROM account"),
@@ -142,6 +142,7 @@ module.exports = {
                 "SELECT COUNT(*) AS onlinePlayers FROM account WHERE last_time_login IS NOT NULL AND (last_time_logout IS NULL OR last_time_login > last_time_logout)"
               ),
               getSystemMetrics(),
+              queryDatabase("SELECT username, tongnap, vnd FROM account ORDER BY tongnap DESC LIMIT 10"),
             ]);
 
           var totalRevenue = Number(revenueResult[0].totalRevenue) || 0;
@@ -151,6 +152,7 @@ module.exports = {
             totalUsers: totalUsersResult[0].totalUsers,
             onlinePlayers: onlinePlayersResult[0].onlinePlayers,
             totalRevenue: totalRevenue,
+            allUser: topUsers,
             serverConfig: parseServerConfig(),
             systemMetrics: systemMetrics,
           });
