@@ -12,7 +12,7 @@
       <summary><span class="user-avatar-wrapper"><img src="<%= options.getAvatar?.[user[0].character] || '/assets/images/arena/logo.jpg' %>" alt=""></span><span class="user-info-text"><span class="username"><%= user[0].username %></span><span class="user-balance"><span id="header-user-vnd"><%= Number(user[0].vnd || 0).toLocaleString('vi-VN') %></span> điểm</span></span><i class="fa-solid fa-chevron-down caret-icon"></i></summary>
       <div class="user-dropdown">
         <a href="/profile"><i class="fa-solid fa-user"></i> Trang cá nhân</a>
-        <a href="/wallet" data-wallet-open><i class="fa-solid fa-wallet icon-green"></i> Ví cá nhân</a>
+        <a href="/wallet" <% if (typeof hasCharacter === "undefined" || hasCharacter) { %>data-wallet-open<% } %>><i class="fa-solid fa-wallet icon-green"></i> Ví cá nhân</a>
         <a href="/history"><i class="fa-solid fa-clock-rotate-left"></i> Lịch sử giao dịch</a>
         <a href="/changepassword"><i class="fa-solid fa-key"></i> Đổi mật khẩu</a>
         <div class="dropdown-divider"></div>
@@ -26,6 +26,6 @@
   </div>
 </header>
 
-<% if (user[0]?.username) { %><%- include("wallet-modal.ejs") %><% } %>
+<% if (user[0]?.username && (typeof hasCharacter === "undefined" || hasCharacter)) { %><%- include("wallet-modal.ejs") %><% } %>
 
 <%- include("social-sidebar.ejs") %>

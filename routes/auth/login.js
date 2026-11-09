@@ -43,34 +43,17 @@ module.exports = {
         });
       }
 
-      sql.query("SELECT 1 FROM player WHERE account_id = ? LIMIT 1", [account.id], (playerErr, players) => {
-        if (playerErr) {
-          console.error("Player lookup failed during login:", playerErr);
-          return res.status(503).json({
-            error: true,
-            message: "Không thể kết nối cơ sở dữ liệu, vui lòng thử lại.",
-          });
-        }
+      const signature = jwt.sign({ sub: account.id, username: account.username }, config.jwt_secretkey, {
+        algorithm: 'HS256', expiresIn: '7d', issuer: 'nro-web', audience: 'nro-web'
+      });
+      const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+      const cookieOptions = { expires, httpOnly: true, sameSite: 'lax', secure: Boolean(req.secure) || config.publicOrigin.startsWith('https://'), path: '/' };
 
-        if (players.length === 0) {
-          return res.json({
-            error: true,
-            message: "Vui lòng vào game và tạo nhân vật!",
-          });
-        }
-
-        const signature = jwt.sign({ sub: account.id, username: account.username }, config.jwt_secretkey, {
-          algorithm: 'HS256', expiresIn: '7d', issuer: 'nro-web', audience: 'nro-web'
-        });
-        const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-        const cookieOptions = { expires, httpOnly: true, sameSite: 'lax', secure: Boolean(req.secure) || config.publicOrigin.startsWith('https://'), path: '/' };
-
-        res.cookie("signature", signature, cookieOptions);
-        res.cookie("username", account.username, cookieOptions);
-        return res.json({
-          error: false,
-          message: "Đăng nhập thành công",
-        });
+      res.cookie("signature", signature, cookieOptions);
+      res.cookie("username", account.username, cookieOptions);
+      return res.json({
+        error: false,
+        message: "Đăng nhập thành công",
       });
     });
   },

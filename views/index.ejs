@@ -2,6 +2,11 @@
 <body class="dashboard-site">
 <%-include("./partials/head.ejs")%>
 <main class="main-body-container">        <div id="homeView" class="dashboard-content tab-panel active-panel">
+            <% if (typeof hasCharacter !== "undefined" && !hasCharacter) { %>
+            <section class="dashboard-section" role="alert">
+                Vui lòng vào game và tạo nhân vật! Bạn chỉ có thể xem trang chủ cho đến khi tạo nhân vật.
+            </section>
+            <% } %>
             <!-- Download Section -->
             <section class="dashboard-section">
                 <div class="section-hexagon-title">TẢI GAME</div>
