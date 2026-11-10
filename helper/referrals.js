@@ -1,11 +1,6 @@
 const { randomBytes } = require('node:crypto');
 
 class ReferralError extends Error {}
-function requireOffline(account) {
-  if (new Date(account.last_time_login).getTime() > new Date(account.last_time_logout).getTime()) {
-    throw new ReferralError('Vui lòng thoát game trước khi thực hiện trên web.');
-  }
-}
 async function getCode(db, accountId) {
   const [rows] = await db.query('SELECT username, gioithieu FROM account WHERE id = ?', [accountId]);
   if (!rows.length) throw new ReferralError('Không tìm thấy tài khoản.');
@@ -32,7 +27,6 @@ async function redeem(db, accountId, rawCode) {
   const account = rows.find(row => Number(row.id) === Number(accountId));
   if (!account || rows.length !== 2) throw new ReferralError('Không tìm thấy tài khoản.');
   if (Number(account.xacnhan_gioithieu)) throw new ReferralError('Bạn đã nhập mã giới thiệu rồi!');
-  requireOffline(account);
   const [result] = await db.query('UPDATE account SET xacnhan_gioithieu = ? WHERE id = ? AND COALESCE(xacnhan_gioithieu, 0) = 0', [refId, accountId]);
   if (result.affectedRows !== 1) throw new ReferralError('Bạn đã nhập mã giới thiệu rồi!');
   for (const id of [accountId, refId]) {
@@ -42,4 +36,4 @@ async function redeem(db, accountId, rawCode) {
   }
   if (Number(account.active) === 1) await creditReferrer(db, refId);
 }
-module.exports = { ReferralError, requireOffline, getCode, creditReferrer, redeem };
+module.exports = { ReferralError, getCode, creditReferrer, redeem };

@@ -67,8 +67,16 @@ async function run(route, db, code) {
   }
   const online = new Database();
   online.rows[0].last_time_login = '2026-01-03';
+  assert.equal((await run(referral, online, 'code2')).body.error, false);
+  assert.equal(online.rows[0].xacnhan_gioithieu, 2);
+  assert.equal(online.gifts.length, 4);
   assert.equal((await run(referral, online, 'code2')).body.error, true);
-  online.rows[0].xacnhan_gioithieu = 2;
+  assert.equal(online.gifts.length, 4);
+  const activeOnline = new Database(1);
+  activeOnline.rows[0].last_time_login = '2026-01-03';
+  assert.equal((await run(referral, activeOnline, 'code2')).body.error, false);
+  assert.equal(activeOnline.rows[1].vnd, 110000);
+  assert.equal(activeOnline.gifts.length, 4);
   assert.equal((await run(activate, online)).body.error, false);
   assert.equal(online.rows[0].active, 1);
   assert.equal(online.rows[0].vnd, 90000);
