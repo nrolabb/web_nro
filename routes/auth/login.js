@@ -43,17 +43,33 @@ module.exports = {
         });
       }
 
-      const signature = jwt.sign({ sub: account.id, username: account.username }, config.jwt_secretkey, {
-        algorithm: 'HS256', expiresIn: '7d', issuer: 'nro-web', audience: 'nro-web'
-      });
-      const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-      const cookieOptions = { expires, httpOnly: true, sameSite: 'lax', secure: Boolean(req.secure) || config.publicOrigin.startsWith('https://'), path: '/' };
+      // Website login is available only after the account has created a game
+      // character. Keep this check before issuing any session cookies.
+      sql.query('SELECT 1 FROM player WHERE account_id = ? LIMIT 1', [account.id], (playerErr, players) => {
+        if (playerErr) {
+          console.error('Character lookup failed during login:', playerErr);
+          return res.status(503).json({ error: true, message: 'Không thể kiểm tra nhân vật, vui lòng thử lại.' });
+        }
+        if (players.length === 0) {
+          return res.status(403).json({
+            error: true,
+            code: 'CHARACTER_REQUIRED',
+            message: 'Bạn cần đăng nhập vào game và tạo nhân vật trước khi đăng nhập web.',
+          });
+        }
 
-      res.cookie("signature", signature, cookieOptions);
-      res.cookie("username", account.username, cookieOptions);
-      return res.json({
-        error: false,
-        message: "Đăng nhập thành công",
+        const signature = jwt.sign({ sub: account.id, username: account.username }, config.jwt_secretkey, {
+          algorithm: 'HS256', expiresIn: '7d', issuer: 'nro-web', audience: 'nro-web'
+        });
+        const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+        const cookieOptions = { expires, httpOnly: true, sameSite: 'lax', secure: Boolean(req.secure) || config.publicOrigin.startsWith('https://'), path: '/' };
+
+        res.cookie("signature", signature, cookieOptions);
+        res.cookie("username", account.username, cookieOptions);
+        return res.json({
+          error: false,
+          message: "Đăng nhập thành công",
+        });
       });
     });
   },
