@@ -366,7 +366,7 @@ a {
     gap: 60px;
     z-index: 1;
     position: relative;
-    padding: 24px 20px;
+    padding: 150px 20px 24px;
     min-height: calc(100vh - 70px);
 }
 
@@ -379,7 +379,10 @@ a {
 }
 
 /* Game downloads are available directly from the login screen. */
-.login-downloads { width: 100%; max-width: 680px; margin-top: 16px; }
+.login-downloads {
+    position: absolute; z-index: 4; top: 18px; left: 50%; transform: translateX(-50%);
+    width: min(680px, calc(100% - 40px));
+}
 .login-downloads-title {
     width: fit-content; margin: 0 auto 14px; padding: 10px 38px;
     color: #17120a; font-family: 'Orbitron', sans-serif; font-size: 1rem; font-weight: 900;
@@ -388,7 +391,7 @@ a {
 .login-download-buttons { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
 .login-download-btn {
     min-height: 58px; flex: 1 1 185px; display: inline-flex; align-items: center; justify-content: center; gap: 12px;
-    padding: 8px 14px; border: 2px solid #fff; border-radius: 999px; background: #ff4b0b; color: #fff;
+    padding: 8px 14px; border: 2px solid rgba(255,255,255,.95); border-radius: 999px; background: #ff4b0b; color: #fff;
     text-decoration: none; font-size: .7rem; line-height: 1.15; font-weight: 700; text-align: left;
     box-shadow: 0 4px 12px rgba(0,0,0,.25); transition: transform .16s ease, background .16s ease;
 }
@@ -1248,7 +1251,12 @@ a {
         align-items: center;
         gap: 40px;
         margin-top: 10px;
+        padding-top: 150px;
     }
+
+    .login-downloads { top: 24px; width: min(680px, calc(100% - 32px)); }
+    .login-download-buttons { gap: 8px; }
+    .login-download-btn { flex: 1 1 165px; min-height: 52px; }
 
     .arena-left-panel {
         align-items: center;
