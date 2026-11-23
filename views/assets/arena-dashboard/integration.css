@@ -86,3 +86,13 @@ body::before {
   background-size: cover;
   background-repeat: no-repeat;
 }
+
+/* Auth pages use their own full-screen background from the arena theme. */
+body.arena-login-page {
+  background-image: var(--page-background);
+  background-position: center;
+  background-size: cover;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+}
+body.arena-login-page::before { display: none; }
